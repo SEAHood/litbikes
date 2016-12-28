@@ -1,7 +1,7 @@
 {
-  "name": "b5server",
+  "name": "litbikes",
   "version": "0.0.1",
-  "description": "server for b5 light-bikes game",
+  "description": "light-bikes game",
   "dependencies": {
     "@types/node": "^6.0.52",
     "@types/underscore": "^1.7.36",

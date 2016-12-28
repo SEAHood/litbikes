@@ -8,7 +8,7 @@ namespace Server {
     var pidGen = 0;
 
 
-    var bikes = [];
+    var bikes : any[] = [];
     var sockets = [];
     const version = 0.1;
 
@@ -119,13 +119,10 @@ namespace Server {
         socket.on('disconnect', function() {
             removePlayer(socket);
 
-            var size = 0;
-            for (i in bikes) {
-                size++;
-            }
+
 
             io.emit('bike_left', sockets.indexOf(socket));
-            console.log('CHECKING SOCKETS', size + " sockets registered");
+            console.log('CHECKING SOCKETS', sockets.length + " sockets registered");
         });
 
         timeout = setTimeout(function() {
@@ -191,18 +188,19 @@ namespace Server {
     }
 
     function removePlayer(socket) {
-        for (pid in sockets) {
-            if (sockets[pid] == socket) {
+        _.each( sockets, s => {
+            if ( s == socket ) {
+                let pid = sockets.indexOf(s);
                 console.log('PLAYER LEFT', pid);
                 //io.emit('player left', guid);
 
                 delete bikes[pid];
-                bikes.splice(pid, 1);
+                bikes.slice(pid, 1);
 
                 delete sockets[pid];
-                sockets.splice(pid, 1);
+                sockets.slice(pid, 1);
             }
-        }
+        });
     };
 
 }
