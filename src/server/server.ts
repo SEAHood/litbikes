@@ -1,5 +1,29 @@
-module LitBikes {
-    const _ = require('underscore');
+import _ = require('underscore');
+import {BikeDto} from "../dto/dto";
+
+module LitBikes.Server {
+
+
+    export class GameWorld {
+
+        private fps = 60;
+        private isRunning = false;
+
+        constructor() {
+            this.cycle();
+        }
+
+        cycle() {
+            if ( this.isRunning ) {
+                // dont console log crap here unless you want lag
+                //console.log(new Date());
+            }
+
+            setTimeout( () => this.cycle(), 1 / this.fps )
+        }
+
+
+    }
 
     export class Server {
         private express = require('express');
@@ -9,8 +33,10 @@ module LitBikes {
 
         private pidGen = 0;
 
+        private gameWorld = new GameWorld();
 
-        private bikes : any[] = [];
+
+        private bikes : BikeDto[] = [];
         private sockets = [];
         private version = 0.1;
 
@@ -24,8 +50,13 @@ module LitBikes {
                 res.sendFile('client/');
             });
 
+            this.app.get('/server-view', (req, res) => {
+                res.writeHead(200, {'Content-Type': 'text/plain'});
+                res.end('Hello World\n');
+            });
+
             setInterval( () => {
-                _.each(this.bikes, b => {
+                /*_.each(this.bikes, b => {
                     if (b) {
                         console.log("BIKE-------------------");
                         console.log(b.pid);
@@ -34,7 +65,7 @@ module LitBikes {
                         console.log(b.isDead);
                         console.log("END BIKE---------------");
                     }
-                });
+                });*/
             }, 1000);
 
             this.io.on('connection', socket => {
@@ -133,7 +164,7 @@ module LitBikes {
             });
         }
 
-        generateBikeData(existingPid) {
+        generateBikeData(existingPid) : BikeDto {
             var pid;
             if ( existingPid || existingPid === 0 ) {
                 pid = existingPid;
@@ -165,7 +196,7 @@ module LitBikes {
                     break;
             }
 
-            return {
+            return <BikeDto>{
                 pid: pid,
                 x: x,
                 y: y,
