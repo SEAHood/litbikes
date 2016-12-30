@@ -25,14 +25,20 @@ gulp.task('default', function() {
 
 gulp.task('compile-client', function(){
 	gulp.src(TS_CLIENT_SRC)
-		.pipe(typescript({module: "commonjs"}))
+		.pipe(typescript({
+			module: "commonjs",
+			target: 'es6'
+		}))
 		.pipe(concat(DEPLOY_CLIENT_JS_NAME))
 		.pipe(gulp.dest(DEPLOY_CLIENT_DIR))
 });
 
 gulp.task('compile-server', function(){
 	gulp.src(TS_SERVER_SRC)
-		.pipe(typescript({module: "commonjs"}))
+		.pipe(typescript({
+			module: "commonjs",
+			target: 'es6'
+		}))
 		.pipe(concat(DEPLOY_SERVER_JS_NAME))
 		.pipe(gulp.dest(DEPLOY_SERVER_DIR))
 });

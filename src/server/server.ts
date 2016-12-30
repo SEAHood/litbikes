@@ -1,29 +1,12 @@
-import _ = require('underscore');
-import {BikeDto} from "../dto/dto";
+/// <reference path="../../typings/globals/socket.io/index.d.ts" />
+/// <reference path="../../typings/globals/underscore/index.d.ts" />
 
-module LitBikes.Server {
+var ThreadedLock = require("threaded-lock");
+import {BikeDto} from "../dto";
+import {Connection} from "../util";
+import {GameWorld} from "./world";
 
-
-    export class GameWorld {
-
-        private fps = 60;
-        private isRunning = false;
-
-        constructor() {
-            this.cycle();
-        }
-
-        cycle() {
-            if ( this.isRunning ) {
-                // dont console log crap here unless you want lag
-                //console.log(new Date());
-            }
-
-            setTimeout( () => this.cycle(), 1 / this.fps )
-        }
-
-
-    }
+//module Server {
 
     export class Server {
         private express = require('express');
@@ -31,13 +14,8 @@ module LitBikes.Server {
         private http = require('http').Server(this.app);
         private io = require('socket.io')(this.http);
 
-        private pidGen = 0;
-
         private gameWorld = new GameWorld();
-
-
-        private bikes : BikeDto[] = [];
-        private sockets = [];
+        private connections : Connection[] = [];
         private version = 0.1;
 
         constructor() {
@@ -47,7 +25,7 @@ module LitBikes.Server {
 
             this.app.use(this.express.static('client/'));
             this.app.get('/', (req, res) => {
-                res.sendFile('client/');
+                res.sendFile('compiled/client/');
             });
 
             this.app.get('/server-view', (req, res) => {
@@ -55,186 +33,59 @@ module LitBikes.Server {
                 res.end('Hello World\n');
             });
 
-            setInterval( () => {
-                /*_.each(this.bikes, b => {
-                    if (b) {
-                        console.log("BIKE-------------------");
-                        console.log(b.pid);
-                        console.log(b.x);
-                        console.log(b.y);
-                        console.log(b.isDead);
-                        console.log("END BIKE---------------");
-                    }
-                });*/
-            }, 1000);
-
             this.io.on('connection', socket => {
-                console.log("CONNECTION!");
                 socket.on('register', () => {
-                    var bikeData = this.generateBikeData(null);
-                    var pid = bikeData.pid;
-                    this.bikes[pid] = bikeData;
-                    this.sockets[pid] = socket;
-                    socket.emit('register', {
-                        gameState: {
-                            gameHeight: 500,
-                            gameWidth: 500,
-                            bikes: this.bikes
-                        },
-                        regData: bikeData
-                    });
-
-                    socket.broadcast.emit('update', { bikeData: bikeData });
-                    //socket.broadcast.emit('new_bike', bikes[pid]);
+                    console.log("REGISTER!");
+                    /*let pid = this.gameWorld.newBike();
+                    this.connections.push( new Connection( socket, pid ) );
+                    this.worldUpdated();*/
                 });
 
-                socket.on('update', data => {
-                    if (!data.v || data.v !== this.version) {
-                        socket.disconnect();
-                        return;
-                    }
-
-                    var bikeData = data.bikeData;
-                    var existingBike = this.bikes[bikeData.pid];
-                    if ( existingBike ) {
-                        if ( !existingBike.isDead && bikeData.isDead ) {
-                            // RIP
-                            existingBike.deathTimestamp = Math.floor(Date.now());
-                        }
-                        existingBike.x = bikeData.x;
-                        existingBike.y = bikeData.y;
-                        existingBike.xspeed = bikeData.xspeed;
-                        existingBike.yspeed = bikeData.yspeed;
-                        existingBike.isDead = bikeData.isDead;
-                        existingBike.trail = bikeData.trail;
-                        /*
-                         console.log("EXISTING BIKE POST: xspeed=" + existingBike.xspeed + ", yspeed=" + existingBike.yspeed);
-                         console.log(existingBike === bikes[bikeData.pid]);*/
-                    } else {
-                        this.bikes[bikeData.pid] = data.bikeData;
-                        /*bikes[bikeData.pid] = {
-                         pid: bikeData.pid,
-                         x: bikeData.x,
-                         y: bikeData.y,
-                         xspeed: bikeData.xspeed,
-                         yspeed: bikeData.yspeed,
-                         isDead: bikeData.isDead
-                         };
-                         sockets[bikeData.pid] = socket;*/
-                    }
-
-                    socket.broadcast.emit('update', data);
-
-                    //emitGameState(socket);
+                socket.on('bike-update', ( data : BikeDto ) => {
+                    this.gameWorld.handleUpdate( data );
+                    this.worldUpdated();
                 });
 
-                socket.on('reset', () => {
-                    console.log("reset event");
-                    var pid = null;
-                    _.any(this.sockets, s => {
-                        if ( s === socket ) {
-                            pid = this.sockets.indexOf(s);
-                            return true;
-                        }
-                        return false;
-                    });
-
-                    if ( pid !== null ) {
-                        this.bikes[pid] = this.generateBikeData(pid);
-                        socket.emit('bike_update', this.bikes[pid]);
-                        this.emitGameState(socket);
-                    }
-                });
-
-                var timeoutInMs = 10000;
-                var timeout;
                 socket.on('disconnect', () => {
-                    this.removePlayer(socket);
-
-
-
-                    this.io.emit('bike_left', this.sockets.indexOf(socket));
-                    console.log('CHECKING SOCKETS', this.sockets.length + " sockets registered");
+                    this.killSocket(socket);
+                    this.worldUpdated();
                 });
 
-                timeout = setTimeout(() => {
-                    this.removePlayer(socket);
-                }, timeoutInMs);
+
+                // TODO RESET
+
+                // TODO TIMEOUT
 
             });
         }
 
-        generateBikeData(existingPid) : BikeDto {
-            var pid;
-            if ( existingPid || existingPid === 0 ) {
-                pid = existingPid;
-            } else {
-                pid = this.pidGen++;
-            }
-            var x = this.randInt(20, 480);
-            var y = this.randInt(20, 480);
-            var direction = this.randInt(1,4);
-            var xspeed, yspeed;
-            switch (direction) {
-                case 1:
-                    xspeed = 0;
-                    yspeed = -1;
-                    break;
-                case 2:
-                    xspeed = 0;
-                    yspeed = 1;
-                    break;
-                case 3:
-                    xspeed = -1;
-                    yspeed = 0;
-                    break;
-                case 4:
-                    xspeed = 1;
-                    yspeed = 0;
-                    break;
-                default:
-                    break;
-            }
-
-            return <BikeDto>{
-                pid: pid,
-                x: x,
-                y: y,
-                xspeed: xspeed,
-                yspeed: yspeed
-            }
-        }
-
-        emitGameState(socket) {
-            var gameState = {
-                bikes: this.bikes
-            };
-            this.io.emit('update', gameState);
-        }
-
-        randInt(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
-
-        randPlusMinus() {
-            return Math.random() < 0.5 ? -1 : 1;
-        }
-
-        removePlayer(socket) {
-            _.each( this.sockets, s => {
-                if ( s == socket ) {
-                    let pid = this.sockets.indexOf(s);
-                    console.log('PLAYER LEFT', pid);
-                    //io.emit('player left', guid);
-
-                    delete this.bikes[pid];
-                    this.bikes.slice(pid, 1);
-
-                    delete this.sockets[pid];
-                    this.sockets.slice(pid, 1);
+        private async killSocket( socket : any ) {
+            let pid = null;
+            let tlc = new ThreadedLock("connections-lock");
+            await tlc.lock();
+            this.connections = _.filter( this.connections, ( c : Connection ) => {
+                if ( c.socket === socket ) {
+                    pid = c.pid;
+                    return false;
+                } else {
+                    return true;
                 }
             });
-        };
+            tlc.unlock();
+
+            if ( pid !== null ) {
+                this.gameWorld.removeBike(pid);
+            }
+        }
+
+        private worldUpdated() {
+            _.each( this.connections, ( c : Connection ) => {
+                c.fireWorldUpdated( this.gameWorld.getWorldDto( c.pid ) );
+            });
+        }
+
     }
+
+    // kick off the server
     const server = new Server();
-}
+//}
