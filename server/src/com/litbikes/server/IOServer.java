@@ -59,24 +59,9 @@ public class IOServer {
             		worldDto.testList.add(b);
             		
             		ioServer.getBroadcastOperations().sendEvent("world-update", worldDto);
-            		
-            		//WorldUpdateDto worldUpdate 
             	}
-            	//ioServer.getBroadcastOperations().sendEvent("test-event", "success");
-                /*this.gameWorld.handleUpdate( data );
-                this.worldUpdated();*/
             }
         });
-        
-        /*ioServer.addEventListener(CLIENT_UPDATE, String.class, new DataListener<String>() {
-            @Override
-            public void onData(final SocketIOClient client, String data, final AckRequest ackRequest) {
-            	System.out.println(data)
-            	//ioServer.getBroadcastOperations().sendEvent("test-event", "success");
-                this.gameWorld.handleUpdate( data );
-                this.worldUpdated();
-            }
-        });*/
         
         ioServer.addDisconnectListener(new DisconnectListener() {
         	@Override
@@ -85,9 +70,6 @@ public class IOServer {
         	}
         });
 
-        
-        // BROADCAST TO ALL
-        // server.getBroadcastOperations().sendEvent("chatevent", data);
 
     	System.out.println("Server starting");
         ioServer.start();
