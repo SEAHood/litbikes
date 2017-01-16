@@ -1,0 +1,22 @@
+{
+  "name": "litbikes",
+  "version": "0.0.1",
+  "description": "light-bikes game",
+  "dependencies": {
+    "@types/underscore": "^1.7.36",
+    "gulp-order": "^1.1.1",
+    "p5": "^0.5.5",
+    "socket.io-client": "^1.7.2",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-clean": "^0.3.2",
+    "gulp-concat": "^2.6.1",
+    "gulp-order": "^1.1.1",
+    "gulp-tsc": "^1.2.6",
+    "run-sequence": "^1.2.2",
+    "typescript": "^2.1.4",
+    "typings": "^2.1.0"
+  }
+}
