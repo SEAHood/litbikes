@@ -14,4 +14,9 @@ public class Vector {
 		this.x = x;
 		this.y = y;
 	}
+	
+	public void add( Vector that ) {
+		this.x += that.x;
+		this.y += that.y;
+	}
 }

@@ -1,5 +1,6 @@
 package com.litbikes.model;
 
+import com.litbikes.dto.BikeDto;
 import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
 
@@ -8,11 +9,13 @@ public class Bike {
 	private int pid;
 	private Vector pos;
 	private Vector spd;
+	private boolean dead;
 	
 	private Bike(int pid, Vector pos, Vector spd) {
 		this.pid = pid;
 		this.pos = pos;
 		this.spd = spd;
+		dead = false;
 	}
 
 	public static Bike create(int pid) {
@@ -39,5 +42,58 @@ public class Bike {
 
 		return new Bike(pid, pos, spd);
 	}
+
+	public void updatePosition() {
+		pos.add(spd);
+		System.out.println(pid + " - new position: "+pos.x+","+pos.y);
+	}
+		
+	public BikeDto getDto() {
+		BikeDto dto = new BikeDto();
+		System.out.println(spd.x);
+		System.out.println(pos.x);
+		System.out.println(spd.y);
+		System.out.println(pos.y);
+		dto.pid = pid;
+		dto.pos = new Vector(pos.x, pos.y);
+		dto.spd = new Vector(spd.x, spd.y);
+		dto.dead = dead;
+		return dto;
+	}
+
+	public int getPid() {
+		return pid;
+	}
+
+	public void setPid(int pid) {
+		this.pid = pid;
+	}
+
+	public Vector getPos() {
+		return pos;
+	}
+
+	public void setPos(Vector pos) {
+		this.pos = pos;
+	}
+
+	public Vector getSpd() {
+		return spd;
+	}
+
+	public void setSpd(Vector spd) {
+		this.spd = spd;
+	}
+
+	public boolean isDead() {
+		return dead;
+	}
+
+	public void setDead(boolean dead) {
+		this.dead = dead;
+	}
+
+	
+	
 	
 }

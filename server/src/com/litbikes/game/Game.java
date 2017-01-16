@@ -1,11 +1,19 @@
-package com.litbikes.server;
+package com.litbikes.game;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+
+import com.litbikes.dto.BikeDto;
 import com.litbikes.dto.ClientUpdateDto;
+import com.litbikes.dto.ServerWorldDto;
+import com.litbikes.dto.Test;
 import com.litbikes.model.Arena;
 import com.litbikes.model.Bike;
 import com.litbikes.util.Vector;
@@ -17,10 +25,12 @@ public class Game {
 	
 	private List<Bike> bikes;
 	private Arena arena;
+	Logger log = Log.getLog();
 	
 	public Game() {
 		Vector arenaDim = new Vector(500, 500);
-		this.arena = new Arena(arenaDim);
+		arena = new Arena(arenaDim);
+		bikes = new ArrayList<>();
 	}
 
 	public static Game create() {
@@ -37,19 +47,57 @@ public class Game {
 	class GameLoop implements Runnable {
 	    public void run() {
 	    	//TODO Implement actual game loop
+	    	for ( Bike bike : bikes ) {
+	    		//bike.updatePosition();
+	    	}
 	    }
 	}
 	
-	public void newPlayer() {		
-		Bike newBike = Bike.create(this.pidGen++);
-		this.bikes.add( newBike );
+	
+	// Returns new pid
+	public int newPlayer() {		
+		int pid = this.pidGen++;
+		log.info("Creating new player with pid " + pid);
+		Bike newBike = Bike.create(pid);
+		bikes.add( newBike );
+		return pid;
+	}
+	
+	public void dropPlayer(int pid) {
+		Bike bike = bikes.stream().filter(b -> b.getPid() == pid).findFirst().get();
+		bikes.remove(bike);
+		log.info("Dropped player " + pid);
 	}
 	
 	public boolean handleClientUpdate(ClientUpdateDto data) {
 		if ( data.isValid() ) {
+			
+			if ( bikes.size() > 0 ) {
+				Bike bike = bikes.stream().filter(b -> b.getPid() == data.pid).findFirst().get();
+				bike.setSpd( new Vector(data.xspd, data.yspd) );
+			}
+			
+			//don't care about anything else tbh
+			
 			return true;
 		} else 
 			return false;
+	}
+	
+	public ServerWorldDto getWorldDto() {
+		ServerWorldDto worldDto = new ServerWorldDto();
+		List<BikeDto> bikesDto = new ArrayList<>();
+		
+		for ( Bike bike : bikes ) {
+			bikesDto.add( bike.getDto() );
+		}
+
+		Instant now = Instant.now();
+		worldDto.timestamp = now.getEpochSecond();
+		worldDto.arena = arena.getDto();
+		worldDto.bikes = bikesDto;
+		worldDto.test = new Test("a","b");
+		return worldDto;
 	}
 	
 	//TODO transport object

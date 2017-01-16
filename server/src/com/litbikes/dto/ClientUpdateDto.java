@@ -30,6 +30,7 @@ public class ClientUpdateDto {
 			   xpos != null && 
 			   ypos != null && 
 			   xspd != null && 
-			   yspd != null;
+			   yspd != null && 
+			   dead != null;
 	}
 }
