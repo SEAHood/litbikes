@@ -1,4 +1,13 @@
 
+/// <reference path="../typings/globals/socket.io-client/index.d.ts" />
+/// <reference path="../typings/globals/underscore/index.d.ts" />
+/// <reference path="../typings/p5.d.ts" />
+/// <reference path="util.ts" />
+/// <reference path="dto.ts" />
+/// <reference path="model/arena.ts" />
+/// <reference path="model/bike.ts" />
+/// <reference path="game/game.ts" /> 
+
 var LitBikes;
 (function (LitBikes) {
     var Util;
@@ -29,9 +38,6 @@ var LitBikes;
     })(Util = LitBikes.Util || (LitBikes.Util = {}));
 })(LitBikes || (LitBikes = {}));
 
-/// <reference path="../../typings/globals/socket.io-client/index.d.ts" />
-/// <reference path="../../typings/globals/underscore/index.d.ts" />
-/// <reference path="../../typings/p5.d.ts" />
 var LitBikes;
 (function (LitBikes) {
     var Arena = Model.Arena;

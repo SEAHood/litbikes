@@ -1,6 +1,3 @@
-/// <reference path="../../typings/globals/socket.io-client/index.d.ts" />
-/// <reference path="../../typings/globals/underscore/index.d.ts" />
-/// <reference path="../../typings/p5.d.ts" />
 
 module LitBikes {
 

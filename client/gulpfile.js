@@ -13,7 +13,7 @@ var SRC_ROOT = 'src',
 		SRC_ROOT + '/model/!*.ts',
 	],*/
 	TS_SRC = [
-		//SRC_ROOT + '/references.ts',
+		SRC_ROOT + '/references.ts',
 		SRC_ROOT + '/dto.ts',
 		SRC_ROOT + '/util.ts',
 		SRC_ROOT + '/model/arena.ts',
