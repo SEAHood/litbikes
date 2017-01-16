@@ -77,7 +77,8 @@ gulp.task('build-ts', function(){
 	return gulp.src(TS_SRC)
 		.pipe(typescript({
 			module: "commonjs",
-			target: 'es6'
+			target: 'es5',
+			sortOutput: true
 		}))
 		.pipe(concat(DEPLOY_JS_NAME))
 		.pipe(gulp.dest(COMPILED_JS_DIR))

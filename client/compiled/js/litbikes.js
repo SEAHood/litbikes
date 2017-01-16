@@ -12,28 +12,33 @@ var LitBikes;
 (function (LitBikes) {
     var Util;
     (function (Util_1) {
-        class Vector {
-            constructor(x, y) {
+        var Vector = (function () {
+            function Vector(x, y) {
                 this.x = x;
                 this.y = y;
             }
-        }
+            return Vector;
+        }());
         Util_1.Vector = Vector;
-        class Util {
-            static randInt(min, max) {
-                return Math.floor(Math.random() * (max - min + 1)) + min;
+        var Util = (function () {
+            function Util() {
             }
-        }
+            Util.randInt = function (min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            };
+            return Util;
+        }());
         Util_1.Util = Util;
-        class Connection {
-            constructor(socket, pid) {
+        var Connection = (function () {
+            function Connection(socket, pid) {
                 this.socket = socket;
                 this.pid = pid;
             }
-            fireWorldUpdated(worldUpdate) {
+            Connection.prototype.fireWorldUpdated = function (worldUpdate) {
                 this.socket.emit('world-update', worldUpdate);
-            }
-        }
+            };
+            return Connection;
+        }());
         Util_1.Connection = Connection;
     })(Util = LitBikes.Util || (LitBikes.Util = {}));
 })(LitBikes || (LitBikes = {}));
@@ -41,8 +46,9 @@ var LitBikes;
 var LitBikes;
 (function (LitBikes) {
     var Arena = Model.Arena;
-    class Game {
-        constructor() {
+    var Game = (function () {
+        function Game() {
+            var _this = this;
             this.host = 'http://localhost:9092';
             this.socket = io.connect(this.host);
             this.bikes = []; //All bikes other than your own
@@ -54,46 +60,48 @@ var LitBikes;
                 test: '#test'
             };
             console.log("Started! 3");
-            this.socket.on('client-registered', (pid) => {
+            this.socket.on('client-registered', function (pid) {
                 console.log("Registered as bike " + pid);
-                this.socket.emit('request-world-update');
+                _this.socket.emit('request-world-update');
             });
-            this.socket.on('world-update', (data) => {
+            this.socket.on('world-update', function (data) {
                 console.log("Got world update");
                 console.log(data);
-                if (!this.gameStarted) {
-                    this.arena = new Arena(data.arena.dimensions);
-                    this.p5Instance = new p5(this.sketch(), 'whatever');
+                if (!_this.gameStarted) {
+                    _this.arena = new Arena(data.arena.dimensions);
+                    _this.p5Instance = new p5(_this.sketch(), 'whatever');
                 }
             });
             this.socket.emit('register');
         }
-        sketch() {
-            return (p) => {
-                p.setup = () => this.setup(p);
+        Game.prototype.sketch = function () {
+            var _this = this;
+            return function (p) {
+                p.setup = function () { return _this.setup(p); };
             };
-        }
-        setup(p) {
-            let spacing = 10;
+        };
+        Game.prototype.setup = function (p) {
+            var spacing = 10;
             p.createCanvas(this.arena.dimensions.x, this.arena.dimensions.y);
             this.arena.draw(p);
             //bg = new Background();
             //setupSocketListeners();
             console.log("Sent registration packet to " + this.host);
-        }
-    }
+        };
+        return Game;
+    }());
     LitBikes.Game = Game;
-    const game = new Game();
+    var game = new Game();
 })(LitBikes || (LitBikes = {}));
 
 var Model;
 (function (Model) {
-    class Arena {
-        constructor(dim) {
+    var Arena = (function () {
+        function Arena(dim) {
             this.spacing = 10;
             this.dimensions = dim;
         }
-        draw(p) {
+        Arena.prototype.draw = function (p) {
             p.background(51);
             p.fill(255);
             p.textAlign('left', 'top');
@@ -106,16 +114,17 @@ var Model;
                 p.line(0, i, this.dimensions.x, i);
             }
             p.text("LitBikes v0.1", 10, 10);
-        }
-    }
+        };
+        return Arena;
+    }());
     Model.Arena = Arena;
 })(Model || (Model = {}));
 
 var Model;
 (function (Model) {
     var Vector = LitBikes.Util.Vector;
-    class Bike {
-        constructor(bikeDto) {
+    var Bike = (function () {
+        function Bike(bikeDto) {
             this.spdMagnitude = 0.2;
             this.isDead = false;
             this.deathTimestamp = null;
@@ -126,28 +135,28 @@ var Model;
             this.deathTimestamp = bikeDto.deathTimestamp;
             this.trail = bikeDto.trail || [bikeDto.pos];
         }
-        getPid() {
+        Bike.prototype.getPid = function () {
             return this.pid;
-        }
-        setSpeed(spd) {
+        };
+        Bike.prototype.setSpeed = function (spd) {
             if ((!this.spd.x && !spd.x) || (!this.spd.y && !spd.y)) {
                 return false;
             }
             this.spd = spd;
             this.trail.push(this.pos);
             return true;
-        }
-        update() {
+        };
+        Bike.prototype.update = function () {
             if (!this.isDead) {
                 this.pos.x += this.spd.x * this.spdMagnitude;
             }
-        }
-        kill(timeOfDeath) {
+        };
+        Bike.prototype.kill = function (timeOfDeath) {
             this.spd = new Vector(0, 0);
             this.isDead = true;
             this.deathTimestamp = timeOfDeath || Math.floor(Date.now());
-        }
-        draw(p) {
+        };
+        Bike.prototype.draw = function (p) {
             p.noStroke();
             //p.fill('rgba(' + rand255() +', 0, 0, 0.50)');
             p.fill(230);
@@ -170,7 +179,8 @@ var Model;
                 var randSize = Math.floor(Math.random() * 40);
                 p.ellipse(this.x, this.y, randSize, randSize);
             }*/
-        }
-    }
+        };
+        return Bike;
+    }());
     Model.Bike = Bike;
 })(Model || (Model = {}));
