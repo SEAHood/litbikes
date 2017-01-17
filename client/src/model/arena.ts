@@ -1,6 +1,6 @@
 module Model {
 
-    import Vector = LitBikes.Util.Vector;
+    import Vector = Util.Vector;
     export class Arena {
 
         public dimensions : Vector;
@@ -12,8 +12,6 @@ module Model {
 
         public draw( p : p5 ) {
             p.background(51);
-            p.fill(255);
-            p.textAlign('left', 'top')
             p.strokeWeight(1);
             p.stroke('rgba(125,249,255,0.10)');
 
@@ -25,7 +23,6 @@ module Model {
                 p.line(0, i, this.dimensions.x, i);
             }
 
-            p.text("LitBikes v0.1", 10, 10);
         }
 
     }

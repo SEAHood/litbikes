@@ -1,6 +1,6 @@
 
-module LitBikes.Util {
-    import WorldUpdateDto = LitBikes.Dto.WorldUpdateDto;
+module Util {
+    import WorldUpdateDto = Dto.WorldUpdateDto;
     export class Vector {
         public x: number;
         public y: number;
@@ -8,6 +8,12 @@ module LitBikes.Util {
             this.x = x;
             this.y = y;
         }
+
+        public add(x: number, y: number) {
+            this.x += x;
+            this.y += y;
+        }
+
     }
 
     export class Util {

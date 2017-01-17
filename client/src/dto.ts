@@ -1,5 +1,5 @@
-module LitBikes.Dto {
-    import Vector = LitBikes.Util.Vector;
+module Dto {
+    import Vector = Util.Vector;
     export interface BikeDto {
         pid: number
         pos: Vector,

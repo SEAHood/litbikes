@@ -22,6 +22,7 @@ public class Game {
 	private int pidGen = 0;
 	private boolean isRunning = false;
 	private static final double FPS = 60.0;
+	public static final double SPEED_MAGNITUDE = 0.4;
 	
 	private List<Bike> bikes;
 	private Arena arena;
@@ -48,19 +49,19 @@ public class Game {
 	    public void run() {
 	    	//TODO Implement actual game loop
 	    	for ( Bike bike : bikes ) {
-	    		//bike.updatePosition();
+	    		bike.updatePosition();
 	    	}
 	    }
 	}
 	
 	
 	// Returns new pid
-	public int newPlayer() {		
+	public BikeDto newPlayer() {		
 		int pid = this.pidGen++;
 		log.info("Creating new player with pid " + pid);
 		Bike newBike = Bike.create(pid);
 		bikes.add( newBike );
-		return pid;
+		return newBike.getDto();
 	}
 	
 	public void dropPlayer(int pid) {

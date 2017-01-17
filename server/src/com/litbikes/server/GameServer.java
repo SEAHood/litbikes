@@ -9,6 +9,7 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
+import com.litbikes.dto.BikeDto;
 import com.litbikes.dto.ClientUpdateDto;
 import com.litbikes.game.Game;
 import com.litbikes.model.Connection;
@@ -82,9 +83,9 @@ public class GameServer {
 	}
 	
 	public static void registerClient(SocketIOClient client) {
-		int newPid = game.newPlayer();
-		connections.add( new Connection(newPid, client.getSessionId()) );
-		client.sendEvent(CLIENT_REGISTERED, newPid);
+		BikeDto dto = game.newPlayer();
+		connections.add( new Connection(dto.pid, client.getSessionId()) );
+		client.sendEvent(CLIENT_REGISTERED, dto);
 	}
 	
 	public static void sendWorldUpdate(SocketIOClient client) {

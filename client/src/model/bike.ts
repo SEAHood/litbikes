@@ -1,16 +1,16 @@
 module Model {
-    import Vector = LitBikes.Util.Vector;
-    import BikeDto = LitBikes.Dto.BikeDto;
+    import Vector = Util.Vector;
+    import BikeDto = Dto.BikeDto;
     export class Bike {
 
-        public pid: number;
-        public pos : Vector;
-        public spd : Vector;
-        public trail: Vector[];
+        private pid: number;
+        private pos : Vector;
+        private spd : Vector;
+        private trail: Vector[];
 
-        private spdMagnitude = 0.2;
-        public isDead: boolean = false;
-        public deathTimestamp: number = null;
+        private spdMagnitude = 0.4;
+        private isDead: boolean = false;
+        private deathTimestamp: number = null;
 
         constructor( bikeDto: BikeDto ) {
             this.pid = bikeDto.pid;
@@ -21,9 +21,6 @@ module Model {
             this.trail = bikeDto.trail || [bikeDto.pos];
         }
 
-        public getPid() : number {
-            return this.pid;
-        }
 
         public setSpeed( spd: Vector ) {
             if ( ( !this.spd.x && !spd.x ) || ( !this.spd.y && !spd.y ) ) {
@@ -36,8 +33,17 @@ module Model {
 
         public update() {
             if ( !this.isDead ) {
-                this.pos.x += this.spd.x * this.spdMagnitude;
+                let xDiff = this.spd.x * this.spdMagnitude;
+                let yDiff = this.spd.y * this.spdMagnitude;
+                this.pos.add(xDiff, yDiff);
+
             }
+        }
+
+        public updateFromDto( dto : BikeDto ) {
+            this.pos = new Vector(dto.pos.x, dto.pos.y);
+            this.spd = new Vector(dto.spd.x, dto.spd.y);
+            this.isDead = dto.isDead;
         }
 
         public kill( timeOfDeath?: number ) {
@@ -50,7 +56,7 @@ module Model {
             p.noStroke();
             //p.fill('rgba(' + rand255() +', 0, 0, 0.50)');
             p.fill(230);
-            p.ellipse(this.pos.x, this.pos.y, 20, 20);
+            p.ellipse(this.pos.x, this.pos.y, 5, 5);
 
             /*if ( !this.isDead ) {
                 p.fill( this.colour );
@@ -72,6 +78,15 @@ module Model {
             }*/
         }
 
+        public getPid() : number {
+            return this.pid;
+        }
+        public getPos() : Vector {
+            return this.pos;
+        }
+        public getSpd() : Vector {
+            return this.spd;
+        }
 
     }
 

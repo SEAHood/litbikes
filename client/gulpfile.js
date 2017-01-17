@@ -4,6 +4,11 @@ var concat = require('gulp-concat');
 var clean = require('gulp-clean');
 var runSequence = require('run-sequence');
 var order = require("gulp-order");
+var ts = require('gulp-typescript');
+var series = require('stream-series');
+var debug = require('gulp-debug');
+var bump = require('gulp-bump');
+
 
 var SRC_ROOT = 'src',
 	/*TS_SRC = [
@@ -14,28 +19,32 @@ var SRC_ROOT = 'src',
 	],*/
 	TS_SRC = [
 		SRC_ROOT + '/references.ts',
+		SRC_ROOT + '/game/game.ts',
 		SRC_ROOT + '/dto.ts',
 		SRC_ROOT + '/util.ts',
 		SRC_ROOT + '/model/arena.ts',
 		SRC_ROOT + '/model/bike.ts',
-		SRC_ROOT + '/game/game.ts'
 	],
 
-	JS_ORDER = [
-		SRC_ROOT + '/game/**/*.js',
-		SRC_ROOT + '/model/**/*.js',
-		SRC_ROOT + '/*.js',
-	],
+	VERSION_FILE = SRC_ROOT + 'version.json',
+
 
 
 	CLIENT_LIBS = [
 		'node_modules/socket.io-client/dist/socket.io.min.js',
-		'node_modules/p5/lib/p5.min.js'
+		'node_modules/p5/lib/p5.min.js',
+		'node_modules/underscore/underscore-min.js'
 	],
 
 	COMPILED_DIR = 'compiled',
 	COMPILED_JS_DIR = COMPILED_DIR + '/js',
 	COMPILED_FILES = COMPILED_DIR + '/**/*',
+
+	JS_ORDER = [
+		 '*.js',
+		 'model/*.js',
+		 'game/game.js',
+	],
 
 	WEBSERVER_DIR = '../server/web',
 	WEBSERVER_FILES = WEBSERVER_DIR + '/**/*',
@@ -77,9 +86,16 @@ gulp.task('build-ts', function(){
 	return gulp.src(TS_SRC)
 		.pipe(typescript({
 			module: "commonjs",
-			target: 'es5',
-			sortOutput: true
+			target: 'es5'
 		}))
+		.pipe(order(JS_ORDER))
 		.pipe(concat(DEPLOY_JS_NAME))
 		.pipe(gulp.dest(COMPILED_JS_DIR))
 });
+
+/* TODO
+gulp.task('bump-rev', function(){
+	gulp.src(VERSION_FILE)
+		.pipe(bump({type:'rev'}))
+		.pipe(gulp.dest('./'));
+});*/

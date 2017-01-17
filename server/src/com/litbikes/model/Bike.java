@@ -1,6 +1,7 @@
 package com.litbikes.model;
 
 import com.litbikes.dto.BikeDto;
+import com.litbikes.game.Game;
 import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
 
@@ -44,16 +45,14 @@ public class Bike {
 	}
 
 	public void updatePosition() {
-		pos.add(spd);
-		System.out.println(pid + " - new position: "+pos.x+","+pos.y);
+        double xDiff = spd.x * Game.SPEED_MAGNITUDE;
+        double yDiff = spd.y * Game.SPEED_MAGNITUDE;
+		pos.add(new Vector(xDiff, yDiff));
+		//System.out.println(pid + " - new position: "+pos.x+","+pos.y);
 	}
 		
 	public BikeDto getDto() {
 		BikeDto dto = new BikeDto();
-		System.out.println(spd.x);
-		System.out.println(pos.x);
-		System.out.println(spd.y);
-		System.out.println(pos.y);
 		dto.pid = pid;
 		dto.pos = new Vector(pos.x, pos.y);
 		dto.spd = new Vector(spd.x, spd.y);
