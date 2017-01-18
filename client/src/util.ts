@@ -9,10 +9,17 @@ module Util {
             this.y = y;
         }
 
+        /*constructor(obj: any) {
+            if ( !!obj.x && !!obj.y ) {
+                this.x = obj.x;
+                this.y = obj.y;
+            }
+        }
+
         public add(x: number, y: number) {
             this.x += x;
             this.y += y;
-        }
+        }*/
 
     }
 

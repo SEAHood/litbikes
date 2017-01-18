@@ -18,4 +18,10 @@ module Dto {
         bikes: BikeDto[],
         arena: ArenaDto
     }
+
+    export interface ClientUpdateDto {
+        pid : number;
+        xSpd : number;
+        ySpd : number;
+    }
 }

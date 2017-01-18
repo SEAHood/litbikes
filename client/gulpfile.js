@@ -33,7 +33,8 @@ var SRC_ROOT = 'src',
 	CLIENT_LIBS = [
 		'node_modules/socket.io-client/dist/socket.io.min.js',
 		'node_modules/p5/lib/p5.min.js',
-		'node_modules/underscore/underscore-min.js'
+		'node_modules/underscore/underscore-min.js',
+		'node_modules/jquery/dist/jquery.min.js'
 	],
 
 	COMPILED_DIR = 'compiled',

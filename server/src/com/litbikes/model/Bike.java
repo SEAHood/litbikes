@@ -1,5 +1,8 @@
 package com.litbikes.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.litbikes.dto.BikeDto;
 import com.litbikes.game.Game;
 import com.litbikes.util.NumberUtil;
@@ -10,12 +13,15 @@ public class Bike {
 	private int pid;
 	private Vector pos;
 	private Vector spd;
+	private List<Vector> trail;
 	private boolean dead;
 	
 	private Bike(int pid, Vector pos, Vector spd) {
 		this.pid = pid;
 		this.pos = pos;
 		this.spd = spd;
+		trail = new ArrayList<>();
+		trail.add(new Vector(pos.x, pos.y));
 		dead = false;
 	}
 
@@ -50,12 +56,17 @@ public class Bike {
 		pos.add(new Vector(xDiff, yDiff));
 		//System.out.println(pid + " - new position: "+pos.x+","+pos.y);
 	}
+	
+	public void addTrailPoint() {
+		trail.add( new Vector(pos.x, pos.y) );
+	}
 		
 	public BikeDto getDto() {
 		BikeDto dto = new BikeDto();
 		dto.pid = pid;
 		dto.pos = new Vector(pos.x, pos.y);
 		dto.spd = new Vector(spd.x, spd.y);
+		dto.trail = trail;
 		dto.dead = dead;
 		return dto;
 	}
@@ -80,8 +91,19 @@ public class Bike {
 		return spd;
 	}
 
-	public void setSpd(Vector spd) {
+	// Returns true if speed is changed
+	public boolean setSpd(Vector spd) {
+        if ( ( this.spd.x == 0 && spd.x == 0 ) || ( this.spd.y != 0 && spd.y != 0 ) ) {
+            return false;
+        }		
 		this.spd = spd;
+		return true;
+	}
+	
+	
+
+	public List<Vector> getTrail() {
+		return trail;
 	}
 
 	public boolean isDead() {

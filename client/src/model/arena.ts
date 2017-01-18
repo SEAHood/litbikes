@@ -11,6 +11,7 @@ module Model {
         }
 
         public draw( p : p5 ) {
+
             p.background(51);
             p.strokeWeight(1);
             p.stroke('rgba(125,249,255,0.10)');

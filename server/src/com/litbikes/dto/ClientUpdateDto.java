@@ -5,32 +5,19 @@ import com.litbikes.util.Vector;
 //Update DTO from client
 public class ClientUpdateDto {
 	public Integer pid;
-	public Integer xpos;
-	public Integer ypos;
-	public Integer xspd;
-	public Integer yspd;
-	public Boolean dead;
+	public Integer xSpd;
+	public Integer ySpd;
 
-	public Vector getPos() {
-		if ( xpos != null && ypos != null )
-			return new Vector(xpos, ypos);
-		else
-			return null;
-	}
-	
 	public Vector getSpd() {
-		if ( xspd != null && yspd != null )
-			return new Vector(xspd, yspd);
+		if ( xSpd != null && ySpd != null )
+			return new Vector(xSpd, ySpd);
 		else
 			return null;
 	}
 	
 	public boolean isValid() {
 		return pid != null && 
-			   xpos != null && 
-			   ypos != null && 
-			   xspd != null && 
-			   yspd != null && 
-			   dead != null;
+			   xSpd != null && xSpd <= 1 && xSpd >= -1 &&
+			   ySpd != null && ySpd <= 1 && ySpd >= -1;
 	}
 }

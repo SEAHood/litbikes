@@ -29,7 +29,7 @@ public class GameServer {
 	public static void main(String[] args) throws InterruptedException {
 
         Configuration config = new Configuration();
-        config.setHostname("localhost");
+        config.setHostname("0.0.0.0");
         config.setPort(9092);
         
         ioServer = new SocketIOServer(config);
@@ -75,8 +75,13 @@ public class GameServer {
         ioServer.addDisconnectListener(new DisconnectListener() {
         	@Override
         	public void onDisconnect(final SocketIOClient client) {
-        		Connection clientConnection = connections.stream().filter(c -> c.getSessionId() == client.getSessionId()).findFirst().get();
-        		game.dropPlayer(clientConnection.getPid());
+        		try {
+        			//todo : exception here?
+            		Connection clientConnection = connections.stream().filter(c -> c.getSessionId() == client.getSessionId()).findFirst().get();
+            		game.dropPlayer(clientConnection.getPid());
+        		} catch (Exception e) {
+        			
+        		}
         		//client.getSessionId();
         	}
         });

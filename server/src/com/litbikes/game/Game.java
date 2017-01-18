@@ -75,7 +75,9 @@ public class Game {
 			
 			if ( bikes.size() > 0 ) {
 				Bike bike = bikes.stream().filter(b -> b.getPid() == data.pid).findFirst().get();
-				bike.setSpd( new Vector(data.xspd, data.yspd) );
+				if ( bike.setSpd( new Vector(data.xSpd, data.ySpd) ) ) {
+					bike.addTrailPoint();
+				}
 			}
 			
 			//don't care about anything else tbh
