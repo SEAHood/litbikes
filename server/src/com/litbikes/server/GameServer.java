@@ -12,7 +12,6 @@ public class GameServer {
 
         Configuration config = new Configuration();
         config.setHostname("0.0.0.0");
-        config.setOrigin("http://0.0.0.0:8080");
         config.setPort(9092);
         
         ioServer = new SocketIOServer(config);
