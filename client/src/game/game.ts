@@ -45,7 +45,7 @@ module Game {
                 });
 
                 _.each( data.bikes, ( b : BikeDto ) => {
-                    if ( b.pid === this.player.getPid() ) {
+                    if ( b.pid === this.player.getPid() && this.player ) {
                         this.player.updateFromDto(b);
                     } else {
                         let bike = _.find(this.bikes, (bike:Bike) => bike.getPid() === b.pid);
@@ -88,7 +88,7 @@ module Game {
                     this.socket.emit('request-respawn');
                 }
 
-                if ( newVector ) {
+                if ( newVector && this.player ) {
                     this.player.setDirection(newVector);
                     this.sendClientUpdate();
                 }
