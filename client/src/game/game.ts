@@ -25,15 +25,15 @@ module Game {
         private p5Instance : p5;
 
         constructor() {
-            this.socket.on('client-registered', ( data : BikeDto ) => {
+            this.socket.on('registered', ( data : BikeDto ) => {
                 console.log("Registered as bike " + data.pid);
 
                 this.player = new Bike(data);
 
-                this.socket.emit('request-world-update');
+                this.socket.emit('request-world');
             });
 
-            setInterval(() => this.socket.emit('request-world-update'), 1000);
+            setInterval(() => this.socket.emit('request-world'), 1000);
 
             this.socket.on('world-update', ( data : WorldUpdateDto ) => {
                 let updatedBikes = _.pluck(data.bikes, 'pid');
@@ -85,7 +85,7 @@ module Game {
                 } else if (keyCode === Keys.LEFT_ARROW) {
                     newVector = new Vector(-1, 0);
                 } else if (keyCode === 82) {
-                    //socket.emit('reset');
+                    this.socket.emit('request-respawn');
                 }
 
                 if ( newVector ) {
@@ -104,7 +104,7 @@ module Game {
                 xSpd : this.player.getSpd().x,
                 ySpd : this.player.getSpd().y
             };
-            this.socket.emit('client-update', updateDto);
+            this.socket.emit('update', updateDto);
         }
 
         private ui = {
@@ -128,7 +128,10 @@ module Game {
             p.text(
                 "pid: " + this.player.getPid() + "\n" +
                 "pos: " + this.player.getPos().x.toFixed(0) + ", " + this.player.getPos().y.toFixed(0) + "\n" +
-                "spd: "+ this.player.getSpd().x + ", " + this.player.getSpd().y
+                "spd: "+ this.player.getSpd().x + ", " + this.player.getSpd().y + "\n" +
+                "crashed: " + (this.player.isCrashed() ? "yes" : "no") + "\n" +
+                "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
+                "spectating: " + (this.player.isSpectating() ? "yes" : "no")
             , 10, 30, 300, 500);
 
             _.each( this.bikes, ( b : Bike ) => {

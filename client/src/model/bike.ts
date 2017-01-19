@@ -1,6 +1,7 @@
 module Model {
     import Vector = Util.Vector;
     import BikeDto = Dto.BikeDto;
+    import NumberUtil = Util.NumberUtil;
     export class Bike {
 
         private pid: number;
@@ -9,33 +10,48 @@ module Model {
         private trail: Vector[];
 
         private spdMagnitude = 0.4;
-        private isDead: boolean = false;
+        private crashed: boolean = false;
+        private crashing: boolean = false;
+        private spectating: boolean = false;
         private deathTimestamp: number = null;
+
+        private trailOpacity: number = 1;
 
         constructor( bikeDto: BikeDto ) {
             this.pid = bikeDto.pid;
             this.pos = new Vector( bikeDto.pos.x, bikeDto.pos.y );
             this.spd = new Vector( bikeDto.spd.x, bikeDto.spd.y );
-            this.isDead = bikeDto.isDead !== null ? false : bikeDto.isDead;
+            this.crashed = bikeDto.crashed;
+            this.spectating = bikeDto.spectating;
             this.deathTimestamp = bikeDto.deathTimestamp;
             this.trail = bikeDto.trail || [bikeDto.pos];
         }
 
 
         public setDirection(spd: Vector ) {
-            if ( ( !this.spd.x && !spd.x ) || ( !this.spd.y && !spd.y ) ) {
-                return false;
+            if ( !this.crashed ) {
+                if (( !this.spd.x && !spd.x ) || ( !this.spd.y && !spd.y )) {
+                    return false;
+                }
+                this.spd = spd;
+                this.trail.push(this.pos);
+                return true;
             }
-            this.spd = spd;
-            this.trail.push(this.pos);
-            return true;
         }
 
         public update() {
-            if ( !this.isDead ) {
+            if ( this.canMove() ) {
                 let xDiff = this.spd.x * this.spdMagnitude;
                 let yDiff = this.spd.y * this.spdMagnitude;
                 this.pos = new Vector(this.pos.x + xDiff, this.pos.y + yDiff);
+            }
+
+            if ( this.isCrashing() ) {
+                this.trailOpacity = Math.max(this.trailOpacity - 0.02, 0);
+                if ( this.trailOpacity == 0 ) {
+                    this.crashing = false;
+                    this.trailOpacity = 1;
+                }
             }
         }
 
@@ -43,50 +59,54 @@ module Model {
             this.pos = dto.pos;
             this.spd = dto.spd;
             this.trail = dto.trail;
-            this.isDead = dto.isDead;
+
+            if ( !this.crashed && dto.crashed ) {
+                this.crash();
+            }
+
+            this.crashed = dto.crashed;
+            this.spectating = dto.spectating;
         }
 
-        public kill( timeOfDeath?: number ) {
+        public crash( timeOfCrash?: number ) {
             this.spd = new Vector(0, 0);
-            this.isDead = true;
-            this.deathTimestamp = timeOfDeath || Math.floor(Date.now());
+            this.crashed = true;
+            this.crashing = true;
+            this.deathTimestamp = timeOfCrash || Math.floor(Date.now());
+            this.trail.push(this.pos);
         }
 
         public draw( p : p5 ) {
-            p.noStroke();
-            //p.fill('rgba(' + rand255() +', 0, 0, 0.50)');
-            p.fill(230);
-            p.ellipse(this.pos.x, this.pos.y, 5, 5);
 
-            p.strokeWeight(2);
-            p.stroke( 255 );
+            if ( this.isVisible() ) {
+                p.noStroke();
+                p.stroke('rgba(220, 220, 220, ' + this.trailOpacity + ')');
+                p.ellipse(this.pos.x, this.pos.y, 5, 5);
 
-            // should sort the trail
-            _.each( this.trail, ( tp : Vector, i : number ) => {
-                let lastBeforeBike = i >= this.trail.length - 1;
-                let nextTp = lastBeforeBike ? this.pos : this.trail[i+1];
-                p.line(tp.x, tp.y, nextTp.x, nextTp.y);
-                //p.ellipse(tp.x, tp.y, 2, 2);
-            });
+                p.strokeWeight(2);
+                p.stroke('rgba(220, 220, 220, ' + this.trailOpacity + ')');
 
-            /*if ( !this.isDead ) {
-                p.fill( this.colour );
-                p.ellipse(this.x, this.y, 5, 5);
-            } else if ( !this.explosionEnded ) {
-                if ( Math.floor(Date.now()) - this.deathTimestamp > this.explosionTime ) {
-                    this.explosionEnded = true;
-                    return;
+                // should sort the trail
+                _.each( this.trail, ( tp : Vector, i : number ) => {
+                    let lastBeforeBike = i >= this.trail.length - 1;
+                    let nextTp = lastBeforeBike ? this.pos : this.trail[i+1];
+                    p.line(tp.x, tp.y, nextTp.x, nextTp.y);
+                    //p.ellipse(tp.x, tp.y, 2, 2);
+                });
+
+                if ( this.isCrashing() ) {
+                    // Explosion
+                    //p.fill('rgba(' + NumberUtil.rand255() +', 0, 0, 0.50)');
+                    p.fill('rgba(0, ' +', ' + NumberUtil.rand255() + ', 0, 0.50)');
+                    p.ellipse(this.pos.x, this.pos.y, 20, 20);
+
+                    var randCol = NumberUtil.rand255();
+                    //p.fill('rgba(' + randCol +', ' + randCol + ', 0, 0.50)');
+                    p.fill('rgba(0, ' + randCol + ', 0, 0.50)');
+                    var randSize = Math.floor(Math.random() * 40);
+                    p.ellipse(this.pos.x, this.pos.y, randSize, randSize);
                 }
-
-                // Explosion
-                p.fill('rgba(' + rand255() +', 0, 0, 0.50)');
-                p.ellipse(this.x, this.y, 20, 20);
-
-                var randCol = rand255();
-                p.fill('rgba(' + randCol +', ' + randCol + ', 0, 0.50)');
-                var randSize = Math.floor(Math.random() * 40);
-                p.ellipse(this.x, this.y, randSize, randSize);
-            }*/
+            }
         }
 
         public getPid() : number {
@@ -99,6 +119,24 @@ module Model {
             return this.spd;
         }
 
+        public isCrashed() : boolean {
+            return this.crashed;
+        }
+        public isCrashing() : boolean {
+            return this.crashing;
+        }
+
+        private isVisible() : boolean {
+            return !this.spectating || this.crashing
+        }
+
+        public isSpectating() : boolean {
+            return this.spectating;
+        }
+
+        public canMove() : boolean {
+            return !this.isCrashed() && !this.isSpectating();
+        }
     }
 
 }

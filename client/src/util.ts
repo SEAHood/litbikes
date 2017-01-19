@@ -23,9 +23,19 @@ module Util {
 
     }
 
-    export class Util {
-        public static randInt(min, max) {
+    export class NumberUtil {
+        public static randInt(min, max) : number {
             return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        public static rand255() : number {
+            return Math.floor(Math.random() * 256);
+        }
+    }
+
+    export class ColourUtil {
+        public static rgba(r,g,b,a) : string {
+            return 'rgba('+r+','+g+','+b+','+a+')';
         }
     }
 

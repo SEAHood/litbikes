@@ -1,4 +1,4 @@
-package com.litbikes.game;
+package com.litbikes.server;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -19,8 +19,8 @@ import com.litbikes.model.Bike;
 import com.litbikes.util.Vector;
 
 public class Game {
+	private GameEventListener eventListener;
 	private int pidGen = 0;
-	private boolean isRunning = false;
 	private static final double FPS = 60.0;
 	public static final double SPEED_MAGNITUDE = 0.4;
 	
@@ -32,10 +32,6 @@ public class Game {
 		Vector arenaDim = new Vector(500, 500);
 		arena = new Arena(arenaDim);
 		bikes = new ArrayList<>();
-	}
-
-	public static Game create() {
-		return new Game();
 	}
 	
 	public void start() {
@@ -49,7 +45,34 @@ public class Game {
 	    public void run() {
 	    	//TODO Implement actual game loop
 	    	for ( Bike bike : bikes ) {
+	    		if ( bike.isCrashed() || bike.isSpectating() )
+	    			continue;
+	    		
 	    		bike.updatePosition();
+	    						
+				boolean collided = false;
+				for ( Bike b : bikes ) {
+					List<Vector> trail = new ArrayList<>();
+					trail.addAll( b.getTrail() );
+					
+					if ( bike.getPid() != b.getPid() ) 
+						trail.add( b.getPos() );
+					
+					collided = bike.checkCollision( trail, b.getPid() == bike.getPid() ) || arena.checkCollision( bike );
+					
+					if ( collided ) {
+						System.out.println("Collided!");
+						break;
+					}
+				}
+				
+				if ( collided ) {
+					bike.crash();
+					bike.setSpectating(true);
+					eventListener.playerCrashed(bike.getPid());
+					
+				}
+				
 	    	}
 	    }
 	}
@@ -74,10 +97,12 @@ public class Game {
 		if ( data.isValid() ) {
 			
 			if ( bikes.size() > 0 ) {
+				
 				Bike bike = bikes.stream().filter(b -> b.getPid() == data.pid).findFirst().get();
-				if ( bike.setSpd( new Vector(data.xSpd, data.ySpd) ) ) {
+				
+				if ( bike.setSpd( new Vector(data.xSpd, data.ySpd) ) )
 					bike.addTrailPoint();
-				}
+				
 			}
 			
 			//don't care about anything else tbh
@@ -101,6 +126,21 @@ public class Game {
 		worldDto.bikes = bikesDto;
 		worldDto.test = new Test("a","b");
 		return worldDto;
+	}
+	
+	public void attachListener( GameEventListener listener ) {
+		eventListener = listener;
+	}
+
+	public void requestRespawn(int pid) {
+
+		Bike bike = bikes.stream().filter(b -> b.getPid() == pid).findFirst().get();
+		if ( bike != null ) {
+			bikes.remove(bike);
+			bikes.add(Bike.create(pid));
+			eventListener.playerSpawned(pid);
+		}
+		
 	}
 	
 	//TODO transport object

@@ -9,5 +9,6 @@ public class BikeDto {
 	public Vector pos;
 	public Vector spd;
 	public List<Vector> trail;
-	public boolean dead;
+	public boolean crashed;
+	public boolean spectating;
 }

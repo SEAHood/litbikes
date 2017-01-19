@@ -4,7 +4,9 @@ module Dto {
         pid: number
         pos: Vector,
         spd: Vector,
-        isDead: boolean,
+        crashed: boolean,
+        crashing: boolean,
+        spectating: boolean,
         deathTimestamp?: number
         trail: Vector[];
     }

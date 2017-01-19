@@ -19,4 +19,8 @@ public class Vector {
 		this.x += that.x;
 		this.y += that.y;
 	}
+	
+	public static Vector zero() {
+		return new Vector(0, 0);
+	}
 }

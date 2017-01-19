@@ -1,10 +1,11 @@
 package com.litbikes.model;
 
+import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.litbikes.dto.BikeDto;
-import com.litbikes.game.Game;
+import com.litbikes.server.Game;
 import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
 
@@ -14,7 +15,8 @@ public class Bike {
 	private Vector pos;
 	private Vector spd;
 	private List<Vector> trail;
-	private boolean dead;
+	private boolean crashed;
+	private boolean spectating;
 	
 	private Bike(int pid, Vector pos, Vector spd) {
 		this.pid = pid;
@@ -22,7 +24,9 @@ public class Bike {
 		this.spd = spd;
 		trail = new ArrayList<>();
 		trail.add(new Vector(pos.x, pos.y));
-		dead = false;
+		crashed = false;
+		spectating = false;
+		addTrailPoint();
 	}
 
 	public static Bike create(int pid) {
@@ -51,14 +55,36 @@ public class Bike {
 	}
 
 	public void updatePosition() {
-        double xDiff = spd.x * Game.SPEED_MAGNITUDE;
-        double yDiff = spd.y * Game.SPEED_MAGNITUDE;
-		pos.add(new Vector(xDiff, yDiff));
-		//System.out.println(pid + " - new position: "+pos.x+","+pos.y);
+		if ( !crashed ) {
+	        double xDiff = spd.x * Game.SPEED_MAGNITUDE;
+	        double yDiff = spd.y * Game.SPEED_MAGNITUDE;
+			pos.add(new Vector(xDiff, yDiff));
+			//System.out.println(pid + " - new position: "+pos.x+","+pos.y);
+		}
 	}
 	
 	public void addTrailPoint() {
 		trail.add( new Vector(pos.x, pos.y) );
+	}
+	
+	public boolean checkCollision( List<Vector> trail, boolean isThis ) {
+		for ( int i = 0; i < trail.size() - 1; i++ ) {
+			// if this is the second last trail segment and the bikes trail belongs to this bike,
+			// theres no collision - cannot crash into your last two trail segments
+			if ( i + 2 >= trail.size() && isThis )
+				return false;
+			
+			Vector thisV = trail.get(i);
+			Vector nextV = trail.get(i+1);
+			Line2D line = new Line2D.Double(thisV.x, thisV.y, nextV.x, nextV.y);
+			//System.out.println("Comparing (" + thisV.x + ", " + thisV.y + ") and (" + nextV.x + ", " + nextV.y + ")");
+			if ( line.intersects(pos.x, pos.y, 2, 2) ) {
+				return true;
+			}
+		}
+
+		return false;
+		
 	}
 		
 	public BikeDto getDto() {
@@ -67,7 +93,8 @@ public class Bike {
 		dto.pos = new Vector(pos.x, pos.y);
 		dto.spd = new Vector(spd.x, spd.y);
 		dto.trail = trail;
-		dto.dead = dead;
+		dto.crashed = crashed;
+		dto.spectating = spectating;
 		return dto;
 	}
 
@@ -106,15 +133,27 @@ public class Bike {
 		return trail;
 	}
 
-	public boolean isDead() {
-		return dead;
+	public boolean isCrashed() {
+		return crashed;
 	}
 
-	public void setDead(boolean dead) {
-		this.dead = dead;
+	public void setCrashed(boolean dead) {
+		this.crashed = dead;
 	}
-
 	
+	public void crash() {
+		this.setCrashed(true);
+		this.setSpd(Vector.zero());
+		addTrailPoint();
+	}
+	
+	public boolean isSpectating() {
+		return spectating;
+	}
+
+	public void setSpectating(boolean spectating) {
+		this.spectating = spectating;
+	}
 	
 	
 }

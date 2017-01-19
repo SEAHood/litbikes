@@ -15,4 +15,9 @@ public class Arena {
 		dto.dimensions = this.dimensions;
 		return dto;
 	}
+	
+	public boolean checkCollision( Bike bike ) {
+		Vector bPos = bike.getPos();
+		return bPos.x > dimensions.x || bPos.x < 0 || bPos.y > dimensions.y || bPos.y < 0;
+	}
 }
