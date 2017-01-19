@@ -4,8 +4,6 @@ var concat = require('gulp-concat');
 var clean = require('gulp-clean');
 var runSequence = require('run-sequence');
 var order = require("gulp-order");
-var ts = require('gulp-typescript');
-var series = require('stream-series');
 var debug = require('gulp-debug');
 var bump = require('gulp-bump');
 
