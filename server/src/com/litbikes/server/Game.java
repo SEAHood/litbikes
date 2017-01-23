@@ -22,7 +22,7 @@ public class Game {
 	private GameEventListener eventListener;
 	private int pidGen = 0;
 	private static final double FPS = 60.0;
-	public static final double SPEED_MAGNITUDE = 0.4;
+	private static final int GAME_TICK_MS = 20;
 	
 	private List<Bike> bikes;
 	private Arena arena;
@@ -37,8 +37,9 @@ public class Game {
 	public void start() {
 		Runnable gameLoop = new GameLoop();
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-		long loopDurationMs = (long) (1/FPS * 1000);
-		executor.scheduleAtFixedRate(gameLoop, 0, loopDurationMs, TimeUnit.MILLISECONDS);
+		//long loopDurationMs = (long) (1/FPS * 1000);
+		System.out.println("Starting game at " + GAME_TICK_MS + "ms per game tick");
+		executor.scheduleAtFixedRate(gameLoop, 0, GAME_TICK_MS, TimeUnit.MILLISECONDS);
 	}
 	
 	class GameLoop implements Runnable {
@@ -135,12 +136,16 @@ public class Game {
 	public void requestRespawn(int pid) {
 
 		Bike bike = bikes.stream().filter(b -> b.getPid() == pid).findFirst().get();
-		if ( bike != null ) {
+		if ( bike != null && bike.isCrashed() ) {
 			bikes.remove(bike);
 			bikes.add(Bike.create(pid));
 			eventListener.playerSpawned(pid);
 		}
 		
+	}
+
+	int getGameTickMs() {
+		return GAME_TICK_MS;
 	}
 	
 	//TODO transport object

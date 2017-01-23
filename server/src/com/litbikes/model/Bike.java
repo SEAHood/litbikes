@@ -14,6 +14,7 @@ public class Bike {
 	private int pid;
 	private Vector pos;
 	private Vector spd;
+	private double spdMag = 0.75;
 	private List<Vector> trail;
 	private boolean crashed;
 	private boolean spectating;
@@ -56,8 +57,8 @@ public class Bike {
 
 	public void updatePosition() {
 		if ( !crashed ) {
-	        double xDiff = spd.x * Game.SPEED_MAGNITUDE;
-	        double yDiff = spd.y * Game.SPEED_MAGNITUDE;
+	        double xDiff = spd.x * spdMag;
+	        double yDiff = spd.y * spdMag;
 			pos.add(new Vector(xDiff, yDiff));
 			//System.out.println(pid + " - new position: "+pos.x+","+pos.y);
 		}
@@ -92,6 +93,7 @@ public class Bike {
 		dto.pid = pid;
 		dto.pos = new Vector(pos.x, pos.y);
 		dto.spd = new Vector(spd.x, spd.y);
+		dto.spdMag = spdMag;
 		dto.trail = trail;
 		dto.crashed = crashed;
 		dto.spectating = spectating;

@@ -5,10 +5,9 @@ var clean = require('gulp-clean');
 var runSequence = require('run-sequence');
 var order = require("gulp-order");
 var debug = require('gulp-debug');
-var bump = require('gulp-bump');
 
 
-var SRC_ROOT = 'src',
+var SRC_ROOT = './src',
 	/*TS_SRC = [
 		SRC_ROOT + '/game/!*.ts',
 		SRC_ROOT + '/references.ts',
@@ -82,6 +81,7 @@ gulp.task('move-html', function() {
 });
 
 gulp.task('build-ts', function(){
+
 	return gulp.src(TS_SRC)
 		.pipe(typescript({
 			module: "commonjs",

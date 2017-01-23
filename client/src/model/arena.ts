@@ -1,13 +1,14 @@
 module Model {
 
     import Vector = Util.Vector;
+    import ArenaDto = Dto.ArenaDto;
     export class Arena {
 
         public dimensions : Vector;
         private spacing = 10;
 
-        constructor( dim: Vector ) {
-            this.dimensions = dim;
+        constructor( dto : ArenaDto ) {
+            this.dimensions = dto.dimensions;
         }
 
         public draw( p : p5 ) {

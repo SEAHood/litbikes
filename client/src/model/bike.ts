@@ -9,7 +9,7 @@ module Model {
         private spd : Vector;
         private trail: Vector[];
 
-        private spdMagnitude = 0.4;
+        private spdMag: number;
         private crashed: boolean = false;
         private crashing: boolean = false;
         private spectating: boolean = false;
@@ -25,6 +25,7 @@ module Model {
             this.spectating = bikeDto.spectating;
             this.deathTimestamp = bikeDto.deathTimestamp;
             this.trail = bikeDto.trail || [bikeDto.pos];
+            this.spdMag = bikeDto.spdMag;
         }
 
 
@@ -41,8 +42,8 @@ module Model {
 
         public update() {
             if ( this.canMove() ) {
-                let xDiff = this.spd.x * this.spdMagnitude;
-                let yDiff = this.spd.y * this.spdMagnitude;
+                let xDiff = (this.spd.x * this.spdMag);// * this.timeDilation.x;
+                let yDiff = (this.spd.y * this.spdMag);// * this.timeDilation.y;
                 this.pos = new Vector(this.pos.x + xDiff, this.pos.y + yDiff);
             }
 
@@ -58,6 +59,7 @@ module Model {
         public updateFromDto( dto : BikeDto ) {
             this.pos = dto.pos;
             this.spd = dto.spd;
+            this.spdMag = dto.spdMag;
             this.trail = dto.trail;
 
             if ( !this.crashed && dto.crashed ) {
@@ -86,7 +88,7 @@ module Model {
                 p.strokeWeight(2);
                 p.stroke('rgba(220, 220, 220, ' + this.trailOpacity + ')');
 
-                // should sort the trail
+                // todo should sort the trail
                 _.each( this.trail, ( tp : Vector, i : number ) => {
                     let lastBeforeBike = i >= this.trail.length - 1;
                     let nextTp = lastBeforeBike ? this.pos : this.trail[i+1];

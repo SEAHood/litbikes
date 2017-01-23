@@ -10,6 +10,8 @@ import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
 import com.litbikes.dto.BikeDto;
 import com.litbikes.dto.ClientUpdateDto;
+import com.litbikes.dto.GameSettingsDto;
+import com.litbikes.dto.RegistrationDto;
 import com.litbikes.model.Connection;
 
 interface GameEventListener {
@@ -30,6 +32,21 @@ public class EventLayer implements GameEventListener {
 	private final static String C_REQUEST_WORLD = "request-world";
 	private final static String C_REQUEST_RESPAWN = "request-respawn";
 	
+	private class ClientEventListener<T> implements DataListener<T> {		
+		public void onData(SocketIOClient client, T data, AckRequest ackRequest) {
+			//addLatency();
+		}
+		
+		/*void addLatency() {
+        	try {
+				Thread.sleep(250);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}*/		
+	}
+	
 	public EventLayer( SocketIOServer ioServer, Game game ) {
 		this.ioServer = ioServer;
 		this.game = game;
@@ -44,33 +61,37 @@ public class EventLayer implements GameEventListener {
 	
 	// Incoming socket messages
 	public void setupSocketListeners() {
-		ioServer.addEventListener(C_REGISTER, String.class, new DataListener<String>() {
+		ioServer.addEventListener(C_REGISTER, String.class, new ClientEventListener<String>() {
             @Override
             public void onData(final SocketIOClient client, String data, final AckRequest ackRequest) {
+            	super.onData(client, data, ackRequest);
             	System.out.println("Received register event");
             	registerClient(client);
             }
         });
 
-        ioServer.addEventListener(C_REQUEST_WORLD, String.class, new DataListener<String>() {
+        ioServer.addEventListener(C_REQUEST_WORLD, String.class, new ClientEventListener<String>() {
             @Override
             public void onData(final SocketIOClient client, String data, final AckRequest ackRequest) {
+            	super.onData(client, data, ackRequest);
             	sendWorldUpdate(client);
             }
         });
 
-        ioServer.addEventListener(C_REQUEST_RESPAWN, String.class, new DataListener<String>() {
+        ioServer.addEventListener(C_REQUEST_RESPAWN, String.class, new ClientEventListener<String>() {
             @Override
             public void onData(final SocketIOClient client, String data, final AckRequest ackRequest) {
+            	super.onData(client, data, ackRequest);
         		Connection clientConnection = connections.stream().filter(c -> c.getSessionId() == client.getSessionId()).findFirst().get();
         		System.out.println("Respawn request from " + clientConnection.getPid());
         		game.requestRespawn(clientConnection.getPid());
             }
         });
 
-        ioServer.addEventListener(C_UPDATE, ClientUpdateDto.class, new DataListener<ClientUpdateDto>() {
+        ioServer.addEventListener(C_UPDATE, ClientUpdateDto.class, new ClientEventListener<ClientUpdateDto>() {
             @Override
             public void onData(final SocketIOClient client, ClientUpdateDto data, final AckRequest ackRequest) {
+            	super.onData(client, data, ackRequest);
             	if ( game.handleClientUpdate(data) ) {
             		broadcastWorldUpdate();
             	}
@@ -109,8 +130,17 @@ public class EventLayer implements GameEventListener {
 	// END GAME EVENTS
 	
 	public void registerClient(SocketIOClient client) {
-		BikeDto dto = game.newPlayer();
-		connections.add( new Connection(dto.pid, client.getSessionId()) );
+		BikeDto bike = game.newPlayer();
+		connections.add( new Connection(bike.pid, client.getSessionId()) );
+		
+		GameSettingsDto gameSettings = new GameSettingsDto();
+		gameSettings.gameTickMs = game.getGameTickMs();
+		
+		RegistrationDto dto = new RegistrationDto();
+		dto.bike = bike;
+		dto.gameSettings = gameSettings;		
+		dto.world = game.getWorldDto();
+		
 		client.sendEvent(C_REGISTERED, dto);
 	}
 	
