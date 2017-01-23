@@ -23,9 +23,6 @@ public class GameServer {
     	game.start();
 
     	System.out.println("Gameserver started!");
-        //Thread.sleep(Integer.MAX_VALUE);
-
-        //server.stop();
 	}
 	
 	

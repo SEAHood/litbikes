@@ -19,6 +19,7 @@ module Game {
         private gameStarted = false;
         private gameTickMs : number;
         private p5Instance : p5;
+        private showDebug = false;
 
         constructor() {
             this.socket.on('registered', ( data : RegistrationDto ) => {
@@ -39,22 +40,38 @@ module Game {
                         LEFT_ARROW = 37,
                         UP_ARROW = 38,
                         RIGHT_ARROW = 39,
-                        DOWN_ARROW = 40
+                        DOWN_ARROW = 40,
+                        W = 87,
+                        A = 65,
+                        S = 83,
+                        D = 68,
+                        R = 82,
+                        F3 = 114
                     }
 
                     let keyCode = ev.which;
                     let newVector = null;
+                    let eventMatched = true;
 
-                    if (keyCode === Keys.UP_ARROW) {
+                    if (keyCode === Keys.UP_ARROW || keyCode === Keys.W) {
                         newVector = new Vector(0, -1);
-                    } else if (keyCode === Keys.DOWN_ARROW) {
+                    } else if (keyCode === Keys.DOWN_ARROW || keyCode === Keys.S) {
                         newVector = new Vector(0, 1);
-                    } else if (keyCode === Keys.RIGHT_ARROW) {
+                    } else if (keyCode === Keys.RIGHT_ARROW || keyCode === Keys.D) {
                         newVector = new Vector(1, 0);
-                    } else if (keyCode === Keys.LEFT_ARROW) {
+                    } else if (keyCode === Keys.LEFT_ARROW || keyCode === Keys.A) {
                         newVector = new Vector(-1, 0);
-                    } else if (keyCode === 82) {
+                    } else if (keyCode === Keys.F3) {
+                        this.showDebug = !this.showDebug;
+                    } else if (keyCode === Keys.R) {
                         this.socket.emit('request-respawn');
+                    } else {
+                        eventMatched = false;
+                    }
+
+                    if ( eventMatched ) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
                     }
 
                     if ( newVector ) {
@@ -138,37 +155,42 @@ module Game {
         }
 
         private draw( p : p5 ) {
-            //this.player.update();
             this.arena.draw(p);
 
-            p.fill(255);
-            p.textAlign('left', 'top')
-            p.text("LitBikes " + this.version, 10, 10);
-            p.text(
-                "fps: " + p.frameRate().toFixed(2) + "\n" +
-                "pid: " + this.player.getPid() + "\n" +
-                "pos: " + this.player.getPos().x.toFixed(0) + ", " + this.player.getPos().y.toFixed(0) + "\n" +
-                "spd: "+ this.player.getSpd().x + ", " + this.player.getSpd().y + "\n" +
-                "crashed: " + (this.player.isCrashed() ? "yes" : "no") + "\n" +
-                "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
-                "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n"
-            , 10, 30, 300, 500);
+            if ( this.showDebug ) {
+                p.fill(255);
+                p.textSize(10);
+                p.textAlign('left', 'top')
+                p.text("LitBikes " + this.version, 10, 10);
+                p.text(
+                    "fps: " + p.frameRate().toFixed(2) + "\n" +
+                    "pid: " + this.player.getPid() + "\n" +
+                    "pos: " + this.player.getPos().x.toFixed(0) + ", " + this.player.getPos().y.toFixed(0) + "\n" +
+                    "spd: "+ this.player.getSpd().x + ", " + this.player.getSpd().y + "\n" +
+                    "crashed: " + (this.player.isCrashed() ? "yes" : "no") + "\n" +
+                    "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
+                    "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n"
+                , 10, 30, 300, 500);
+            }
 
             _.each( this.bikes, ( b : Bike ) => {
-                //b.update();
                 b.draw(p);
             });
 
             this.player.draw(p);
+
+            if ( this.player.isSpectating() ) {
+                p.textSize(32);
+                p.textAlign('center', 'bottom')
+                p.fill(255);
+                p.noStroke();
+                p.text("Press 'R' to respawn", this.arena.dimensions.x / 2, this.arena.dimensions.y / 2);
+            }
         }
 
         private setup( p : p5 ) {
-            //p.frameRate(30);
             p.createCanvas(this.arena.dimensions.x, this.arena.dimensions.y);
             this.arena.draw(p);
-
-            //bg = new Background();
-            //setupSocketListeners();
         }
 
     }

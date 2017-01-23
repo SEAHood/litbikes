@@ -93,17 +93,14 @@ module Model {
                     let lastBeforeBike = i >= this.trail.length - 1;
                     let nextTp = lastBeforeBike ? this.pos : this.trail[i+1];
                     p.line(tp.x, tp.y, nextTp.x, nextTp.y);
-                    //p.ellipse(tp.x, tp.y, 2, 2);
                 });
 
                 if ( this.isCrashing() ) {
                     // Explosion
-                    //p.fill('rgba(' + NumberUtil.rand255() +', 0, 0, 0.50)');
                     p.fill('rgba(0, ' +', ' + NumberUtil.rand255() + ', 0, 0.50)');
                     p.ellipse(this.pos.x, this.pos.y, 20, 20);
 
                     var randCol = NumberUtil.rand255();
-                    //p.fill('rgba(' + randCol +', ' + randCol + ', 0, 0.50)');
                     p.fill('rgba(0, ' + randCol + ', 0, 0.50)');
                     var randSize = Math.floor(Math.random() * 40);
                     p.ellipse(this.pos.x, this.pos.y, randSize, randSize);

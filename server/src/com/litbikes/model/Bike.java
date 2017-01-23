@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.litbikes.dto.BikeDto;
-import com.litbikes.server.Game;
 import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
 
@@ -60,7 +59,6 @@ public class Bike {
 	        double xDiff = spd.x * spdMag;
 	        double yDiff = spd.y * spdMag;
 			pos.add(new Vector(xDiff, yDiff));
-			//System.out.println(pid + " - new position: "+pos.x+","+pos.y);
 		}
 	}
 	
@@ -78,7 +76,6 @@ public class Bike {
 			Vector thisV = trail.get(i);
 			Vector nextV = trail.get(i+1);
 			Line2D line = new Line2D.Double(thisV.x, thisV.y, nextV.x, nextV.y);
-			//System.out.println("Comparing (" + thisV.x + ", " + thisV.y + ") and (" + nextV.x + ", " + nextV.y + ")");
 			if ( line.intersects(pos.x, pos.y, 2, 2) ) {
 				return true;
 			}

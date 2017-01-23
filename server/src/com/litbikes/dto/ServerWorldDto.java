@@ -7,5 +7,4 @@ public class ServerWorldDto {
 	public long timestamp;
 	public List<BikeDto> bikes;
 	public ArenaDto arena;
-	public Test test;
 }
