@@ -8,6 +8,7 @@ module Game {
     import Vector = Util.Vector;
     import ClientUpdateDto = Dto.ClientUpdateDto;
     import RegistrationDto = Dto.RegistrationDto;
+    import NumberUtil = Util.NumberUtil;
     export class Game {
         private player : Bike;
         private host = 'http://fresh.crabdance.com:9092';
@@ -20,6 +21,11 @@ module Game {
         private gameTickMs : number;
         private p5Instance : p5;
         private showDebug = false;
+        private showRespawn = true;
+
+        private mainFont;
+        private secondaryFont;
+        private debugFont;
 
         constructor() {
             this.socket.on('registered', ( data : RegistrationDto ) => {
@@ -46,7 +52,8 @@ module Game {
                         S = 83,
                         D = 68,
                         R = 82,
-                        F3 = 114
+                        F3 = 114,
+                        H = 72
                     }
 
                     let keyCode = ev.which;
@@ -65,6 +72,8 @@ module Game {
                         this.showDebug = !this.showDebug;
                     } else if (keyCode === Keys.R) {
                         this.socket.emit('request-respawn');
+                    } else if (keyCode === Keys.H) {
+                        this.showRespawn = !this.showRespawn;
                     } else {
                         eventMatched = false;
                     }
@@ -99,11 +108,10 @@ module Game {
 
             this.processWorldUpdate(data.world);
 
-            this.p5Instance = new p5(this.sketch(), this.ui.game);
+            this.p5Instance = new p5(this.sketch(), 'game-container');
             this.gameStarted = true;
 
             setInterval(() => {
-                //console.log(new Date().getMilliseconds());
                 this.player.update();
                 _.each( this.bikes, ( b : Bike ) => {
                     b.update();
@@ -143,10 +151,6 @@ module Game {
             this.socket.emit('update', updateDto);
         }
 
-        private ui = {
-            game : '#game'
-        };
-
         private sketch() {
             return ( p : p5 ) => {
                 p.setup = () => this.setup(p);
@@ -158,8 +162,9 @@ module Game {
             this.arena.draw(p);
 
             if ( this.showDebug ) {
+                p.textFont(this.debugFont);
                 p.fill(255);
-                p.textSize(10);
+                p.textSize(15);
                 p.textAlign('left', 'top')
                 p.text("LitBikes " + this.version, 10, 10);
                 p.text(
@@ -169,7 +174,9 @@ module Game {
                     "spd: "+ this.player.getSpd().x + ", " + this.player.getSpd().y + "\n" +
                     "crashed: " + (this.player.isCrashed() ? "yes" : "no") + "\n" +
                     "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
-                    "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n"
+                    "colour: " + this.player.getColour() + "\n" +
+                    "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n" +
+                    "other bikes: " + this.bikes.length + "\n"
                 , 10, 30, 300, 500);
             }
 
@@ -179,18 +186,53 @@ module Game {
 
             this.player.draw(p);
 
-            if ( this.player.isSpectating() ) {
-                p.textSize(32);
-                p.textAlign('center', 'bottom')
-                p.fill(255);
+            if ( this.player.isSpectating() && this.showRespawn ) {
+                p.textFont(this.mainFont);
+                p.textAlign('center', 'bottom');
                 p.noStroke();
-                p.text("Press 'R' to respawn", this.arena.dimensions.x / 2, this.arena.dimensions.y / 2);
+
+                let halfWidth = this.arena.dimensions.x / 2;
+                let halfHeight = this.arena.dimensions.y / 2;
+
+                if ( this.player.isCrashed() ) {
+                    p.fill('rgba(125,249,255,0.50)');
+                    p.textSize(29);
+                    p.text("Killed by " + this.player.getCrashedInto(),
+                        halfWidth + NumberUtil.randInt(0, 2), halfHeight - 30 + NumberUtil.randInt(0, 2));
+                    p.fill('rgba(255,255,255,0.80)');
+                    p.textSize(28);
+                    p.text("Killed by " + this.player.getCrashedInto(),
+                        halfWidth, halfHeight - 30);
+                }
+
+                p.fill('rgba(125,249,255,0.50)');
+                p.textSize(33);
+                p.text("Press 'R' to respawn",
+                    halfWidth + NumberUtil.randInt(0, 2), halfHeight + NumberUtil.randInt(0, 2));
+
+                p.fill('rgba(255,255,255,0.80)');
+                p.textSize(32);
+                p.text("Press 'R' to respawn", halfWidth, halfHeight);
+
+                p.fill('rgba(0,0,0,0.40)');
+                p.rect(halfWidth - 80, halfHeight + 13, 160, 20);
+                p.fill(255);
+                p.textFont(this.secondaryFont);
+                p.textSize(15);
+                p.text("Press 'H' to hide",
+                    halfWidth, halfHeight + 30);
+
+
             }
         }
 
+
+
         private setup( p : p5 ) {
+            this.mainFont = p.loadFont('fonts/3Dventure.ttf');
+            this.secondaryFont = p.loadFont('fonts/visitor.ttf');
+            this.debugFont = p.loadFont('fonts/monofur.ttf');
             p.createCanvas(this.arena.dimensions.x, this.arena.dimensions.y);
-            this.arena.draw(p);
         }
 
     }

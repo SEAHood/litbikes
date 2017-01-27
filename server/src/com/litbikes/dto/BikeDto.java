@@ -9,7 +9,9 @@ public class BikeDto {
 	public Vector pos;
 	public Vector spd;
 	public double spdMag;
-	public List<Vector> trail;
+	public List<TrailSegmentDto> trail;
 	public boolean crashed;
+	public String crashedInto;
 	public boolean spectating;
+	public String colour; // in rgba(0,0,0,%A%) format
 }

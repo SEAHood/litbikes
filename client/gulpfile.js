@@ -6,14 +6,7 @@ var runSequence = require('run-sequence');
 var order = require("gulp-order");
 var debug = require('gulp-debug');
 
-
 var SRC_ROOT = './src',
-	/*TS_SRC = [
-		SRC_ROOT + '/game/!*.ts',
-		SRC_ROOT + '/references.ts',
-		SRC_ROOT + '/!*.ts',
-		SRC_ROOT + '/model/!*.ts',
-	],*/
 	TS_SRC = [
 		SRC_ROOT + '/references.ts',
 		SRC_ROOT + '/game/game.ts',
@@ -23,15 +16,11 @@ var SRC_ROOT = './src',
 		SRC_ROOT + '/model/bike.ts',
 	],
 
-	VERSION_FILE = SRC_ROOT + 'version.json',
-
-
-
-	CLIENT_LIBS = [
-		'node_modules/socket.io-client/dist/socket.io.min.js',
-		'node_modules/p5/lib/p5.min.js',
-		'node_modules/underscore/underscore-min.js',
-		'node_modules/jquery/dist/jquery.min.js'
+	STATIC_ROOT = SRC_ROOT + '/static',
+	STATIC_FILES = [
+		STATIC_ROOT + '/index.html',
+		STATIC_ROOT + '/fonts/*',
+		STATIC_ROOT + '/js/*.min.js'
 	],
 
 	COMPILED_DIR = 'compiled',
@@ -53,8 +42,8 @@ var SRC_ROOT = './src',
 gulp.task('build+deploy', function(callback) {
 	runSequence(
 		'clean',
-		'build-ts',
-		['move-libs', 'move-html'],
+		'build:ts',
+		'move:static',
 		'deploy'
 	);
 	callback();
@@ -70,17 +59,12 @@ gulp.task('deploy', function() {
 		.pipe(gulp.dest(WEBSERVER_DIR))
 });
 
-gulp.task('move-libs', function() {
-	return gulp.src(CLIENT_LIBS)
-		.pipe(gulp.dest(COMPILED_JS_DIR))
-});
-
-gulp.task('move-html', function() {
-	return gulp.src('src/index.html')
+gulp.task('move:static', function() {
+	return gulp.src(STATIC_FILES, { base : './src/static' })
 		.pipe(gulp.dest(COMPILED_DIR))
 });
 
-gulp.task('build-ts', function(){
+gulp.task('build:ts', function(){
 
 	return gulp.src(TS_SRC)
 		.pipe(typescript({

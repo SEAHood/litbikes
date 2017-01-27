@@ -1,10 +1,13 @@
 package com.litbikes.model;
 
+import java.awt.Color;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.litbikes.dto.BikeDto;
+import com.litbikes.util.ColourUtil;
 import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
 
@@ -13,25 +16,23 @@ public class Bike {
 	private int pid;
 	private Vector pos;
 	private Vector spd;
-	private double spdMag = 0.75;
-	private List<Vector> trail;
+	private double spdMag = 1;
+	private List<TrailSegment> trail;
 	private boolean crashed;
 	private boolean spectating;
+	private Vector startPos;
+	private Color colour;
+	private String crashedInto;
 	
-	private Bike(int pid, Vector pos, Vector spd) {
+	public Bike(int pid) {
 		this.pid = pid;
-		this.pos = pos;
-		this.spd = spd;
-		trail = new ArrayList<>();
-		trail.add(new Vector(pos.x, pos.y));
-		crashed = false;
-		spectating = false;
-		addTrailPoint();
 	}
 
-	public static Bike create(int pid) {
-		Vector pos = new Vector(NumberUtil.randInt(20, 480), NumberUtil.randInt(20, 480));
-		Vector spd = null;
+	public void init() {
+		Vector position = new Vector(NumberUtil.randInt(20, 480), NumberUtil.randInt(20, 480));
+		pos = position;
+		startPos = position;
+		spd = null;
 
 		int dir = NumberUtil.randInt(1, 4);
 		switch (dir) {
@@ -51,7 +52,12 @@ public class Bike {
 				break;
 		}
 
-		return new Bike(pid, pos, spd);
+		trail = new ArrayList<>();
+		crashed = false;
+		spectating = false;
+		colour = ColourUtil.getBrightColor();
+		addTrailPoint();
+		
 	}
 
 	public void updatePosition() {
@@ -62,23 +68,26 @@ public class Bike {
 		}
 	}
 	
-	public void addTrailPoint() {
-		trail.add( new Vector(pos.x, pos.y) );
+	private void addTrailPoint() {
+		Line2D segLine;
+		if ( trail.size() > 0 ) {
+			Line2D lastSeg = trail.get(trail.size() - 1).getLine();
+			segLine = new Line2D.Double(lastSeg.getX2(), lastSeg.getY2(), pos.x, pos.y);	
+		} else {
+			segLine = new Line2D.Double(pos.x, pos.y, pos.x, pos.y);	
+		}
+		trail.add(new TrailSegment(segLine));
 	}
 	
-	public boolean checkCollision( List<Vector> trail, boolean isThis ) {
-		for ( int i = 0; i < trail.size() - 1; i++ ) {
-			// if this is the second last trail segment and the bikes trail belongs to this bike,
-			// theres no collision - cannot crash into your last two trail segments
-			if ( i + 2 >= trail.size() && isThis )
-				return false;
-			
-			Vector thisV = trail.get(i);
-			Vector nextV = trail.get(i+1);
-			Line2D line = new Line2D.Double(thisV.x, thisV.y, nextV.x, nextV.y);
-			if ( line.intersects(pos.x, pos.y, 2, 2) ) {
-				return true;
-			}
+	public boolean checkCollision( List<TrailSegment> trail, int lookAhead ) {
+		double aheadX = pos.x + (lookAhead * spd.x);
+		double aheadY = pos.y + (lookAhead * spd.y);
+		
+		Line2D line = new Line2D.Double(pos.x, pos.y, aheadX, aheadY);
+					
+		for ( TrailSegment segment : trail ) {
+			if ( line.intersectsLine(segment.getLine()) ) 
+				return true;	
 		}
 
 		return false;
@@ -91,9 +100,13 @@ public class Bike {
 		dto.pos = new Vector(pos.x, pos.y);
 		dto.spd = new Vector(spd.x, spd.y);
 		dto.spdMag = spdMag;
-		dto.trail = trail;
+		dto.trail = trail.stream()
+                .map(tp -> tp.getDto())
+                .collect(Collectors.toList());
 		dto.crashed = crashed;
+		dto.crashedInto = crashedInto;
 		dto.spectating = spectating;
+		dto.colour = String.format("rgba(%s,%s,%s,%%A%%)", colour.getRed(), colour.getGreen(), colour.getBlue());
 		return dto;
 	}
 
@@ -117,19 +130,34 @@ public class Bike {
 		return spd;
 	}
 
-	// Returns true if speed is changed
-	public boolean setSpd(Vector spd) {
+	public void setSpd(Vector spd) {
         if ( ( this.spd.x == 0 && spd.x == 0 ) || ( this.spd.y != 0 && spd.y != 0 ) ) {
-            return false;
+            return;
         }		
+                
 		this.spd = spd;
-		return true;
+		addTrailPoint();
 	}
 	
 	
 
-	public List<Vector> getTrail() {
-		return trail;
+	public List<TrailSegment> getTrail( boolean withHead ) {
+		if ( !withHead ) 
+			return trail.subList(0, Math.max(trail.size() - 1, 0));
+		
+		List<TrailSegment> trailWithHead = new ArrayList<>(trail);
+		
+		if ( trail.size() > 0 ) {
+			Line2D lastSeg = trailWithHead.get(trail.size() - 1).getLine();
+			Line2D headLine = new Line2D.Double(lastSeg.getX2(), lastSeg.getY2(), pos.x, pos.y);		
+			trailWithHead.add(new TrailSegment(headLine));
+		} else {
+			Line2D headLine = new Line2D.Double(startPos.x, startPos.y, pos.x, pos.y);
+			trailWithHead.add(new TrailSegment(headLine));
+		}
+		
+		
+		return trailWithHead;
 	}
 
 	public boolean isCrashed() {
@@ -153,6 +181,15 @@ public class Bike {
 	public void setSpectating(boolean spectating) {
 		this.spectating = spectating;
 	}
+	
+	public boolean isActive() {
+		return !isCrashed() && !isSpectating();
+	}
+
+	public void setCrashedInto(String crashedInto) {
+		this.crashedInto = crashedInto;
+	}
+
 	
 	
 }

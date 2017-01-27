@@ -1,0 +1,39 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="js/socket.io.min.js"></script>
+  <script src="js/p5.min.js"></script>
+  <script src="js/underscore.min.js"></script>
+  <script src="js/jquery.min.js"></script>
+  <!-- uncomment lines below to include extra js libraries -->
+  <!--<script language="javascript" src="../jslibs/js/js.dom.js"></script>-->
+  <!--<script language="javascript" src="../jslibs/js/js.sound.js"></script>-->
+  <script src="js/litbikes.js"></script>
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+      background-color:#333333;
+      width: 100%;
+      height: 100%;
+    }
+    canvas {
+      border: 1px solid rgba(125,249,255,0.6);
+      -webkit-box-shadow: 0 0 0 1px rgba(125,249,255,0.4);
+      -moz-box-shadow: 0 0 0 1px rgba(125,249,255,0.4);
+      box-shadow: 0 0 0 1px rgba(125,249,255,0.4);
+      width: 100%;
+      height: 100%;
+    }
+    #game-container {
+      display: flex;
+      flex-direction: column; /* put this if you want to stack elements vertically */
+    }
+    #game-container canvas { margin: 30px auto; }
+  </style>
+</head>
+
+<body>
+  <div id="game-container"></div>
+</body>
+</html>

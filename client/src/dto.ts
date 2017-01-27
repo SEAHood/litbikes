@@ -8,9 +8,11 @@ module Dto {
         spdMag: number,
         crashed: boolean,
         crashing: boolean,
+        crashedInto: string,
         spectating: boolean,
         deathTimestamp?: number
-        trail: Vector[];
+        trail: TrailSegmentDto[];
+        colour: string;
     }
 
     export interface RegistrationDto {
@@ -22,6 +24,11 @@ module Dto {
 
     export interface ArenaDto {
         dimensions: Vector
+    }
+
+    export interface TrailSegmentDto {
+        start: Vector,
+        end: Vector
     }
 
     export interface WorldUpdateDto {

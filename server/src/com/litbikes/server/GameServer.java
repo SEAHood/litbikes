@@ -16,11 +16,12 @@ public class GameServer {
         
         ioServer = new SocketIOServer(config);
         game = new Game();
-        EventLayer eventLayer = new EventLayer(ioServer, game);
-        eventLayer.initialise();        
+        GameController gameController = new GameController(ioServer, game);
+        gameController.initialise();       
         
         ioServer.start();      
     	game.start();
+    	
 
     	System.out.println("Gameserver started!");
 	}
