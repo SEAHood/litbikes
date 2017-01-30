@@ -7,4 +7,6 @@ server/target/
 server/bin/
 server/.classpath
 server/.project
+server/*.jar
 *.jar
+
