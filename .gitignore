@@ -3,3 +3,4 @@ client/node_modules/
 client/compiled/
 server/web/
 server/target/
+server/bin/
