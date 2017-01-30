@@ -1,6 +1,10 @@
 client/.idea/
 client/node_modules/
 client/compiled/
+server/.settings/
 server/web/
 server/target/
 server/bin/
+server/.classpath
+server/.project
+*.jar
