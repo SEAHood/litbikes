@@ -22,6 +22,8 @@ module Game {
         private p5Instance : p5;
         private showDebug = false;
         private showRespawn = true;
+        private timeKeepAliveSent : number;
+        private latency : number;
 
         private mainFont;
         private secondaryFont;
@@ -32,7 +34,15 @@ module Game {
                 this.startGame(data);
             });
 
-            setInterval(() => this.socket.emit('request-world'), 1000);
+            setInterval(() => {
+                this.timeKeepAliveSent = new Date().getTime();
+                this.socket.emit('keep-alive');
+            }, 1000);
+
+            this.socket.on('keep-alive-ack', data => {
+                let timeNow = new Date().getTime();
+                this.latency = timeNow - this.timeKeepAliveSent;
+            });
 
             this.socket.on('world-update', ( data : WorldUpdateDto ) => {
                 if ( this.gameStarted ) {
@@ -130,6 +140,10 @@ module Game {
 
             _.each( data.bikes, ( b : BikeDto ) => {
                 if ( b.pid === this.player.getPid() && this.player ) {
+                    /*let diffX = this.player.getPos().x - b.pos.x;
+                    let diffY = this.player.getPos().y - b.pos.y;
+                    console.log( diffX + " (p" + this.player.getPos().x + " vs s" + b.pos.x + ") " +
+                        diffY + " (p" + this.player.getPos().y + " vs s" + b.pos.y + ") " );*/
                     this.player.updateFromDto(b);
                 } else {
                     let bike = _.find(this.bikes, (bike:Bike) => bike.getPid() === b.pid);
@@ -169,6 +183,7 @@ module Game {
                 p.text("LitBikes " + this.version, 10, 10);
                 p.text(
                     "fps: " + p.frameRate().toFixed(2) + "\n" +
+                    "ms: " + this.latency + "ms\n" +
                     "pid: " + this.player.getPid() + "\n" +
                     "pos: " + this.player.getPos().x.toFixed(0) + ", " + this.player.getPos().y.toFixed(0) + "\n" +
                     "spd: "+ this.player.getSpd().x + ", " + this.player.getSpd().y + "\n" +

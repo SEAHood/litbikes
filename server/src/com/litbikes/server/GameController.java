@@ -2,6 +2,9 @@ package com.litbikes.server;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
@@ -16,6 +19,7 @@ import com.litbikes.dto.GameSettingsDto;
 import com.litbikes.dto.RegistrationDto;
 import com.litbikes.model.Bike;
 import com.litbikes.model.Connection;
+import com.litbikes.server.Game.GameLoop;
 
 interface GameEventListener {
 	void playerCrashed(int pid);
@@ -44,20 +48,21 @@ public class GameController implements GameEventListener, BotListener {
 	private final static String C_UPDATE = "update";
 	private final static String C_REQUEST_WORLD = "request-world";
 	private final static String C_REQUEST_RESPAWN = "request-respawn";
+	private final static String C_KEEP_ALIVE = "keep-alive";
 	
 	private class ClientEventListener<T> implements DataListener<T> {		
 		public void onData(SocketIOClient client, T data, AckRequest ackRequest) {
 			//addLatency();
 		}
 		
-		/*void addLatency() {
+		void addLatency() {
         	try {
 				Thread.sleep(250);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}*/		
+		}
 	}
 	
 	public GameController( SocketIOServer ioServer, Game game ) {
@@ -80,6 +85,15 @@ public class GameController implements GameEventListener, BotListener {
             	super.onData(client, data, ackRequest);
             	System.out.println("Received register event");
             	registerClient(client);
+            }
+        });
+
+		ioServer.addEventListener(C_KEEP_ALIVE, String.class, new ClientEventListener<String>() {
+            @Override
+            public void onData(final SocketIOClient client, String data, final AckRequest ackRequest) {
+            	super.onData(client, data, ackRequest);
+            	// TODO Figure out how ackRequest works
+        		client.sendEvent("keep-alive-ack");
             }
         });
 
@@ -124,7 +138,11 @@ public class GameController implements GameEventListener, BotListener {
 	}
 	
 	private void handleClientUpdateEvent(ClientUpdateDto updateDto) {
+		long startTime = System.nanoTime();
     	if ( game.handleClientUpdate(updateDto) ) {
+    		long endTime = System.nanoTime();    		
+    		long duration = (endTime - startTime);  //divide by 1000000 to get milliseconds.
+    		System.out.println("Handled client update in " + (duration/1000000) + "ms (" + duration + "ns)" );
     		broadcastWorldUpdate();
     	}
 	}
@@ -135,11 +153,18 @@ public class GameController implements GameEventListener, BotListener {
 	}	
 	
 	public void gameStarted() {		
-		int botCount = 5;
+		int botCount = 0;
 		for ( int i = 0; i < botCount; i++ ) {
 			Bot bot = addBot();
 			bot.start();
 		}
+
+		ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+		executor.scheduleAtFixedRate(new Runnable() {
+			public void run() {
+				broadcastWorldUpdate();
+			}
+		}, 0, 500, TimeUnit.MILLISECONDS);
 	}
 
 	public void playerCrashed( int pid ) {
