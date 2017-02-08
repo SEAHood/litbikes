@@ -7,6 +7,8 @@ public class ClientUpdateDto {
 	public Integer pid;
 	public Integer xSpd;
 	public Integer ySpd;
+	public Integer xPos;
+	public Integer yPos;
 
 	public Vector getSpd() {
 		if ( xSpd != null && ySpd != null )

@@ -6,12 +6,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+
 import com.litbikes.dto.BikeDto;
 import com.litbikes.util.ColourUtil;
 import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
 
 public class Bike {
+	private static Logger LOG = Log.getLogger(Bike.class);
 	
 	private int pid;
 	private Vector pos;
@@ -32,7 +36,6 @@ public class Bike {
 		Vector position = new Vector(NumberUtil.randInt(20, 480), NumberUtil.randInt(20, 480));
 		pos = position;
 		startPos = position;
-		spd = null;
 
 		int dir = NumberUtil.randInt(1, 4);
 		switch (dir) {
@@ -49,6 +52,7 @@ public class Bike {
 				spd = new Vector(1, 0);
 				break;
 			default:
+				spd = new Vector(0, 0);
 				break;
 		}
 
@@ -58,6 +62,7 @@ public class Bike {
 		colour = ColourUtil.getBrightColor();
 		addTrailPoint();
 		
+		LOG.info("Bike " + pid + " initialised");		
 	}
 
 	public void updatePosition() {
@@ -131,15 +136,12 @@ public class Bike {
 	}
 
 	public void setSpd(Vector spd) {
-        if ( ( this.spd.x == 0 && spd.x == 0 ) || ( this.spd.y != 0 && spd.y != 0 ) ) {
+        if ( ( this.spd.x == 0 && spd.x == 0 ) || ( this.spd.y == 0 && spd.y == 0 ) )
             return;
-        }		
                 
 		this.spd = spd;
 		addTrailPoint();
 	}
-	
-	
 
 	public List<TrailSegment> getTrail( boolean withHead ) {
 		if ( !withHead ) 
@@ -155,8 +157,7 @@ public class Bike {
 			Line2D headLine = new Line2D.Double(startPos.x, startPos.y, pos.x, pos.y);
 			trailWithHead.add(new TrailSegment(headLine));
 		}
-		
-		
+				
 		return trailWithHead;
 	}
 
@@ -186,10 +187,14 @@ public class Bike {
 		return !isCrashed() && !isSpectating();
 	}
 
+
+	public String getCrashedInto() {
+		return crashedInto;
+	}
+
 	public void setCrashedInto(String crashedInto) {
 		this.crashedInto = crashedInto;
 	}
-
 	
 	
 }

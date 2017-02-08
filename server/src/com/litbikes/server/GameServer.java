@@ -1,10 +1,14 @@
 package com.litbikes.server;
 
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
+
 import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOServer;
 
 public class GameServer {
 	
+	private static Logger LOG = Log.getLogger(GameServer.class);
 	private static Game game;
 	private static SocketIOServer ioServer;	
 	
@@ -17,13 +21,13 @@ public class GameServer {
         ioServer = new SocketIOServer(config);
         game = new Game();
         GameController gameController = new GameController(ioServer, game);
-        gameController.initialise();       
-        
-        ioServer.start();      
+        gameController.initialise();
+                
+        ioServer.start();
     	game.start();
     	
 
-    	System.out.println("Gameserver started!");
+    	LOG.info("Gameserver started!");
 	}
 	
 	

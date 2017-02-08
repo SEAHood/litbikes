@@ -19,10 +19,9 @@ import com.litbikes.dto.GameSettingsDto;
 import com.litbikes.dto.RegistrationDto;
 import com.litbikes.model.Bike;
 import com.litbikes.model.Connection;
-import com.litbikes.server.Game.GameLoop;
 
 interface GameEventListener {
-	void playerCrashed(int pid);
+	void playerCrashed(Bike bike);
 	void playerSpawned(int pid);
 	void gameStarted();
 }
@@ -37,7 +36,7 @@ interface BotListener {
 // Manages connections and bots
 public class GameController implements GameEventListener, BotListener {
 
-	Logger log = Log.getLog();
+	private static Logger LOG = Log.getLogger(GameController.class);
 	private SocketIOServer ioServer;
 	private List<Connection> connections;
 	private List<Bot> bots;
@@ -55,13 +54,9 @@ public class GameController implements GameEventListener, BotListener {
 			//addLatency();
 		}
 		
+		@SuppressWarnings("unused")
 		void addLatency() {
-        	try {
-				Thread.sleep(250);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+        	try { Thread.sleep(30); } catch (InterruptedException e) {}
 		}
 	}
 	
@@ -83,7 +78,7 @@ public class GameController implements GameEventListener, BotListener {
             @Override
             public void onData(final SocketIOClient client, String data, final AckRequest ackRequest) {
             	super.onData(client, data, ackRequest);
-            	System.out.println("Received register event");
+            	LOG.info("Received register event");
             	registerClient(client);
             }
         });
@@ -110,7 +105,7 @@ public class GameController implements GameEventListener, BotListener {
             public void onData(final SocketIOClient client, String data, final AckRequest ackRequest) {
             	super.onData(client, data, ackRequest);
         		Connection clientConnection = connections.stream().filter(c -> c.getSessionId() == client.getSessionId()).findFirst().get();
-        		System.out.println("Respawn request from " + clientConnection.getPid());
+        		LOG.info("Respawn request from " + clientConnection.getPid());
         		game.requestRespawn(clientConnection.getPid());
             }
         });
@@ -119,7 +114,7 @@ public class GameController implements GameEventListener, BotListener {
             @Override
             public void onData(final SocketIOClient client, ClientUpdateDto updateDto, final AckRequest ackRequest) {
             	super.onData(client, updateDto, ackRequest);
-            	handleClientUpdateEvent(updateDto);
+            	handleClientUpdateEvent(client, updateDto);
             }
         });
         
@@ -137,12 +132,12 @@ public class GameController implements GameEventListener, BotListener {
         });
 	}
 	
-	private void handleClientUpdateEvent(ClientUpdateDto updateDto) {
+	private void handleClientUpdateEvent(SocketIOClient client, ClientUpdateDto updateDto) {
 		long startTime = System.nanoTime();
     	if ( game.handleClientUpdate(updateDto) ) {
     		long endTime = System.nanoTime();    		
     		long duration = (endTime - startTime);  //divide by 1000000 to get milliseconds.
-    		System.out.println("Handled client update in " + (duration/1000000) + "ms (" + duration + "ns)" );
+    		LOG.info( "Handled client update in " + duration + " nanoseconds" );
     		broadcastWorldUpdate();
     	}
 	}
@@ -164,10 +159,11 @@ public class GameController implements GameEventListener, BotListener {
 			public void run() {
 				broadcastWorldUpdate();
 			}
-		}, 0, 500, TimeUnit.MILLISECONDS);
+		}, 0, 1500, TimeUnit.MILLISECONDS);
 	}
 
-	public void playerCrashed( int pid ) {
+	public void playerCrashed( Bike bike ) {
+		LOG.info("Bike " + bike.getPid() + " crashed into " + bike.getCrashedInto());
 		broadcastWorldUpdate();
 	}
 	
@@ -192,7 +188,8 @@ public class GameController implements GameEventListener, BotListener {
 	}
 	
 	public void sendWorldUpdate(SocketIOClient client) {
-		client.sendEvent("world-update", game.getWorldDto());
+		if ( client != null )
+			client.sendEvent("world-update", game.getWorldDto());
 	}
 	
 	public void broadcastWorldUpdate() {
@@ -210,7 +207,7 @@ public class GameController implements GameEventListener, BotListener {
 		Bot bot = new Bot(bike, game.getBikes(), game.getArena());
 		bot.attachListener(this);
 		bots.add(bot);
-		log.info("Creating new bot with pid " + bike.getPid());
+		LOG.info("Creating new bot with pid " + bike.getPid());
 		return bot;
 	}
 
@@ -225,7 +222,7 @@ public class GameController implements GameEventListener, BotListener {
 	}
 	
 	public void sentClientUpdate( ClientUpdateDto updateDto ) {
-		handleClientUpdateEvent(updateDto);
+		handleClientUpdateEvent(null, updateDto);
 	}
 	
 	public void sentRequestRespawn( Bot bot ) {

@@ -16,12 +16,10 @@ public class Arena {
 		return dto;
 	}
 	
-	public boolean checkCollision( Bike bike, int lookAhead ) {
-		return false;
-		
-		/*Vector bPos = bike.getPos();
+	public boolean checkCollision( Bike bike, int lookAhead ) {		
+		Vector bPos = bike.getPos();
 		double collisionX = bPos.x + (lookAhead * bike.getSpd().x);
 		double collisionY = bPos.y + (lookAhead * bike.getSpd().y);
-		return collisionX >= dimensions.x || collisionX <= 0 || collisionY >= dimensions.y || collisionY <= 0;*/
+		return collisionX >= dimensions.x || collisionX <= 0 || collisionY >= dimensions.y || collisionY <= 0;
 	}
 }

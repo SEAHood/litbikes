@@ -19,15 +19,17 @@ import com.litbikes.model.Bike;
 import com.litbikes.util.Vector;
 
 public class Game {
-	private GameEventListener eventListener;
-	private int pidGen = 0;
+	private static Logger LOG = Log.getLogger(Game.class);
 	private static final int GAME_TICK_MS = 30;
 	private static final int GAME_WIDTH = 600;
 	private static final int GAME_HEIGHT = 600;
 	
+	private GameEventListener eventListener;
+	private int pidGen = 0;
+	private long gameTick = 0;
+		
 	private List<Bike> bikes;
 	private Arena arena;
-	Logger log = Log.getLog();
 	
 	public Game() {
 		Vector arenaDim = new Vector(GAME_WIDTH, GAME_HEIGHT);
@@ -36,9 +38,9 @@ public class Game {
 	}
 	
 	public void start() {
-		Runnable gameLoop = new GameLoop();
+		Runnable gameLoop = new GameTick();
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-		System.out.println("Starting game at " + GAME_TICK_MS + "ms per game tick");
+		LOG.info("Starting game at " + GAME_TICK_MS + "ms per game tick");
 		executor.scheduleAtFixedRate(gameLoop, 0, GAME_TICK_MS, TimeUnit.MILLISECONDS);
 		eventListener.gameStarted();
 	}
@@ -47,7 +49,7 @@ public class Game {
 	
 	public Bike newPlayer() {		
 		int pid = this.pidGen++;
-		log.info("Creating new player with pid " + pid);
+		LOG.info("Creating new player with pid " + pid);
 		Bike newBike = new Bike(pid);
 		newBike.init();
 		bikes.add( newBike );
@@ -57,14 +59,14 @@ public class Game {
 	public void dropPlayer(int pid) {
 		Bike bike = bikes.stream().filter(b -> b.getPid() == pid).findFirst().get();
 		bikes.remove(bike);
-		log.info("Dropped player " + pid);
+		LOG.info("Dropped player " + pid);
 	}
 	
 	public boolean handleClientUpdate(ClientUpdateDto data) {
 		if ( data.isValid() ) {			
 			if ( bikes.size() > 0 ) {				
 				Bike bike = bikes.stream().filter(b -> b.getPid() == data.pid).findFirst().get();				
-				bike.setSpd( new Vector(data.xSpd, data.ySpd) )	;			
+				bike.setSpd( new Vector(data.xSpd, data.ySpd) );
 			}						
 			return true;
 		} else 
@@ -81,6 +83,7 @@ public class Game {
 
 		Instant now = Instant.now();
 		worldDto.timestamp = now.getEpochSecond();
+		worldDto.gameTick = gameTick;
 		worldDto.arena = arena.getDto();
 		worldDto.bikes = bikesDto;
 		
@@ -103,9 +106,12 @@ public class Game {
 		return GAME_TICK_MS;
 	}
 	
-	class GameLoop implements Runnable {
-	    public void run() {	    	
-	    	List<Bike> activeBikes = bikes.stream().filter(b -> b.isActive()).collect(Collectors.toList());	    
+	class GameTick implements Runnable {
+	    public void run() {
+	    	//Increment tick count first
+	    	gameTick++;
+	    	
+	    	List<Bike> activeBikes = bikes.stream().filter(b -> b.isActive()).collect(Collectors.toList());
 	    	
 	    	for ( Bike bike : activeBikes ) {
 	    		bike.updatePosition();
@@ -129,7 +135,7 @@ public class Game {
 				if ( collided ) {
 					bike.crash();
 					bike.setSpectating(true);
-					eventListener.playerCrashed(bike.getPid());
+					eventListener.playerCrashed(bike);
 				}				
 	    	}
 	    }

@@ -33,6 +33,7 @@ module Dto {
 
     export interface WorldUpdateDto {
         timestamp: number,
+        gameTick: number,
         bikes: BikeDto[],
         arena: ArenaDto
     }
@@ -45,5 +46,7 @@ module Dto {
         pid : number;
         xSpd : number;
         ySpd : number;
+        xPos : number;
+        yPos : number;
     }
 }

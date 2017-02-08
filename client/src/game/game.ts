@@ -11,7 +11,7 @@ module Game {
     import NumberUtil = Util.NumberUtil;
     export class Game {
         private player : Bike;
-        private host = 'http://fresh.crabdance.com:9092';
+        private host = 'http://localhost:9092';//'http://fresh.crabdance.com:9092';
         private socket = io.connect(this.host);
         private arena : Arena;
         private bikes : Bike[] = []; //All bikes other than your own
@@ -24,6 +24,7 @@ module Game {
         private showRespawn = true;
         private timeKeepAliveSent : number;
         private latency : number;
+        private gameTick : number;
 
         private mainFont;
         private secondaryFont;
@@ -94,13 +95,21 @@ module Game {
                     }
 
                     if ( newVector ) {
-                        this.player.setDirection(newVector);
-                        this.sendClientUpdate();
+                        //this.player.setDirection(newVector);
+                        //this.sendClientUpdate();
+                        // TODO MOVE THIS SOMEWHERE ELSE
+                        let updateDto : ClientUpdateDto = {
+                            pid : this.player.getPid(),
+                            xSpd : newVector.x,
+                            ySpd : newVector.y,
+                            xPos : this.player.getPos().x,
+                            yPos : this.player.getPos().y
+                        };
+                        this.socket.emit('update', updateDto);
                     }
                 }
             });
 
-            console.log("Sent registration packet to " + this.host);
             this.socket.emit('register');
         }
 
@@ -109,12 +118,10 @@ module Game {
             if ( !data.gameSettings.gameTickMs ) {
                 console.error("Cannot start game - game tick interval is not defined");
             }
-
+            this.gameTick = data.world.gameTick;
             this.player = new Bike( data.bike );
             this.arena = new Arena( data.world.arena );
             this.gameTickMs = data.gameSettings.gameTickMs;
-
-            console.log("Game started at " + this.gameTickMs + "ms per tick");
 
             this.processWorldUpdate(data.world);
 
@@ -122,6 +129,7 @@ module Game {
             this.gameStarted = true;
 
             setInterval(() => {
+                this.gameTick++;
                 this.player.update();
                 _.each( this.bikes, ( b : Bike ) => {
                     b.update();
@@ -140,10 +148,6 @@ module Game {
 
             _.each( data.bikes, ( b : BikeDto ) => {
                 if ( b.pid === this.player.getPid() && this.player ) {
-                    /*let diffX = this.player.getPos().x - b.pos.x;
-                    let diffY = this.player.getPos().y - b.pos.y;
-                    console.log( diffX + " (p" + this.player.getPos().x + " vs s" + b.pos.x + ") " +
-                        diffY + " (p" + this.player.getPos().y + " vs s" + b.pos.y + ") " );*/
                     this.player.updateFromDto(b);
                 } else {
                     let bike = _.find(this.bikes, (bike:Bike) => bike.getPid() === b.pid);
@@ -154,15 +158,6 @@ module Game {
                     }
                 }
             });
-        }
-
-        private sendClientUpdate() {
-            let updateDto : ClientUpdateDto = {
-                pid : this.player.getPid(),
-                xSpd : this.player.getSpd().x,
-                ySpd : this.player.getSpd().y
-            };
-            this.socket.emit('update', updateDto);
         }
 
         private sketch() {

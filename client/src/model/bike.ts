@@ -5,7 +5,6 @@ module Model {
     import TrailSegmentDto = Dto.TrailSegmentDto;
     import ColourUtil = Util.ColourUtil;
     export class Bike {
-
         private pid: number;
         private pos : Vector;
         private spd : Vector;
@@ -21,10 +20,9 @@ module Model {
         private colour: string;
         private trailOpacity: number = 1;
 
-
         constructor( bikeDto: BikeDto ) {
             this.pid = bikeDto.pid;
-            this.pos = new Vector( bikeDto.pos.x, bikeDto.pos.y );
+            this.setPos(new Vector( bikeDto.pos.x, bikeDto.pos.y ));
             this.spd = new Vector( bikeDto.spd.x, bikeDto.spd.y );
             this.crashed = bikeDto.crashed;
             this.spectating = bikeDto.spectating;
@@ -40,23 +38,11 @@ module Model {
 
         }
 
-
-        public setDirection(spd: Vector ) {
-            if ( !this.crashed ) {
-                if (( !this.spd.x && !spd.x ) || ( !this.spd.y && !spd.y )) {
-                    return false;
-                }
-                this.spd = spd;
-                this.addTrailSegment();
-                return true;
-            }
-        }
-
         public update() {
             if ( this.canMove() ) {
-                let xDiff = (this.spd.x * this.spdMag);// * this.timeDilation.x;
-                let yDiff = (this.spd.y * this.spdMag);// * this.timeDilation.y;
-                this.pos = new Vector(this.pos.x + xDiff, this.pos.y + yDiff);
+                let xDiff = this.spd.x * this.spdMag;// * this.timeDilation.x;
+                let yDiff = this.spd.y * this.spdMag;// * this.timeDilation.y;
+                this.setPos(new Vector(this.pos.x + xDiff, this.pos.y + yDiff));
             }
 
             if ( this.isCrashing() ) {
@@ -69,7 +55,8 @@ module Model {
         }
 
         public updateFromDto( dto : BikeDto ) {
-            this.pos = dto.pos;
+            this.setPos(dto.pos);
+
             this.spd = dto.spd;
             this.spdMag = dto.spdMag;
             this.trail = [];
@@ -160,6 +147,10 @@ module Model {
         public getPos() : Vector {
             return this.pos;
         }
+        public setPos( pos : Vector ) {
+            this.pos = pos;
+        }
+
         public getSpd() : Vector {
             return this.spd;
         }

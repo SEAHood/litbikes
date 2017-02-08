@@ -31,6 +31,13 @@ module Util {
         public static rand255() : number {
             return Math.floor(Math.random() * 256);
         }
+
+        public static sameVector( v1 : Vector, v2 : Vector, error : number = 0 ) {
+            let xDiff = v1.x - v2.x;
+            let yDiff = v1.y - v2.y;
+            return ( xDiff >= error && xDiff <= error ) &&
+                   ( yDiff >= error && yDiff <= error );
+        }
     }
 
     export class ColourUtil {

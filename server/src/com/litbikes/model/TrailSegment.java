@@ -12,9 +12,6 @@ public class TrailSegment {
 	}
 	
 	public Line2D getLine() {
-		if ( line == null ) {
-			System.out.println("ARGH");
-		}
 		return line;
 	}
 	

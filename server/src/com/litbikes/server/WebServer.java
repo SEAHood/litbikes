@@ -3,10 +3,13 @@ package com.litbikes.server;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.util.log.Log;
+import org.eclipse.jetty.util.log.Logger;
 
 
 
 public class WebServer {
+	private static Logger LOG = Log.getLogger(WebServer.class);
 	
 	public static void main(String[] args) throws Exception
     {
@@ -20,7 +23,7 @@ public class WebServer {
         
         server.setHandler(context);
         server.start();
-        System.out.println("Webserver started");
+        LOG.info("Webserver started");
         
         server.join();
     }
