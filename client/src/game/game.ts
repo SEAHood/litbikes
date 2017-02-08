@@ -11,7 +11,7 @@ module Game {
     import NumberUtil = Util.NumberUtil;
     export class Game {
         private player : Bike;
-        private host = 'http://localhost:9092';//'http://fresh.crabdance.com:9092';
+        private host = 'http://fresh.crabdance.com:9092';
         private socket = io.connect(this.host);
         private arena : Arena;
         private bikes : Bike[] = []; //All bikes other than your own
