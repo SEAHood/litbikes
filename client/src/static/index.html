@@ -2,16 +2,20 @@
 <head>
   <meta charset="UTF-8">
   <link rel="shortcut icon" href="img/fav.ico">
-  <title>litbikes 🔥</title>
+  <title>litbikes</title>
   <script src="js/socket.io.min.js"></script>
   <script src="js/p5.min.js"></script>
   <script src="js/underscore.min.js"></script>
   <script src="js/jquery.min.js"></script>
-  <!-- uncomment lines below to include extra js libraries -->
-  <!--<script language="javascript" src="../jslibs/js/js.dom.js"></script>-->
-  <!--<script language="javascript" src="../jslibs/js/js.sound.js"></script>-->
   <script src="js/litbikes.js"></script>
+
+
   <style>
+    @font-face {
+      font-family: Visitor;
+      src: url('fonts/visitor.ttf');
+    }
+
     body {
       padding: 0;
       margin: 0;
@@ -27,15 +31,44 @@
       width: 100%;
       height: 100%;
     }
+
+    #wrapper {
+      margin:0 auto;
+      padding:0;
+      width: 80%;
+      height:100%;
+    }
+
+    #title {
+      padding: 15px 0;
+      padding-top: 30px;
+      font-family: 'Visitor', Times, serif;
+      color: #ffffff;
+      display:block;
+      text-align:center;
+      letter-spacing:3em;
+      margin-right:-3em;
+    }
+
+    #title h1 {
+      margin: 0;
+    }
+
     #game-container {
       display: flex;
       flex-direction: column; /* put this if you want to stack elements vertically */
     }
-    #game-container canvas { margin: 30px auto; }
+    #game-container canvas { margin: 0 auto; }
   </style>
 </head>
 
 <body>
-  <div id="game-container"></div>
+  <div id="wrapper">
+    <div id="title">
+      <h1>🔥litbikes🔥</h1>
+    </div>
+    <div id="game-container">
+    </div>
+  </div>
 </body>
 </html>
