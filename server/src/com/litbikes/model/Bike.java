@@ -20,7 +20,7 @@ public class Bike {
 	private int pid;
 	private Vector pos;
 	private Vector spd;
-	private double spdMag = 1;
+	private double spdMag = 1.5;
 	private List<TrailSegment> trail;
 	private boolean crashed;
 	private boolean spectating;
@@ -196,5 +196,10 @@ public class Bike {
 		this.crashedInto = crashedInto;
 	}
 	
+	
+	@Override
+	public String toString() {
+		return pid + ": p(" + pos.x + ", " + pos.y + "), s(" + spd.x + ", " + spd.y +"), " + (crashed?"crashed":"not crashed");
+	}
 	
 }

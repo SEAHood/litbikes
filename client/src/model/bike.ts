@@ -11,14 +11,20 @@ module Model {
         private trail: TrailSegment[];
 
         private spdMag: number;
-        private crashed: boolean = false;
-        private crashing: boolean = false;
-        private spectating: boolean = false;
-        private deathTimestamp: number = null;
+        private crashed: boolean;
+        private crashing: boolean;
+        private respawning: boolean;
+        private spectating: boolean;
+        private deathTimestamp: number;
         private crashedInto: string;
 
+        private lastRespawn: number; // Respawn timestamp
+
         private colour: string;
-        private trailOpacity: number = 1;
+        private trailOpacity: number;
+
+        private idRingBlinkTime: number;
+        private idRingBlinkOn: boolean;
 
         constructor( bikeDto: BikeDto ) {
             this.pid = bikeDto.pid;
@@ -36,6 +42,11 @@ module Model {
                 this.trail.push( TrailSegment.fromDto(seg) );
             });
 
+            this.lastRespawn = Date.now();
+            this.respawning = true;
+            this.trailOpacity = 1;
+            this.idRingBlinkTime = -1;
+            this.idRingBlinkOn = false;
         }
 
         public update() {
@@ -72,8 +83,14 @@ module Model {
             if ( this.crashed && !dto.crashed ) {
                 // probs respawned
                 // TODO: have the server send this info instead
+                this.lastRespawn = Date.now();
+                this.respawning = true;
                 this.crashing = false;
                 this.trailOpacity = 1;
+            }
+
+            if ( this.respawning && Date.now() - 2550 > this.lastRespawn ) {
+                this.respawning = false;
             }
 
             this.crashed = dto.crashed;
@@ -98,11 +115,25 @@ module Model {
             this.addTrailSegment();
         }
 
-        public draw( p : p5 ) {
+        public draw( p : p5, identify : boolean ) {
 
             if ( this.isVisible() ) {
 
-                // Draw bike
+                if ( identify ) {
+                    if (this.idRingBlinkOn) {
+                        p.fill('rgba(0,0,0,0)');
+                        p.strokeWeight(2);
+                        p.stroke(255);
+                        p.ellipse(this.pos.x, this.pos.y, 20, 20);
+                    }
+
+                    if (Date.now() - 150 > this.idRingBlinkTime) {
+                        this.idRingBlinkTime = Date.now();
+                        this.idRingBlinkOn = !this.idRingBlinkOn;
+                    }
+                }
+
+                // Draw bikew
                 p.noStroke();
                 p.fill(this.colour.replace('%A%', '1'));
                 p.ellipse(this.pos.x, this.pos.y, 5, 5);
@@ -120,9 +151,13 @@ module Model {
                 let trail = _.clone(this.trail);
                 trail.push(newSeg);
 
+                p.noFill();
+                p.beginShape();
                 _.each( trail, ( tp : TrailSegment ) => {
-                    p.line(tp.start.x, tp.start.y, tp.end.x, tp.end.y);
+                    p.vertex( tp.start.x, tp.start.y);
                 });
+                p.vertex( this.pos.x, this.pos.y);
+                p.endShape();
 
                 // Draw crashing
                 if ( this.isCrashing() ) {
@@ -162,6 +197,10 @@ module Model {
         }
         public isCrashing() : boolean {
             return this.crashing;
+        }
+
+        public isRespawning() : boolean {
+            return this.respawning;
         }
 
         public getCrashedInto() : string {

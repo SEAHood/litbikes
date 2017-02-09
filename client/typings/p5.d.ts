@@ -592,6 +592,7 @@ declare class p5 {
     //   param "kind" has invalid type: Number/Constant
     //
     // beginShape(kind: Number/Constant): any
+    beginShape(): any
 
     /**
      * Specifies vertex coordinates for Bezier curves.
@@ -614,6 +615,8 @@ declare class p5 {
     //   param "mode" has invalid type: Number/Constant
     //
     // endShape(mode: Number/Constant): any
+    endShape(): any
+    endShape(mode: any): any
 
     /**
      * Specifies vertex coordinates for quadratic Bezier curves.

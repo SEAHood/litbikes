@@ -191,10 +191,10 @@ module Game {
             }
 
             _.each( this.bikes, ( b : Bike ) => {
-                b.draw(p);
+                b.draw(p, false);
             });
 
-            this.player.draw(p);
+            this.player.draw(p, this.player.isRespawning());
 
             if ( this.player.isSpectating() && this.showRespawn ) {
                 p.textFont(this.mainFont);

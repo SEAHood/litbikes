@@ -148,7 +148,7 @@ public class GameController implements GameEventListener, BotListener {
 	}	
 	
 	public void gameStarted() {		
-		int botCount = 0;
+		int botCount = 5;
 		for ( int i = 0; i < botCount; i++ ) {
 			Bot bot = addBot();
 			bot.start();

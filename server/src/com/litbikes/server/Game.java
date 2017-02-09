@@ -107,9 +107,19 @@ public class Game {
 	}
 	
 	class GameTick implements Runnable {
+		
+		long tim = System.currentTimeMillis();
+		
 	    public void run() {
 	    	//Increment tick count first
 	    	gameTick++;
+
+			long cTim = System.currentTimeMillis();
+			if ( cTim - tim > 1000 )
+			{
+				LOG.info(bikes.get(0).toString());
+				tim = cTim;
+			}
 	    	
 	    	List<Bike> activeBikes = bikes.stream().filter(b -> b.isActive()).collect(Collectors.toList());
 	    	
