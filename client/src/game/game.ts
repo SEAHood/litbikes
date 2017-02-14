@@ -9,6 +9,7 @@ module Game {
     import ClientUpdateDto = Dto.ClientUpdateDto;
     import RegistrationDto = Dto.RegistrationDto;
     import NumberUtil = Util.NumberUtil;
+    import ChatMessageDto = Dto.ChatMessageDto;
     export class Game {
         private player : Bike;
         private host = 'http://fresh.crabdance.com:9092';
@@ -51,7 +52,39 @@ module Game {
                 }
             });
 
+            this.socket.on('chat-message', ( data : ChatMessageDto ) => {
+                // TODO: Use moment or something?
+                let messageTime = new Date(data.timestamp).toTimeString().split(' ')[0];
+                let chatElement = "<li>";
+
+                chatElement += "[" + messageTime + "]";
+                if ( data.isSystemMessage ) {
+                    chatElement += "&nbsp;<span style='color:#AFEEEE'>" + _.escape(data.message) + "</span>";
+                } else {
+                    let colour = data.sourceColour.replace("%A%", "100");
+                    chatElement += "&nbsp;<span style='color:" + colour + "'><strong>" + data.source + "</strong></span>:";
+                    chatElement += "&nbsp;" + _.escape(data.message);
+                }
+                chatElement += "</li>";
+
+                $('#chat-log ul').append(chatElement);
+                $('#chat-log').scrollTop($('#chat-log')[0].scrollHeight);
+            });
+
             $(document).on('keydown', ev => {
+
+                if ( $(ev.target).is('input') ) {
+                    // Typing in chat, don't process as game keys
+                    if ( ev.which === 13 ) { // enter
+                        let message = $('#chat-input').val();
+                        this.socket.emit('chat-message', message);
+                        $('#chat-input').val('');
+                    }
+
+                    return;
+                }
+
+
                 if ( this.player ) {
                     enum Keys {
                         LEFT_ARROW = 37,

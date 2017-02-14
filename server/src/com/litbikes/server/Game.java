@@ -117,7 +117,7 @@ public class Game {
 			long cTim = System.currentTimeMillis();
 			if ( cTim - tim > 1000 )
 			{
-				LOG.info(bikes.get(0).toString());
+				//LOG.info(bikes.get(0).toString());
 				tim = cTim;
 			}
 	    	

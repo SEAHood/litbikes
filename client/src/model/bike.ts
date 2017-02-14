@@ -81,15 +81,13 @@ module Model {
             }
 
             if ( this.crashed && !dto.crashed ) {
-                // probs respawned
-                // TODO: have the server send this info instead
                 this.lastRespawn = Date.now();
                 this.respawning = true;
                 this.crashing = false;
                 this.trailOpacity = 1;
             }
 
-            if ( this.respawning && Date.now() - 2550 > this.lastRespawn ) {
+            if ( this.respawning && Date.now() - 2100 > this.lastRespawn ) {
                 this.respawning = false;
             }
 

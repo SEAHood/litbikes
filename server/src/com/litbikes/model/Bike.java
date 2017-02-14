@@ -168,6 +168,10 @@ public class Bike {
 	public void setCrashed(boolean dead) {
 		this.crashed = dead;
 	}
+
+	public Color getColour() {
+		return colour;
+	}
 	
 	public void crash() {
 		this.setCrashed(true);

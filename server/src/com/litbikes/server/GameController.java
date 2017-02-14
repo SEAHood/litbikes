@@ -1,7 +1,13 @@
 package com.litbikes.server;
 
+import java.awt.Color;
+import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -9,16 +15,21 @@ import java.util.concurrent.TimeUnit;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
+import com.corundumstudio.socketio.AckCallback;
 import com.corundumstudio.socketio.AckRequest;
+import com.corundumstudio.socketio.HandshakeData;
 import com.corundumstudio.socketio.SocketIOClient;
+import com.corundumstudio.socketio.SocketIONamespace;
 import com.corundumstudio.socketio.SocketIOServer;
+import com.corundumstudio.socketio.Transport;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
+import com.corundumstudio.socketio.protocol.Packet;
+import com.litbikes.dto.ChatMessageDto;
 import com.litbikes.dto.ClientUpdateDto;
 import com.litbikes.dto.GameSettingsDto;
 import com.litbikes.dto.RegistrationDto;
 import com.litbikes.model.Bike;
-import com.litbikes.model.Connection;
 
 interface GameEventListener {
 	void playerCrashed(Bike bike);
@@ -28,7 +39,7 @@ interface GameEventListener {
 
 interface BotListener {
 	void requestedWorldUpdate(Bot bot);
-	void sentClientUpdate(ClientUpdateDto updateDto);
+	void sentClientUpdate(BotIOClient client, ClientUpdateDto updateDto);
 	void sentRequestRespawn(Bot bot);
 }
 
@@ -37,10 +48,11 @@ interface BotListener {
 public class GameController implements GameEventListener, BotListener {
 
 	private static Logger LOG = Log.getLogger(GameController.class);
-	private SocketIOServer ioServer;
-	private List<Connection> connections;
+	private final SocketIOServer ioServer;
+	//private List<Connection> connections;
+	private final Map<UUID, Integer> sessionPids;
 	private List<Bot> bots;
-	private Game game;
+	private final Game game;
 
 	private final static String C_REGISTER = "register";
 	private final static String C_REGISTERED = "registered";
@@ -48,6 +60,7 @@ public class GameController implements GameEventListener, BotListener {
 	private final static String C_REQUEST_WORLD = "request-world";
 	private final static String C_REQUEST_RESPAWN = "request-respawn";
 	private final static String C_KEEP_ALIVE = "keep-alive";
+	private final static String C_CHAT_MESSAGE = "chat-message";
 	
 	private class ClientEventListener<T> implements DataListener<T> {		
 		public void onData(SocketIOClient client, T data, AckRequest ackRequest) {
@@ -60,11 +73,11 @@ public class GameController implements GameEventListener, BotListener {
 		}
 	}
 	
-	public GameController( SocketIOServer ioServer, Game game ) {
-		this.ioServer = ioServer;
-		this.game = game;
-		connections = new ArrayList<>();
-		bots = new ArrayList<>();	
+	public GameController( SocketIOServer _ioServer, Game _game ) {
+		ioServer = _ioServer;
+		game = _game;
+		bots = new ArrayList<>();
+		sessionPids = new HashMap<>();
 	}
 	
 	public void initialise() {
@@ -80,6 +93,10 @@ public class GameController implements GameEventListener, BotListener {
             	super.onData(client, data, ackRequest);
             	LOG.info("Received register event");
             	registerClient(client);
+            	
+            	String newPlayerMessage = "Player " + sessionPids.get(client.getSessionId()) + " joined!";
+            	ChatMessageDto dto = new ChatMessageDto(null, null, newPlayerMessage, true);
+            	broadcastData("chat-message", dto);
             }
         });
 
@@ -104,9 +121,13 @@ public class GameController implements GameEventListener, BotListener {
             @Override
             public void onData(final SocketIOClient client, String data, final AckRequest ackRequest) {
             	super.onData(client, data, ackRequest);
-        		Connection clientConnection = connections.stream().filter(c -> c.getSessionId() == client.getSessionId()).findFirst().get();
-        		LOG.info("Respawn request from " + clientConnection.getPid());
-        		game.requestRespawn(clientConnection.getPid());
+            	
+            	Integer clientPid = sessionPids.get(client.getSessionId());            	
+            	if ( clientPid == null ) 
+            		return; // Client doesn't exist - what should we do here?
+            	
+        		LOG.info("Respawn request from " + clientPid);
+        		game.requestRespawn(clientPid);
             }
         });
 
@@ -117,14 +138,25 @@ public class GameController implements GameEventListener, BotListener {
             	handleClientUpdateEvent(client, updateDto);
             }
         });
+
+        ioServer.addEventListener(C_CHAT_MESSAGE, String.class, new ClientEventListener<String>() {
+            @Override
+            public void onData(final SocketIOClient client, String message, final AckRequest ackRequest) {
+            	super.onData(client, message, ackRequest);
+            	LOG.info("Received chat message");
+            	handleChatMessageEvent(client, message);
+            }
+        });
         
         ioServer.addDisconnectListener(new DisconnectListener() {
         	@Override
         	public void onDisconnect(final SocketIOClient client) {
         		try {
-        			//todo : exception here?
-            		Connection clientConnection = connections.stream().filter(c -> c.getSessionId() == client.getSessionId()).findFirst().get();
-            		game.dropPlayer(clientConnection.getPid());
+                	Integer clientPid = sessionPids.get(client.getSessionId());            	
+                	if ( clientPid == null ) 
+                		return; // Client doesn't exist - what should we do here?
+                	
+            		game.dropPlayer(clientPid);
         		} catch (Exception e) {
         			
         		}
@@ -132,7 +164,15 @@ public class GameController implements GameEventListener, BotListener {
         });
 	}
 	
-	private void handleClientUpdateEvent(SocketIOClient client, ClientUpdateDto updateDto) {
+	private void handleClientUpdateEvent( SocketIOClient client, ClientUpdateDto updateDto ) {
+		if ( client == null ) {
+			
+		}
+		
+    	Integer clientPid = sessionPids.get(client.getSessionId());            	
+    	if ( clientPid == null ) 
+    		return; // Client doesn't exist - what should we do here?
+		
 		long startTime = System.nanoTime();
     	if ( game.handleClientUpdate(updateDto) ) {
     		long endTime = System.nanoTime();    		
@@ -140,6 +180,18 @@ public class GameController implements GameEventListener, BotListener {
     		LOG.info( "Handled client update in " + duration + " nanoseconds" );
     		broadcastWorldUpdate();
     	}
+	}
+	
+	private void handleChatMessageEvent( SocketIOClient client, String message ) {
+    	Integer clientPid = sessionPids.get(client.getSessionId());            	
+    	if ( clientPid == null ) 
+    		return; // Client doesn't exist - what should we do here?
+    	
+    	Color colour = game.getBikes().stream().filter(b -> b.getPid() == clientPid).findFirst().get().getColour();
+    	String sourceColour = String.format("rgba(%s,%s,%s,%%A%%)", colour.getRed(), colour.getGreen(), colour.getBlue()); // TODO Override tostring on Color
+    	ChatMessageDto dto = new ChatMessageDto(clientPid.toString(), sourceColour, message, false);
+
+    	broadcastData("chat-message", dto);
 	}
 	
 	// START GAME EVENTS
@@ -174,7 +226,8 @@ public class GameController implements GameEventListener, BotListener {
 	
 	public void registerClient( SocketIOClient client ) {
 		Bike bike = game.newPlayer();
-		connections.add( new Connection(bike.getPid(), client.getSessionId()) );
+		
+		sessionPids.put(client.getSessionId(), bike.getPid());
 		
 		GameSettingsDto gameSettings = new GameSettingsDto();
 		gameSettings.gameTickMs = game.getGameTickMs();
@@ -207,6 +260,7 @@ public class GameController implements GameEventListener, BotListener {
 		Bot bot = new Bot(bike, game.getBikes(), game.getArena());
 		bot.attachListener(this);
 		bots.add(bot);
+		sessionPids.put(bot.getSessionId(), bot.getPid());
 		LOG.info("Creating new bot with pid " + bike.getPid());
 		return bot;
 	}
@@ -217,14 +271,17 @@ public class GameController implements GameEventListener, BotListener {
 		}
 	}
 
+	// TODO : Put these events through an event system that deals with SocketIOClient - see BotIOClient
 	public void requestedWorldUpdate( Bot bot ) {
 		bot.updateWorld(game.getBikes(), game.getArena());
 	}
-	
-	public void sentClientUpdate( ClientUpdateDto updateDto ) {
-		handleClientUpdateEvent(null, updateDto);
+
+	// TODO : Put these events through an event system that deals with SocketIOClient - see BotIOClient
+	public void sentClientUpdate( BotIOClient client, ClientUpdateDto updateDto ) {
+		handleClientUpdateEvent(client, updateDto);
 	}
-	
+
+	// TODO : Put these events through an event system that deals with SocketIOClient - see BotIOClient
 	public void sentRequestRespawn( Bot bot ) {
 		game.requestRespawn(bot.getPid());
 	}

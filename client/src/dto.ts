@@ -12,7 +12,7 @@ module Dto {
         spectating: boolean,
         deathTimestamp?: number
         trail: TrailSegmentDto[];
-        colour: string;
+        colour: string; // includes %A% alpha
     }
 
     export interface RegistrationDto {
@@ -36,6 +36,14 @@ module Dto {
         gameTick: number,
         bikes: BikeDto[],
         arena: ArenaDto
+    }
+
+    export interface ChatMessageDto {
+        timestamp: number,
+        source: string,
+        sourceColour: string, // includes %A% alpha
+        message: string
+        isSystemMessage: boolean;
     }
 
     export interface GameSettingsDto {

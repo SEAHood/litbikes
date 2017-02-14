@@ -2,6 +2,7 @@ package com.litbikes.server;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -21,22 +22,24 @@ public class Bot {
 	private static int AI_RESPAWN_MS = 3000;
 	private BotListener listener;
 	private final int pid;
-	private Bike botBike;
+	private final BotIOClient ioClient;
+	private Bike bike;
 	private List<Bike> bikes;
 	private Arena arena;
 	long lastPredictionTime;
 	long predictionCooldown = 200;
 	
-	public Bot( Bike bike, List<Bike> bikes, Arena arena ) {
-		this.pid = bike.getPid();
-		this.botBike = bike;
-		this.arena = arena;
-		this.bikes = bikes;
+	public Bot( Bike _bike, List<Bike> _bikes, Arena _arena ) {
+		pid = _bike.getPid();
+		bike = _bike;
+		arena = _arena;
+		bikes = _bikes;
+		ioClient = new BotIOClient();
 	}
 	
-	public void updateWorld( List<Bike> bikes, Arena arena ) {
-		this.arena = arena;
-		this.bikes = bikes;
+	public void updateWorld( List<Bike> _bikes, Arena _arena ) {
+		arena = _arena;
+		bikes = _bikes;
 	}
 	
 	public void start() {
@@ -58,7 +61,7 @@ public class Bot {
 				allTrails.addAll( b.getTrail(!isSelf) );
 			}
 			
-	 		boolean incCollision = botBike.checkCollision( allTrails, dDist ) || arena.checkCollision(botBike, dDist);
+	 		boolean incCollision = bike.checkCollision( allTrails, dDist ) || arena.checkCollision(bike, dDist);
 			
 			if (incCollision) {
 	 			int newVal = Math.random() < 0.5 ? -1 : 1;
@@ -66,15 +69,15 @@ public class Bot {
 	 			ClientUpdateDto updateDto = new ClientUpdateDto();
 	 			updateDto.pid = pid;
 	 			
-	 			if ( botBike.getSpd().x != 0 ) {
+	 			if ( bike.getSpd().x != 0 ) {
 	 				updateDto.xSpd = 0;
 	 				updateDto.ySpd = newVal;
-	 			} else if ( botBike.getSpd().y != 0 ) {
+	 			} else if ( bike.getSpd().y != 0 ) {
 	 				updateDto.xSpd = newVal;
 	 				updateDto.ySpd = 0;
 	 			}
 	 			
-	 			listener.sentClientUpdate(updateDto);
+	 			listener.sentClientUpdate(ioClient, updateDto);
 			}		
 	 					
 			lastPredictionTime = thisPredictionTime;
@@ -89,14 +92,17 @@ public class Bot {
 	public int getPid() {
 		return pid;
 	}
-		
+
+	public UUID getSessionId() {
+		return ioClient.getSessionId();
+	}
 
 	class AILoop implements Runnable {
 		private Bot bot;
 		public AILoop(Bot b) { bot = b; }
 	    public void run() {
 	    	listener.requestedWorldUpdate(bot);
-	    	if ( !botBike.isCrashed() ) {
+	    	if ( !bike.isCrashed() ) {
 		    	predictCollision();
 	    	} else {
 	    		try {
@@ -108,6 +114,5 @@ public class Bot {
 	    	}	    	
 	    }
 	}
-
 	
 }
