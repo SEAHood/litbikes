@@ -1,4 +1,4 @@
-package com.litbikes.server;
+package com.litbikes.ai;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +20,6 @@ public class Bot {
 	private static Logger LOG = Log.getLogger(Bot.class);
 	private static int AI_TICK_MS = 50;
 	private static int AI_RESPAWN_MS = 3000;
-	private BotListener listener;
 	private final int pid;
 	private final BotIOClient ioClient;
 	private Bike bike;
@@ -28,13 +27,18 @@ public class Bot {
 	private Arena arena;
 	long lastPredictionTime;
 	long predictionCooldown = 200;
+	BotController controller;
 	
 	public Bot( Bike _bike, List<Bike> _bikes, Arena _arena ) {
 		pid = _bike.getPid();
 		bike = _bike;
 		arena = _arena;
 		bikes = _bikes;
-		ioClient = new BotIOClient();
+		ioClient = new BotIOClient(this);
+	}
+	
+	public void attachController( BotController _controller ) {
+		controller = _controller;
 	}
 	
 	public void updateWorld( List<Bike> _bikes, Arena _arena ) {
@@ -43,7 +47,7 @@ public class Bot {
 	}
 	
 	public void start() {
-		Runnable aiLoop = new AILoop(this);
+		Runnable aiLoop = new AILoop();
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 		LOG.info("Starting bot at " + AI_TICK_MS + "ms per AI tick");
 		executor.scheduleAtFixedRate(aiLoop, 0, AI_TICK_MS, TimeUnit.MILLISECONDS);
@@ -77,17 +81,12 @@ public class Bot {
 	 				updateDto.ySpd = 0;
 	 			}
 	 			
-	 			listener.sentClientUpdate(ioClient, updateDto);
+	 			controller.sentUpdate(ioClient, updateDto);
 			}		
 	 					
 			lastPredictionTime = thisPredictionTime;
 		}	
      }
-	
-	public void attachListener( BotListener listener ) {
-		this.listener = listener;
-	}
-
 
 	public int getPid() {
 		return pid;
@@ -98,10 +97,7 @@ public class Bot {
 	}
 
 	class AILoop implements Runnable {
-		private Bot bot;
-		public AILoop(Bot b) { bot = b; }
 	    public void run() {
-	    	listener.requestedWorldUpdate(bot);
 	    	if ( !bike.isCrashed() ) {
 		    	predictCollision();
 	    	} else {
@@ -110,7 +106,7 @@ public class Bot {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-	    		listener.sentRequestRespawn(bot);
+	    		controller.sentRequestRespawn(ioClient);
 	    	}	    	
 	    }
 	}

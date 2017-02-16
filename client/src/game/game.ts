@@ -207,7 +207,7 @@ module Game {
                 p.textFont(this.debugFont);
                 p.fill(255);
                 p.textSize(15);
-                p.textAlign('left', 'top')
+                p.textAlign('left', 'top');
                 p.text("LitBikes " + this.version, 10, 10);
                 p.text(
                     "fps: " + p.frameRate().toFixed(2) + "\n" +
@@ -229,22 +229,35 @@ module Game {
 
             this.player.draw(p, this.player.isRespawning());
 
-            if ( this.player.isSpectating() && this.showRespawn ) {
-                p.textFont(this.mainFont);
-                p.textAlign('center', 'bottom');
-                p.noStroke();
+            if ( this.player.isCrashed() && this.player.isSpectating() && this.showRespawn ) {
 
                 let halfWidth = this.arena.dimensions.x / 2;
                 let halfHeight = this.arena.dimensions.y / 2;
 
+                p.noStroke();
+                p.fill('rgba(0,0,0,0.6)');
+                p.rect(0, halfHeight - 35, this.arena.dimensions.x, 100);
+
+                p.textFont(this.mainFont);
+                p.textAlign('center', 'top');
+
+
+
                 if ( this.player.isCrashed() ) {
+                    let crashedInto = this.player.getCrashedInto();
+                    let crashedIntoStr = "";
+                    if ( crashedInto == null ) {
+                        crashedIntoStr = "wall"; // what else?
+                    } else {
+                        crashedIntoStr = this.player.getCrashedInto().toString();
+                    }
                     p.fill('rgba(125,249,255,0.50)');
                     p.textSize(29);
-                    p.text("Killed by " + this.player.getCrashedInto(),
+                    p.text("Killed by " + crashedIntoStr,
                         halfWidth + NumberUtil.randInt(0, 2), halfHeight - 30 + NumberUtil.randInt(0, 2));
                     p.fill('rgba(255,255,255,0.80)');
                     p.textSize(28);
-                    p.text("Killed by " + this.player.getCrashedInto(),
+                    p.text("Killed by " + crashedIntoStr,
                         halfWidth, halfHeight - 30);
                 }
 
@@ -258,12 +271,11 @@ module Game {
                 p.text("Press 'R' to respawn", halfWidth, halfHeight);
 
                 p.fill('rgba(0,0,0,0.40)');
-                p.rect(halfWidth - 80, halfHeight + 13, 160, 20);
                 p.fill(255);
                 p.textFont(this.secondaryFont);
                 p.textSize(15);
                 p.text("Press 'H' to hide",
-                    halfWidth, halfHeight + 30);
+                    halfWidth, halfHeight + 45);
 
 
             }

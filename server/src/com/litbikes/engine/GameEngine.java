@@ -1,4 +1,4 @@
-package com.litbikes.server;
+package com.litbikes.engine;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -18,8 +18,8 @@ import com.litbikes.model.Arena;
 import com.litbikes.model.Bike;
 import com.litbikes.util.Vector;
 
-public class Game {
-	private static Logger LOG = Log.getLogger(Game.class);
+public class GameEngine {
+	private static Logger LOG = Log.getLogger(GameEngine.class);
 	private static final int GAME_TICK_MS = 30;
 	private static final int GAME_WIDTH = 600;
 	private static final int GAME_HEIGHT = 600;
@@ -28,13 +28,15 @@ public class Game {
 	private int pidGen = 0;
 	private long gameTick = 0;
 		
-	private List<Bike> bikes;
-	private Arena arena;
+	private final List<Bike> bikes;
+	private final Arena arena;
+	private final ScoreKeeper score;
 	
-	public Game() {
+	public GameEngine() {
 		Vector arenaDim = new Vector(GAME_WIDTH, GAME_HEIGHT);
 		arena = new Arena(arenaDim);
 		bikes = new ArrayList<>();
+		score = new ScoreKeeper();
 	}
 	
 	public void start() {
@@ -78,7 +80,9 @@ public class Game {
 		List<BikeDto> bikesDto = new ArrayList<>();
 
 		for ( Bike bike : bikes ) {
-			bikesDto.add( bike.getDto() );
+			BikeDto bikeDto = bike.getDto();
+			bikeDto.score = score.getScore(bikeDto.pid);
+			bikesDto.add( bikeDto );
 		}
 
 		Instant now = Instant.now();
@@ -131,21 +135,22 @@ public class Game {
 					boolean isSelf = b.getPid() == bike.getPid();
 					collided = collided || bike.checkCollision( b.getTrail(!isSelf), 1 );
 					if ( collided ) {
-						bike.setCrashedInto(Integer.toString(b.getPid()));
+						bike.setCrashedInto(b.getPid());
 						break;
 					}
 				}
 				
 				if ( !collided ) {
 					collided = arena.checkCollision(bike, 1);
-					if ( collided )
-						bike.setCrashedInto("wall");
 				}
 
 				if ( collided ) {
 					bike.crash();
 					bike.setSpectating(true);
 					eventListener.playerCrashed(bike);
+					Integer crashedInto = bike.getCrashedInto();
+					if ( crashedInto != null && crashedInto != bike.getPid() ) 
+						score.grantScore(1, bike.getCrashedInto());
 				}				
 	    	}
 	    }

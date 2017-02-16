@@ -11,7 +11,8 @@ public class BikeDto {
 	public double spdMag;
 	public List<TrailSegmentDto> trail;
 	public boolean crashed;
-	public String crashedInto;
+	public Integer crashedInto;
 	public boolean spectating;
 	public String colour; // in rgba(0,0,0,%A%) format
+	public int score;
 }

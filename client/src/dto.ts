@@ -8,11 +8,12 @@ module Dto {
         spdMag: number,
         crashed: boolean,
         crashing: boolean,
-        crashedInto: string,
+        crashedInto: number,
         spectating: boolean,
         deathTimestamp?: number
         trail: TrailSegmentDto[];
         colour: string; // includes %A% alpha
+        score: number;
     }
 
     export interface RegistrationDto {

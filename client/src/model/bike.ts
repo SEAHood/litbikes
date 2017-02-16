@@ -16,7 +16,8 @@ module Model {
         private respawning: boolean;
         private spectating: boolean;
         private deathTimestamp: number;
-        private crashedInto: string;
+        private crashedInto: number; // pid last crashed into
+        private score: number;
 
         private lastRespawn: number; // Respawn timestamp
 
@@ -36,6 +37,7 @@ module Model {
             this.spdMag = bikeDto.spdMag;
             this.colour = bikeDto.colour;
             this.crashedInto = bikeDto.crashedInto;
+            this.score = bikeDto.score;
 
             this.trail = [];
             _.each(bikeDto.trail, (seg : TrailSegmentDto) => {
@@ -66,6 +68,7 @@ module Model {
         }
 
         public updateFromDto( dto : BikeDto ) {
+
             this.setPos(dto.pos);
 
             this.spd = dto.spd;
@@ -94,6 +97,7 @@ module Model {
             this.crashed = dto.crashed;
             this.crashedInto = dto.crashedInto;
             this.spectating = dto.spectating;
+            this.score = dto.score;
         }
 
         private addTrailSegment() {
@@ -131,11 +135,13 @@ module Model {
                     }
                 }
 
-                // Draw bikew
+                // Draw bike
                 p.noStroke();
                 p.fill(this.colour.replace('%A%', '1'));
                 p.ellipse(this.pos.x, this.pos.y, 5, 5);
-
+                p.textSize(15);
+                p.textAlign('center', 'middle');
+                p.text(this.score+"", this.pos.x, this.pos.y - 10);
 
                 // Draw trail
                 p.strokeWeight(2);
@@ -201,7 +207,7 @@ module Model {
             return this.respawning;
         }
 
-        public getCrashedInto() : string {
+        public getCrashedInto() : number {
             return this.crashedInto;
         }
 

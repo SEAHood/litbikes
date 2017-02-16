@@ -2,6 +2,7 @@ module Model {
 
     import Vector = Util.Vector;
     import ArenaDto = Dto.ArenaDto;
+    import NumberUtil = Util.NumberUtil;
     export class Arena {
 
         public dimensions : Vector;

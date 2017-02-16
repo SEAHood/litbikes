@@ -1,6 +1,7 @@
-package com.litbikes.server;
+package com.litbikes.ai;
 
 import java.net.SocketAddress;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -10,26 +11,37 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIONamespace;
 import com.corundumstudio.socketio.Transport;
 import com.corundumstudio.socketio.protocol.Packet;
+import com.litbikes.model.Arena;
+import com.litbikes.model.Bike;
 
 // TODO : Could probably extend this to make the bots completely separate from the game controller
 // Override client send() implementation to send data to bot instead 
 public class BotIOClient implements SocketIOClient {
 
 	private final UUID sessionId;
+	private final Bot bot;
 	
-	public BotIOClient() {
+	public BotIOClient( Bot _bot ) {
 		sessionId = UUID.randomUUID();
+		bot = _bot;
 	}
 	
 	@Override
 	public UUID getSessionId() {
 		return sessionId;
 	}	
+
+	public void updateBot(List<Bike> bikes, Arena arena) {
+		bot.updateWorld(bikes, arena);
+	}
+	
+	@Override
+	public void sendEvent( String event, Object... data ) {
+	}
 	
 	// SocketIOClient required overrides
 	@Override public void send(Packet packet) {}
 	@Override public void disconnect() {}
-	@Override public void sendEvent(String name, Object... data) {}
 	@Override public void set(String key, Object val) {}
 	@Override public <T> T get(String key) { return null; }
 	@Override public boolean has(String key) { return false; }

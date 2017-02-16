@@ -26,7 +26,7 @@ public class Bike {
 	private boolean spectating;
 	private Vector startPos;
 	private Color colour;
-	private String crashedInto;
+	private Integer crashedInto; // pid of bike trail crashed into
 	
 	public Bike(int pid) {
 		this.pid = pid;
@@ -59,6 +59,7 @@ public class Bike {
 		trail = new ArrayList<>();
 		crashed = false;
 		spectating = false;
+		crashedInto = null;
 		colour = ColourUtil.getBrightColor();
 		addTrailPoint();
 		
@@ -192,11 +193,11 @@ public class Bike {
 	}
 
 
-	public String getCrashedInto() {
+	public Integer getCrashedInto() {
 		return crashedInto;
 	}
 
-	public void setCrashedInto(String crashedInto) {
+	public void setCrashedInto(int crashedInto) {
 		this.crashedInto = crashedInto;
 	}
 	
