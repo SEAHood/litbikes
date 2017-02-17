@@ -50,7 +50,7 @@ public class GameController implements GameEventListener {
 	public void start() {
 		setupGameListeners();
 		game.start();
-		botController.deployBots(25);
+		botController.deployBots(5);
 	}
 
 	
