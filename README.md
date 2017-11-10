@@ -8,6 +8,5 @@
 3. Run ```npm install``` inside client directory
 4. Run ```gulp build+deploy``` inside client directory - if a 'file not found' error happens, just run this again
 5. Run ```mvn package``` inside server directory - creates server JAR inside 'target' directory (LitBikesServer\*.jar)
-6. Start web server by running ```java -cp <server JAR> com.litbikes.server.WebServer```
-7. Start web server by running ```java -cp <server JAR> com.litbikes.server.GameServer```
-8. Litbikes is now running on port 8080
+6. Start web server by running ```java -cp <server JAR> com.litbikes.server.Launcher [-b <bot count>] [-s <game width> <game height>]```
+7. Litbikes is now running on port 8080
