@@ -12,7 +12,7 @@ module Game {
     import ChatMessageDto = Dto.ChatMessageDto;
     export class Game {
         private player : Bike;
-        private host = 'http://fresh.crabdance.com:9092';
+        private host = 'http://' + window.location.hostname + ':9092';
         private socket = io.connect(this.host);
         private arena : Arena;
         private bikes : Bike[] = []; //All bikes other than your own
@@ -152,8 +152,8 @@ module Game {
                 console.error("Cannot start game - game tick interval is not defined");
             }
             this.gameTick = data.world.gameTick;
-            this.player = new Bike( data.bike );
-            this.arena = new Arena( data.world.arena );
+            this.player = new Bike(data.bike, true);
+            this.arena = new Arena(data.world.arena);
             this.gameTickMs = data.gameSettings.gameTickMs;
 
             this.processWorldUpdate(data.world);
@@ -187,7 +187,7 @@ module Game {
                     if ( bike ) {
                         bike.updateFromDto(b);
                     } else {
-                        this.bikes.push(new Bike(b));
+                        this.bikes.push(new Bike(b, false));
                     }
                 }
             });

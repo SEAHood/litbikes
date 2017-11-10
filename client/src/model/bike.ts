@@ -18,6 +18,7 @@ module Model {
         private deathTimestamp: number;
         private crashedInto: number; // pid last crashed into
         private score: number;
+        private isPlayer: boolean;
 
         private lastRespawn: number; // Respawn timestamp
 
@@ -27,7 +28,7 @@ module Model {
         private idRingBlinkTime: number;
         private idRingBlinkOn: boolean;
 
-        constructor( bikeDto: BikeDto ) {
+        constructor( bikeDto: BikeDto, isPlayer: boolean ) {
             this.pid = bikeDto.pid;
             this.setPos(new Vector( bikeDto.pos.x, bikeDto.pos.y ));
             this.spd = new Vector( bikeDto.spd.x, bikeDto.spd.y );
@@ -38,6 +39,7 @@ module Model {
             this.colour = bikeDto.colour;
             this.crashedInto = bikeDto.crashedInto;
             this.score = bikeDto.score;
+            this.isPlayer = isPlayer;
 
             this.trail = [];
             _.each(bikeDto.trail, (seg : TrailSegmentDto) => {
@@ -134,15 +136,7 @@ module Model {
                         this.idRingBlinkOn = !this.idRingBlinkOn;
                     }
                 }
-
-                // Draw bike
-                p.noStroke();
-                p.fill(this.colour.replace('%A%', '1'));
-                p.ellipse(this.pos.x, this.pos.y, 5, 5);
-                p.textSize(15);
-                p.textAlign('center', 'middle');
-                p.text(this.score+"", this.pos.x, this.pos.y - 10);
-
+                
                 // Draw trail
                 p.strokeWeight(2);
                 p.stroke(this.colour.replace('%A%', this.trailOpacity.toString()));
@@ -162,6 +156,21 @@ module Model {
                 });
                 p.vertex( this.pos.x, this.pos.y);
                 p.endShape();
+
+                // Draw bike
+                let bikeColour = this.isPlayer 
+                    ? "rgb(255, 255, 255)"
+                    :  this.colour.replace('%A%', '1');
+                p.noStroke();
+                p.fill(bikeColour);
+                p.ellipse(this.pos.x, this.pos.y, 5, 5);
+                
+                // Score
+                /*
+                p.textSize(15);
+                p.textAlign('center', 'middle');
+                p.text(this.score+"", this.pos.x, this.pos.y - 10);
+                */
 
                 // Draw crashing
                 if ( this.isCrashing() ) {

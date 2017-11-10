@@ -28,12 +28,12 @@ public class GameServer {
 	private final static String C_KEEP_ALIVE = "keep-alive";
 	private final static String C_CHAT_MESSAGE = "chat-message";
 	
-	public GameServer(int port) {
+	public GameServer(int port, int maxBots, int gameWidth, int gameHeight) {
 		config = new Configuration();
         config.setHostname("0.0.0.0");
         config.setPort(port);
         ioServer = new SocketIOServer(config);
-        gameController = new GameController(ioServer);
+        gameController = new GameController(ioServer, maxBots, gameWidth, gameHeight);
 	}
 	
 	public void start() {

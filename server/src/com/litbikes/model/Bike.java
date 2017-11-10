@@ -4,13 +4,13 @@ import java.awt.Color;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
 import com.litbikes.dto.BikeDto;
-import com.litbikes.util.ColourUtil;
 import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
 
@@ -27,12 +27,13 @@ public class Bike {
 	private Vector startPos;
 	private Color colour;
 	private Integer crashedInto; // pid of bike trail crashed into
+	private Random random = new Random();
 	
 	public Bike(int pid) {
 		this.pid = pid;
 	}
 
-	public void init() {
+	public void init(boolean newPlayer) {
 		Vector position = new Vector(NumberUtil.randInt(20, 480), NumberUtil.randInt(20, 480));
 		pos = position;
 		startPos = position;
@@ -60,10 +61,26 @@ public class Bike {
 		crashed = false;
 		spectating = false;
 		crashedInto = null;
-		colour = ColourUtil.getBrightColor();
 		addTrailPoint();
 		
+		if ( newPlayer )
+			colour = generateBikeColour();
+		
 		LOG.info("Bike " + pid + " initialised");		
+	}
+	
+	private Color generateBikeColour() 
+	{
+		String[] colours = {
+			"#FF0099",
+			"#B4FF69",
+			"#69B4FF",
+			"#FFB469",
+			"#69FFB4",
+			"#F3F315"
+		};		
+        String colour = colours[random.nextInt(colours.length)];		
+        return Color.decode(colour);		
 	}
 
 	public void updatePosition() {

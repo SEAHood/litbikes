@@ -21,8 +21,6 @@ import com.litbikes.util.Vector;
 public class GameEngine {
 	private static Logger LOG = Log.getLogger(GameEngine.class);
 	private static final int GAME_TICK_MS = 30;
-	private static final int GAME_WIDTH = 600;
-	private static final int GAME_HEIGHT = 600;
 	
 	private GameEventListener eventListener;
 	private int pidGen = 0;
@@ -32,8 +30,8 @@ public class GameEngine {
 	private final Arena arena;
 	private final ScoreKeeper score;
 	
-	public GameEngine() {
-		Vector arenaDim = new Vector(GAME_WIDTH, GAME_HEIGHT);
+	public GameEngine(int gameWidth, int gameHeight) {
+		Vector arenaDim = new Vector(gameWidth, gameHeight);
 		arena = new Arena(arenaDim);
 		bikes = new ArrayList<>();
 		score = new ScoreKeeper();
@@ -53,7 +51,7 @@ public class GameEngine {
 		int pid = this.pidGen++;
 		LOG.info("Creating new player with pid " + pid);
 		Bike newBike = new Bike(pid);
-		newBike.init();
+		newBike.init(true);
 		bikes.add( newBike );
 		return newBike;
 	}
@@ -101,7 +99,7 @@ public class GameEngine {
 	public void requestRespawn(int pid) {
 		Bike bike = bikes.stream().filter(b -> b.getPid() == pid).findFirst().get();
 		if ( bike != null && bike.isCrashed() ) {
-			bike.init();
+			bike.init(false);
 			eventListener.playerSpawned(pid);
 		}		
 	}

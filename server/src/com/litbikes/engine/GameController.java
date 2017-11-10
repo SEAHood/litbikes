@@ -39,10 +39,12 @@ public class GameController implements GameEventListener {
 	
 	private final static String C_REGISTERED = "registered";
 	
-	
-	public GameController( SocketIOServer _ioServer ) {
+	private int maxBots;
+		
+	public GameController( SocketIOServer _ioServer, int _maxBots, int gameWidth, int gameHeight ) {
 		ioServer = _ioServer;
-		game = new GameEngine();
+		maxBots = _maxBots;
+		game = new GameEngine(gameWidth, gameHeight);
 		sessionPids = new HashMap<>();
 		botController = new BotController(this);
 	}
@@ -50,7 +52,7 @@ public class GameController implements GameEventListener {
 	public void start() {
 		setupGameListeners();
 		game.start();
-		botController.deployBots(25);
+		botController.deployBots(maxBots);
 	}
 
 	
@@ -150,11 +152,7 @@ public class GameController implements GameEventListener {
     	if ( clientPid == null ) 
     		return; // Client doesn't exist - what should we do here?
 		
-		long startTime = System.nanoTime();
     	if ( game.handleClientUpdate(updateDto) ) {
-    		long endTime = System.nanoTime();    		
-    		long duration = (endTime - startTime);  //divide by 1000000 to get milliseconds.
-    		LOG.info( "Handled client update in " + duration + " nanoseconds" );
     		broadcastWorldUpdate();
     	}		
 	}
