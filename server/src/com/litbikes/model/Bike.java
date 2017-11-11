@@ -73,12 +73,23 @@ public class Bike implements ICollidable {
 	private Color generateBikeColour() 
 	{
 		String[] colours = {
-			"#FF0099",
-			"#B4FF69",
-			"#69B4FF",
-			"#FFB469",
-			"#69FFB4",
-			"#F3F315"
+			"#ff0099",
+			"#b4ff69",
+			"#69b4ff",
+			"#ffb469",
+			"#69ffb4",
+			"#f3f315",
+			"#f1c40f",
+			"#e74c3c",
+			"#8e44ad",
+			"#3498db",
+			"#2ecc71",
+			"#9b59b6",
+			"#27ae60",
+			"#1abc9c",
+			"#2980b9",
+			"#d35400",
+			"#f39c12"
 		};		
         String colour = colours[random.nextInt(colours.length)];		
         return Color.decode(colour);		

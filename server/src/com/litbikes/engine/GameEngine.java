@@ -61,6 +61,7 @@ public class GameEngine {
 		newBike.setName(name != null ? name : "Player " + pid);
 		newBike.init(getSpawnLocation(), true);
 		bikes.add( newBike );
+		score.grantScore(pid, name, 0);
 		return newBike;
 	}
 	
