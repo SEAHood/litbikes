@@ -23,6 +23,7 @@ module Dto {
         bike : BikeDto;
         arena : ArenaDto;
         world : WorldUpdateDto;
+        scores : ScoreDto[];
     }
 
     export interface ArenaDto {
@@ -47,6 +48,12 @@ module Dto {
         sourceColour: string; // includes %A% alpha
         message: string;
         isSystemMessage: boolean;
+    }
+
+    export interface ScoreDto {
+        pid: number;
+        name: string;
+        score: number;
     }
 
     export interface GameSettingsDto {

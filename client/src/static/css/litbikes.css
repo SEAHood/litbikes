@@ -63,13 +63,41 @@ input:focus, textarea:focus {
 
 #game-container canvas { margin: 0 auto; }
 
-#chat-container {
+#info-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
     font-family: 'Monofur', Times, serif;
     color: white;
+    background-color: #333333;
+}
+
+#score-container {
+    width: 30%;
+
+    /* blue */
+    border: 1px solid rgba(125, 249, 255, 0.7);
+    -webkit-box-shadow: 0 0 0 1px rgba(125, 249, 255, 0.5);
+    -moz-box-shadow: 0 0 0 1px rgba(125, 249, 255, 0.5);
+    box-shadow: 0 0 0 1px rgba(125, 249, 255, 0.5);
+
+    /* grey */
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    -webkit-box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+    -moz-box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+#score ul {
+    list-style-type: none;
+    padding: 5px 10px;
+}
+
+#chat-container {
     display: flex;
     flex-direction: column; /* put this if you want to stack elements vertically */
-    width: 100%;
-    height: 150px;
+    width: 70%;
+    height: 175px;
 
     /* blue */
     border: 1px solid rgba(125, 249, 255, 0.7);
@@ -132,8 +160,7 @@ input:focus, textarea:focus {
 
 #chat-log {
     width: 100%;
-    height: 125px;
-    background-color:#333333;
+    height: 150px;
     resize: none;
     overflow-y: scroll;
 }

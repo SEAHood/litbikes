@@ -13,9 +13,11 @@ import org.eclipse.jetty.util.log.Logger;
 
 import com.litbikes.dto.BikeDto;
 import com.litbikes.dto.ClientUpdateDto;
+import com.litbikes.dto.ScoreDto;
 import com.litbikes.dto.ServerWorldDto;
 import com.litbikes.model.Arena;
 import com.litbikes.model.Bike;
+import com.litbikes.model.ICollidable;
 import com.litbikes.model.Wall;
 import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
@@ -65,6 +67,7 @@ public class GameEngine {
 	public void dropPlayer(int pid) {
 		Bike bike = bikes.stream().filter(b -> b.getPid() == pid).findFirst().get();
 		bikes.remove(bike);
+		score.removeScore(pid);
 		LOG.info("Dropped player " + pid);
 	}
 	
@@ -113,6 +116,10 @@ public class GameEngine {
 	private Vector getSpawnLocation() {
 		return new Vector(NumberUtil.randInt(20, gameWidth - 20), NumberUtil.randInt(20, gameHeight - 20));
 	}
+	
+	public List<ScoreDto> getScores() {
+		return score.getScores();
+	}
 
 	int getGameTickMs() {
 		return GAME_TICK_MS;
@@ -160,9 +167,11 @@ public class GameEngine {
 						bike.setSpectating(true);
 						eventListener.playerCrashed(bike);
 						if ( bike.getCrashedInto() != null ) {
-							Integer crashedIntoPid = bike.getCrashedInto().getId();
-							if ( crashedIntoPid != bike.getPid() ) 
-								score.grantScore(1, crashedIntoPid);
+							ICollidable crashedInto = bike.getCrashedInto();
+							if ( crashedInto.getId() != bike.getPid() ) {
+								score.grantScore(crashedInto.getId(), crashedInto.getName(), 1);
+								eventListener.scoreUpdated(score.getScores());
+							}
 						}
 					}	
 		    	}

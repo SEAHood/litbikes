@@ -18,7 +18,7 @@ public class Launcher {
 		int gameWidth = 600;
 		int gameHeight = 600;
 
-		if ( params.get("p") != null ) // bots
+		if ( params.get("p") != null ) // port
 			port = Integer.parseInt( params.get("p").get(0) );
 		
 		if ( params.get("b") != null ) // bots

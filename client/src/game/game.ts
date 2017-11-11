@@ -11,6 +11,7 @@ module Game {
     import RegistrationDto = Dto.RegistrationDto;
     import NumberUtil = Util.NumberUtil;
     import ChatMessageDto = Dto.ChatMessageDto;
+    import ScoreDto = Dto.ScoreDto;
     export class Game {
         private player : Bike;
         private host = 'http://' + window.location.hostname + ':9092';
@@ -51,6 +52,10 @@ module Game {
                 if ( this.gameStarted ) {
                     this.processWorldUpdate(data);
                 }
+            });
+
+            this.socket.on('score-update', (data: ScoreDto[]) => {
+                this.updateScores(data);
             });
 
             this.socket.on('chat-message', ( data : ChatMessageDto ) => {
@@ -160,7 +165,8 @@ module Game {
             this.player = new Bike(data.bike, true);
             this.arena = new Arena(data.world.arena);
             this.gameTickMs = data.gameSettings.gameTickMs;
-
+            
+            this.updateScores(data.scores);
             this.processWorldUpdate(data.world);
 
             this.p5Instance = new p5(this.sketch(), 'game-container');
@@ -199,6 +205,32 @@ module Game {
                     }
                 }
             });
+        }
+
+        private updateScores(scores: ScoreDto[]) {            
+            scores = _.sortBy(scores, x => x.score).reverse();
+            let topFive = _.first(scores, 5);
+            $('#score ul').empty();
+            let playerInTopFive = false;
+            topFive.forEach((score: ScoreDto, i: number) => {
+                let isPlayer = score.pid == this.player.getPid();
+                playerInTopFive = isPlayer || playerInTopFive;
+                let li = isPlayer ? "<li style='color:yellow'>" : "<li>";
+                let position = "#" + (i + 1);
+                let scoreElement = li + position + ": " + score.name + " - " + score.score + "</li>";
+                $('#score ul').append(scoreElement);
+            });
+
+            if (!playerInTopFive) {
+                let playerScore = scores.filter(x => x.pid == this.player.getPid())[0];
+                if (!playerScore) {
+                    return;
+                }
+                let li = "<li style='color:yellow'>";
+                let position = "#" + (scores.indexOf(playerScore) + 1);
+                let scoreElement = li + position + ": " + playerScore.name + " - " + playerScore.score + "</li>";
+                $('#score ul').append(scoreElement);
+            }
         }
 
         private sketch() {

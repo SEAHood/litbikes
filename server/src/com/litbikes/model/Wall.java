@@ -5,6 +5,6 @@ public class Wall implements ICollidable {
 		return -1;
 	}
 	public String getName() {
-		return "the wall";
+		return "The Wall";
 	}
 }

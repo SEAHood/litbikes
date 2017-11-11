@@ -1,37 +1,59 @@
 package com.litbikes.engine;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+
+import com.litbikes.dto.ScoreDto;
 
 public class ScoreKeeper {
-	
-	private final Map<Integer, Integer> scoreCard;
+	private final List<ScoreDto> scores;
 	
 	public ScoreKeeper() {
-		scoreCard = new HashMap<>();
+		scores = new ArrayList<>();
 	}
 	
-	public int grantScore( int score, int pid ) {
-		int currentScore = scoreCard.get(pid) != null ? scoreCard.get(pid) : 0;
-		int newScore = currentScore + score;
-		scoreCard.put(pid, newScore);
-		return newScore;
-	}
-	
-	public int revokeScore( int score, int pid ) {
-		int currentScore = scoreCard.get(pid) != null ? scoreCard.get(pid) : 0;
-		int newScore = Math.max(currentScore - score, 0);
-		scoreCard.put(pid, newScore);
-		return newScore;
+	public void grantScore( int pid, String name, int score ) {
+		ScoreDto currentScore;
+		try {
+			currentScore = scores.stream().filter(x -> x.pid == pid).findFirst().get();
+		} catch (NoSuchElementException ex) {
+			currentScore = new ScoreDto(pid, name, 0);
+			scores.add(currentScore);
+		}
+		
+		ScoreDto newScore = new ScoreDto(pid, name, currentScore.score + score);
+		scores.set(scores.indexOf(currentScore), newScore);
 	}
 	
 	public int getScore( int pid ) {
-		Integer score = scoreCard.get(pid);
-		return score != null ? score : 0;
+		ScoreDto score;
+		try {
+			score = scores.stream().filter(x -> x.pid == pid).findFirst().get();
+		} catch (NoSuchElementException ex) {
+			return 0;
+		}
+		return score != null ? score.score : 0;
+	}
+	
+	public void removeScore(int pid) {
+		ScoreDto score;
+		try {
+			score = scores.stream().filter(x -> x.pid == pid).findFirst().get();
+		} catch (NoSuchElementException ex) {
+			return;
+		}
+		scores.remove(score);
+	}
+	
+	public List<ScoreDto> getScores() {
+		return scores;
 	}
 	
 	public void reset() {
-		scoreCard.clear();
+		scores.clear();
 	}
 	
 }

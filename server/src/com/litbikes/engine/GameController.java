@@ -2,6 +2,7 @@ package com.litbikes.engine;
 
 import java.awt.Color;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -22,11 +23,13 @@ import com.litbikes.dto.ClientRegistrationDto;
 import com.litbikes.dto.ClientUpdateDto;
 import com.litbikes.dto.GameSettingsDto;
 import com.litbikes.dto.RegistrationDto;
+import com.litbikes.dto.ScoreDto;
 import com.litbikes.model.Bike;
 
 interface GameEventListener {
 	void playerCrashed(Bike bike);
 	void playerSpawned(int pid);
+	void scoreUpdated(List<ScoreDto> scores);
 	void gameStarted();
 }
 
@@ -85,6 +88,10 @@ public class GameController implements GameEventListener {
 	public void playerSpawned( int pid ) {
 		broadcastWorldUpdate();
 	}
+
+	public void scoreUpdated(List<ScoreDto> scores) {
+		broadcastData("score-update", scores);
+	}
 	// END GAME EVENTS
 	
 	public void registerClient(SocketIOClient client, ClientRegistrationDto registrationDto) {
@@ -100,6 +107,7 @@ public class GameController implements GameEventListener {
 		dto.bike = bike.getDto();
 		dto.gameSettings = gameSettings;		
 		dto.world = game.getWorldDto();
+		dto.scores = game.getScores();
 		
 		client.sendEvent(C_REGISTERED, dto);
 	}
