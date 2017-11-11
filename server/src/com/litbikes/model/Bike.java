@@ -14,10 +14,11 @@ import com.litbikes.dto.BikeDto;
 import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
 
-public class Bike {
+public class Bike implements ICollidable {
 	private static Logger LOG = Log.getLogger(Bike.class);
 	
 	private int pid;
+	private String name;
 	private Vector pos;
 	private Vector spd;
 	private double spdMag = 1.5;
@@ -26,17 +27,17 @@ public class Bike {
 	private boolean spectating;
 	private Vector startPos;
 	private Color colour;
-	private Integer crashedInto; // pid of bike trail crashed into
+	private ICollidable crashedInto;
 	private Random random = new Random();
 	
 	public Bike(int pid) {
 		this.pid = pid;
+		name = "Unknown";
 	}
 
-	public void init(boolean newPlayer) {
-		Vector position = new Vector(NumberUtil.randInt(20, 480), NumberUtil.randInt(20, 480));
-		pos = position;
-		startPos = position;
+	public void init(Vector pos, boolean newPlayer) {
+		this.pos = pos;
+		startPos = pos;
 
 		int dir = NumberUtil.randInt(1, 4);
 		switch (dir) {
@@ -83,10 +84,10 @@ public class Bike {
         return Color.decode(colour);		
 	}
 
-	public void updatePosition() {
-		if ( !crashed ) {
-	        double xDiff = spd.x * spdMag;
-	        double yDiff = spd.y * spdMag;
+	public void updatePosition(double speedModifier) {
+		if ( !crashed ) {			
+	        double xDiff = spd.x * spdMag * speedModifier;
+	        double yDiff = spd.y * spdMag * speedModifier;
 			pos.add(new Vector(xDiff, yDiff));
 		}
 	}
@@ -120,6 +121,7 @@ public class Bike {
 	public BikeDto getDto() {
 		BikeDto dto = new BikeDto();
 		dto.pid = pid;
+		dto.name = name;
 		dto.pos = new Vector(pos.x, pos.y);
 		dto.spd = new Vector(spd.x, spd.y);
 		dto.spdMag = spdMag;
@@ -127,7 +129,8 @@ public class Bike {
                 .map(tp -> tp.getDto())
                 .collect(Collectors.toList());
 		dto.crashed = crashed;
-		dto.crashedInto = crashedInto;
+		dto.crashedInto = crashedInto != null ? crashedInto.getId() : null;
+		dto.crashedIntoName = crashedInto != null ? crashedInto.getName() : null;
 		dto.spectating = spectating;
 		dto.colour = String.format("rgba(%s,%s,%s,%%A%%)", colour.getRed(), colour.getGreen(), colour.getBlue());
 		return dto;
@@ -136,9 +139,18 @@ public class Bike {
 	public int getPid() {
 		return pid;
 	}
-
-	public void setPid(int pid) {
-		this.pid = pid;
+	
+	@Override
+	public int getId() {
+		return pid;
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public Vector getPos() {
@@ -210,11 +222,17 @@ public class Bike {
 	}
 
 
-	public Integer getCrashedInto() {
+	public ICollidable getCrashedInto() {
 		return crashedInto;
 	}
+	
+	public boolean crashedIntoSelf() {
+		if (crashedInto == null)
+			return false;
+		return crashedInto.getId() == pid;
+	}
 
-	public void setCrashedInto(int crashedInto) {
+	public void setCrashedInto(ICollidable crashedInto) {
 		this.crashedInto = crashedInto;
 	}
 	

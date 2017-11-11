@@ -16,11 +16,13 @@ import com.litbikes.dto.ClientUpdateDto;
 import com.litbikes.dto.ServerWorldDto;
 import com.litbikes.model.Arena;
 import com.litbikes.model.Bike;
+import com.litbikes.model.Wall;
+import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
 
 public class GameEngine {
 	private static Logger LOG = Log.getLogger(GameEngine.class);
-	private static final int GAME_TICK_MS = 30;
+	private static final int GAME_TICK_MS = 25;
 	
 	private GameEventListener eventListener;
 	private int pidGen = 0;
@@ -29,12 +31,17 @@ public class GameEngine {
 	private final List<Bike> bikes;
 	private final Arena arena;
 	private final ScoreKeeper score;
+
+	private final int gameWidth;
+	private final int gameHeight;
 	
 	public GameEngine(int gameWidth, int gameHeight) {
 		Vector arenaDim = new Vector(gameWidth, gameHeight);
 		arena = new Arena(arenaDim);
 		bikes = new ArrayList<>();
 		score = new ScoreKeeper();
+		this.gameWidth = gameWidth;
+		this.gameHeight = gameHeight;
 	}
 	
 	public void start() {
@@ -45,13 +52,12 @@ public class GameEngine {
 		eventListener.gameStarted();
 	}
 	
-	
-	
-	public Bike newPlayer() {		
+	public Bike newPlayer(String name) {
 		int pid = this.pidGen++;
 		LOG.info("Creating new player with pid " + pid);
 		Bike newBike = new Bike(pid);
-		newBike.init(true);
+		newBike.setName(name != null ? name : "Player " + pid);
+		newBike.init(getSpawnLocation(), true);
 		bikes.add( newBike );
 		return newBike;
 	}
@@ -99,9 +105,13 @@ public class GameEngine {
 	public void requestRespawn(int pid) {
 		Bike bike = bikes.stream().filter(b -> b.getPid() == pid).findFirst().get();
 		if ( bike != null && bike.isCrashed() ) {
-			bike.init(false);
+			bike.init(getSpawnLocation(), false);
 			eventListener.playerSpawned(pid);
 		}		
+	}
+	
+	private Vector getSpawnLocation() {
+		return new Vector(NumberUtil.randInt(20, gameWidth - 20), NumberUtil.randInt(20, gameHeight - 20));
 	}
 
 	int getGameTickMs() {
@@ -112,48 +122,57 @@ public class GameEngine {
 		
 		long tim = System.currentTimeMillis();
 		
-	    public void run() {
-	    	//Increment tick count first
-	    	gameTick++;
-
-			long cTim = System.currentTimeMillis();
-			if ( cTim - tim > 1000 )
-			{
-				//LOG.info(bikes.get(0).toString());
-				tim = cTim;
-			}
-	    	
-	    	List<Bike> activeBikes = bikes.stream().filter(b -> b.isActive()).collect(Collectors.toList());
-	    	
-	    	for ( Bike bike : activeBikes ) {
-	    		bike.updatePosition();
-				boolean collided = false;
-
-				for ( Bike b : activeBikes ) {
-					boolean isSelf = b.getPid() == bike.getPid();
-					collided = collided || bike.checkCollision( b.getTrail(!isSelf), 1 );
-					if ( collided ) {
-						bike.setCrashedInto(b.getPid());
-						break;
+		public void run() {
+			try {
+		    	//Increment tick count first
+		    	gameTick++;
+	
+				long cTim = System.currentTimeMillis();
+				if ( cTim - tim > 1000 )
+				{
+					//LOG.info(bikes.get(0).toString());
+					tim = cTim;
+				}
+		    	
+		    	List<Bike> activeBikes = bikes.stream().filter(b -> b.isActive()).collect(Collectors.toList());
+	
+		    	for ( Bike bike : activeBikes ) {
+		    		
+		    		bike.updatePosition(1);
+					boolean collided = false;
+	
+					for ( Bike b : activeBikes ) {
+						boolean isSelf = b.getPid() == bike.getPid();
+						collided = collided || bike.checkCollision( b.getTrail(!isSelf), 1 );
+						if ( collided ) {
+							bike.setCrashedInto(b);
+							break;
+						}
 					}
-				}
-				
-				if ( !collided ) {
-					collided = arena.checkCollision(bike, 1);
-				}
-
-				if ( collided ) {
-					bike.crash();
-					bike.setSpectating(true);
-					eventListener.playerCrashed(bike);
-					Integer crashedInto = bike.getCrashedInto();
-					if ( crashedInto != null && crashedInto != bike.getPid() ) 
-						score.grantScore(1, bike.getCrashedInto());
-				}				
-	    	}
+					
+					if ( arena.checkCollision(bike, 1) ) {
+						collided = true;
+						bike.setCrashedInto(new Wall());						
+					}
+	
+					if ( collided ) {
+						bike.crash();
+						bike.setSpectating(true);
+						eventListener.playerCrashed(bike);
+						if ( bike.getCrashedInto() != null ) {
+							Integer crashedIntoPid = bike.getCrashedInto().getId();
+							if ( crashedIntoPid != bike.getPid() ) 
+								score.grantScore(1, crashedIntoPid);
+						}
+					}	
+		    	}
+			} catch (Exception e) {
+				e.printStackTrace();
+				LOG.info(e.getMessage());
+			}
 	    }
 	}
-
+	
 	public Arena getArena() {
 		return arena;
 	}

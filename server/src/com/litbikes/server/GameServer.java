@@ -9,6 +9,7 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
+import com.litbikes.dto.ClientRegistrationDto;
 import com.litbikes.dto.ClientUpdateDto;
 import com.litbikes.engine.GameController;
 
@@ -44,11 +45,11 @@ public class GameServer {
 	}
 	
 	public void setupSocketListeners() {
-		ioServer.addEventListener(C_REGISTER, String.class, new ClientEventListener<String>() {
+		ioServer.addEventListener(C_REGISTER, ClientRegistrationDto.class, new ClientEventListener<ClientRegistrationDto>() {
             @Override
-            public void onData(final SocketIOClient client, String data, final AckRequest ackRequest) {
-            	super.onData(client, data, ackRequest);
-            	gameController.clientRegisterEvent(client);
+            public void onData(final SocketIOClient client, ClientRegistrationDto registrationDto, final AckRequest ackRequest) {
+            	super.onData(client, registrationDto, ackRequest);
+            	gameController.clientRegisterEvent(client, registrationDto);
             }
         });
 
@@ -80,7 +81,8 @@ public class GameServer {
             @Override
             public void onData(final SocketIOClient client, ClientUpdateDto updateDto, final AckRequest ackRequest) {
             	super.onData(client, updateDto, ackRequest);
-            	gameController.clientUpdateEvent(client, updateDto);
+            	if (updateDto != null)
+            		gameController.clientUpdateEvent(client, updateDto);
             }
         });
 

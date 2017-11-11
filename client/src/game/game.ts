@@ -7,6 +7,7 @@ module Game {
     import BikeDto = Dto.BikeDto;
     import Vector = Util.Vector;
     import ClientUpdateDto = Dto.ClientUpdateDto;
+    import ClientRegistrationDto = Dto.ClientRegistrationDto;
     import RegistrationDto = Dto.RegistrationDto;
     import NumberUtil = Util.NumberUtil;
     import ChatMessageDto = Dto.ChatMessageDto;
@@ -143,7 +144,11 @@ module Game {
                 }
             });
 
-            this.socket.emit('register');
+
+            let registrationDto : ClientRegistrationDto = {
+                name : "Johnson"
+            }
+            this.socket.emit('register', registrationDto);
         }
 
 
@@ -160,6 +165,9 @@ module Game {
 
             this.p5Instance = new p5(this.sketch(), 'game-container');
             this.gameStarted = true;
+            
+            $('#game').width(this.arena.dimensions.x);
+            $('#game').height(this.arena.dimensions.y);
 
             setInterval(() => {
                 this.gameTick++;
@@ -244,20 +252,14 @@ module Game {
 
 
                 if ( this.player.isCrashed() ) {
-                    let crashedInto = this.player.getCrashedInto();
-                    let crashedIntoStr = "";
-                    if ( crashedInto == null ) {
-                        crashedIntoStr = "wall"; // what else?
-                    } else {
-                        crashedIntoStr = this.player.getCrashedInto().toString();
-                    }
+                    let crashedInto = this.player.getCrashedIntoName();
                     p.fill('rgba(125,249,255,0.50)');
                     p.textSize(29);
-                    p.text("Killed by " + crashedIntoStr,
+                    p.text("Killed by " + crashedInto,
                         halfWidth + NumberUtil.randInt(0, 2), halfHeight - 30 + NumberUtil.randInt(0, 2));
                     p.fill('rgba(255,255,255,0.80)');
                     p.textSize(28);
-                    p.text("Killed by " + crashedIntoStr,
+                    p.text("Killed by " + crashedInto,
                         halfWidth, halfHeight - 30);
                 }
 

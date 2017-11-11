@@ -3,6 +3,7 @@ package com.litbikes.engine;
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -17,6 +18,7 @@ import com.litbikes.ai.Bot;
 import com.litbikes.ai.BotController;
 import com.litbikes.ai.BotIOClient;
 import com.litbikes.dto.ChatMessageDto;
+import com.litbikes.dto.ClientRegistrationDto;
 import com.litbikes.dto.ClientUpdateDto;
 import com.litbikes.dto.GameSettingsDto;
 import com.litbikes.dto.RegistrationDto;
@@ -40,6 +42,7 @@ public class GameController implements GameEventListener {
 	private final static String C_REGISTERED = "registered";
 	
 	private int maxBots;
+	private Random random = new Random();
 		
 	public GameController( SocketIOServer _ioServer, int _maxBots, int gameWidth, int gameHeight ) {
 		ioServer = _ioServer;
@@ -71,7 +74,11 @@ public class GameController implements GameEventListener {
 	}
 
 	public void playerCrashed( Bike bike ) {
-		LOG.info("Bike " + bike.getPid() + " crashed into " + bike.getCrashedInto());
+		String crashedInto = bike.crashedIntoSelf() ? "their own trail!" : bike.getCrashedInto().getName();
+    	String playerCrashedMessage = bike.getName() + " crashed into " + crashedInto;
+		LOG.info(playerCrashedMessage);
+    	ChatMessageDto dto = new ChatMessageDto(null, null, playerCrashedMessage, true);
+    	broadcastData("chat-message", dto);
 		broadcastWorldUpdate();
 	}
 	
@@ -80,8 +87,9 @@ public class GameController implements GameEventListener {
 	}
 	// END GAME EVENTS
 	
-	public void registerClient( SocketIOClient client ) {
-		Bike bike = game.newPlayer();
+	public void registerClient(SocketIOClient client, ClientRegistrationDto registrationDto) {
+		
+		Bike bike = game.newPlayer(registrationDto.name);
 		
 		sessionPids.put(client.getSessionId(), bike.getPid());
 		
@@ -115,7 +123,8 @@ public class GameController implements GameEventListener {
 	}
 
 	public Bot createBot() {
-		Bike bike = game.newPlayer();
+		String botName = "BOT#" + String.format("%04d", random.nextInt(10000));
+		Bike bike = game.newPlayer(botName);
 		Bot bot = new Bot(bike, game.getBikes(), game.getArena());
 		sessionPids.put(bot.getSessionId(), bot.getPid());
 		return bot;
@@ -140,9 +149,10 @@ public class GameController implements GameEventListener {
     	if ( clientPid == null ) 
     		return; // Client doesn't exist - what should we do here?
     	
-    	Color colour = game.getBikes().stream().filter(b -> b.getPid() == clientPid).findFirst().get().getColour();
+    	Bike sourceBike = game.getBikes().stream().filter(b -> b.getPid() == clientPid).findFirst().get();    	
+    	Color colour = sourceBike.getColour();
     	String sourceColour = String.format("rgba(%s,%s,%s,%%A%%)", colour.getRed(), colour.getGreen(), colour.getBlue()); // TODO Override tostring on Color
-    	ChatMessageDto dto = new ChatMessageDto(clientPid.toString(), sourceColour, message, false);
+    	ChatMessageDto dto = new ChatMessageDto(sourceBike.getName(), sourceColour, message, false);
 
     	broadcastData("chat-message", dto);		
 	}
@@ -175,11 +185,12 @@ public class GameController implements GameEventListener {
 		client.sendEvent("keep-alive-ack");
 	}
 
-	public void clientRegisterEvent(SocketIOClient client) {
+	public void clientRegisterEvent(SocketIOClient client, ClientRegistrationDto registrationDto) {
     	LOG.info("Received register event");
-    	registerClient(client);
+    	LOG.info(registrationDto.name);
+    	registerClient(client, registrationDto);
     	
-    	String newPlayerMessage = "Player " + sessionPids.get(client.getSessionId()) + " joined!";
+    	String newPlayerMessage = registrationDto.name + " joined!";
     	ChatMessageDto dto = new ChatMessageDto(null, null, newPlayerMessage, true);
     	broadcastData("chat-message", dto);
 	}

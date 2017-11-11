@@ -6,6 +6,7 @@ module Model {
     import ColourUtil = Util.ColourUtil;
     export class Bike {
         private pid: number;
+        private name: string;
         private pos : Vector;
         private spd : Vector;
         private trail: TrailSegment[];
@@ -17,6 +18,7 @@ module Model {
         private spectating: boolean;
         private deathTimestamp: number;
         private crashedInto: number; // pid last crashed into
+        private crashedIntoName: string;
         private score: number;
         private isPlayer: boolean;
 
@@ -30,6 +32,7 @@ module Model {
 
         constructor( bikeDto: BikeDto, isPlayer: boolean ) {
             this.pid = bikeDto.pid;
+            this.name = bikeDto.name;
             this.setPos(new Vector( bikeDto.pos.x, bikeDto.pos.y ));
             this.spd = new Vector( bikeDto.spd.x, bikeDto.spd.y );
             this.crashed = bikeDto.crashed;
@@ -38,6 +41,7 @@ module Model {
             this.spdMag = bikeDto.spdMag;
             this.colour = bikeDto.colour;
             this.crashedInto = bikeDto.crashedInto;
+            this.crashedIntoName = bikeDto.crashedIntoName;
             this.score = bikeDto.score;
             this.isPlayer = isPlayer;
 
@@ -98,6 +102,7 @@ module Model {
 
             this.crashed = dto.crashed;
             this.crashedInto = dto.crashedInto;
+            this.crashedIntoName = dto.crashedIntoName;
             this.spectating = dto.spectating;
             this.score = dto.score;
         }
@@ -128,6 +133,7 @@ module Model {
                         p.fill('rgba(0,0,0,0)');
                         p.strokeWeight(2);
                         p.stroke(255);
+                        p.ellipse(this.pos.x, this.pos.y, 50, 50);
                         p.ellipse(this.pos.x, this.pos.y, 20, 20);
                     }
 
@@ -192,13 +198,15 @@ module Model {
         public getPid() : number {
             return this.pid;
         }
+        public getName() : string {
+            return this.name;
+        }
         public getPos() : Vector {
             return this.pos;
         }
         public setPos( pos : Vector ) {
             this.pos = pos;
         }
-
         public getSpd() : Vector {
             return this.spd;
         }
@@ -211,23 +219,21 @@ module Model {
         public isCrashing() : boolean {
             return this.crashing;
         }
-
         public isRespawning() : boolean {
             return this.respawning;
         }
-
         public getCrashedInto() : number {
             return this.crashedInto;
         }
-
+        public getCrashedIntoName() : string {
+            return this.crashedIntoName;
+        }
         private isVisible() : boolean {
             return !this.spectating || this.crashing
         }
-
         public isSpectating() : boolean {
             return this.spectating;
         }
-
         public canMove() : boolean {
             return !this.isCrashed() && !this.isSpectating();
         }
