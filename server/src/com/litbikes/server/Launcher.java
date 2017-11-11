@@ -13,18 +13,23 @@ public class Launcher {
 		if ( params == null )
 			return;
 
+		int port = 8080;
 		int maxBots = 5;
 		int gameWidth = 600;
 		int gameHeight = 600;
+
+		if ( params.get("p") != null ) // bots
+			port = Integer.parseInt( params.get("p").get(0) );
 		
 		if ( params.get("b") != null ) // bots
 			maxBots = Integer.parseInt( params.get("b").get(0) );
-		
+				
 		if ( params.get("s") != null && params.get("s").size() == 2) { // game size
 			gameWidth = Integer.parseInt( params.get("s").get(0) );
 			gameHeight = Integer.parseInt( params.get("s").get(1) );			
 		}
 		
+		final Integer _port = new Integer(port);
 		final Integer _maxBots = new Integer(maxBots); 
 		final Integer _gameWidth = new Integer(gameWidth); 
 		final Integer _gameHeight = new Integer(gameHeight); 
@@ -40,7 +45,7 @@ public class Launcher {
 		Thread webServerThread = new Thread( new Runnable() {
 			@Override
 			public void run() {
-				WebServer web = new WebServer(8080);
+				WebServer web = new WebServer(_port);
 				web.start();
 			}
 		}, "WebServer");
