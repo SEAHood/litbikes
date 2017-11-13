@@ -11,6 +11,7 @@ module Game {
     import ClientGameJoinDto = Dto.ClientGameJoinDto;
     import HelloDto = Dto.HelloDto;
     import NumberUtil = Util.NumberUtil;
+    import UrlUtil = Util.UrlUtil;
     import ChatMessageDto = Dto.ChatMessageDto;
     import ScoreDto = Dto.ScoreDto;
     export class Game {
@@ -18,7 +19,7 @@ module Game {
         private host = 'http://' + window.location.hostname + ':9092';
         private socket = io.connect(this.host);
         private arena : Arena;
-        private bikes : Bike[] = []; //All bikes other than your own
+        private bikes : Bike[] = [];
         private registered = false;
         private version ="0.1b";
         private gameStarted = false;
@@ -265,30 +266,6 @@ module Game {
         private draw( p : p5 ) {
             this.arena.draw(p);
 
-            if ( this.showDebug ) {
-                p.textFont(this.debugFont);
-                p.fill(255);
-                p.textSize(15);
-                p.textAlign('left', 'top');
-                p.text("LitBikes " + this.version, 10, 10);
-                if ( this.gameJoined ) {
-                    p.text(
-                        "fps: " + p.frameRate().toFixed(2) + "\n" +
-                        "ms: " + this.latency + "ms\n" +
-                        "pid: " + this.player.getPid() + "\n" +
-                        "pos: " + this.player.getPos().x.toFixed(0) + ", " + this.player.getPos().y.toFixed(0) + "\n" +
-                        "spd: "+ this.player.getSpd().x + ", " + this.player.getSpd().y + "\n" +
-                        "crashed: " + (this.player.isCrashed() ? "yes" : "no") + "\n" +
-                        "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
-                        "colour: " + this.player.getColour() + "\n" +
-                        "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n" +
-                        "other bikes: " + this.bikes.length + "\n"
-                    , 10, 30, 300, 500);
-                } else {
-                    p.text("Game not joined", 10, 30, 300, 500);
-                }
-            }
-
             _.each( this.bikes, ( b : Bike ) => {
                 b.draw(p, false);
             });
@@ -339,6 +316,31 @@ module Game {
                 }
             } else {
                 // crap to draw when game not joined
+            }
+            
+            // Debug text
+            if ( this.showDebug ) {
+                p.textFont(this.debugFont);
+                p.fill(255);
+                p.textSize(15);
+                p.textAlign('left', 'top');
+                p.text("LitBikes " + this.version, 10, 10);
+                if ( this.gameJoined ) {
+                    p.text(
+                        "fps: " + p.frameRate().toFixed(2) + "\n" +
+                        "ms: " + this.latency + "ms\n" +
+                        "pid: " + this.player.getPid() + "\n" +
+                        "pos: " + this.player.getPos().x.toFixed(0) + ", " + this.player.getPos().y.toFixed(0) + "\n" +
+                        "spd: "+ this.player.getSpd().x + ", " + this.player.getSpd().y + "\n" +
+                        "crashed: " + (this.player.isCrashed() ? "yes" : "no") + "\n" +
+                        "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
+                        "colour: " + this.player.getColour() + "\n" +
+                        "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n" +
+                        "other bikes: " + (this.bikes.length - 1) + "\n"
+                    , 10, 30, 300, 500);
+                } else {
+                    p.text("Game not joined", 10, 30, 300, 500);
+                }
             }
         }
 
