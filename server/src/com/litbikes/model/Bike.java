@@ -30,9 +30,9 @@ public class Bike implements ICollidable {
 	private ICollidable crashedInto;
 	private Random random = new Random();
 	
-	public Bike(int pid) {
-		this.pid = pid;
-		name = "Unknown";
+	public Bike(int _pid, String _name) {
+		pid = _pid;
+		name = _name;
 	}
 
 	public void init(Vector pos, boolean newPlayer) {

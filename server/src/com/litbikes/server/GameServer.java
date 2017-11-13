@@ -9,7 +9,7 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
-import com.litbikes.dto.ClientRegistrationDto;
+import com.litbikes.dto.ClientGameJoinDto;
 import com.litbikes.dto.ClientUpdateDto;
 import com.litbikes.engine.GameController;
 
@@ -22,7 +22,8 @@ public class GameServer {
 	
 	private final int LATENCY_THROTTLE = 60;
 
-	private final static String C_REGISTER = "register";
+	private final static String C_HELLO = "hello";
+	private final static String C_REQUEST_JOIN_GAME = "request-join-game";
 	private final static String C_UPDATE = "update";
 	private final static String C_REQUEST_WORLD = "request-world";
 	private final static String C_REQUEST_RESPAWN = "request-respawn";
@@ -45,11 +46,19 @@ public class GameServer {
 	}
 	
 	public void setupSocketListeners() {
-		ioServer.addEventListener(C_REGISTER, ClientRegistrationDto.class, new ClientEventListener<ClientRegistrationDto>() {
+		ioServer.addEventListener(C_HELLO, String.class, new ClientEventListener<String>() {
             @Override
-            public void onData(final SocketIOClient client, ClientRegistrationDto registrationDto, final AckRequest ackRequest) {
-            	super.onData(client, registrationDto, ackRequest);
-            	gameController.clientRegisterEvent(client, registrationDto);
+            public void onData(final SocketIOClient client, String data, final AckRequest ackRequest) {
+            	super.onData(client, data, ackRequest);
+            	gameController.clientHelloEvent(client);
+            }
+        });
+		
+		ioServer.addEventListener(C_REQUEST_JOIN_GAME, ClientGameJoinDto.class, new ClientEventListener<ClientGameJoinDto>() {
+            @Override
+            public void onData(final SocketIOClient client, ClientGameJoinDto gameJoinDto, final AckRequest ackRequest) {
+            	super.onData(client, gameJoinDto, ackRequest);
+            	gameController.clientRequestGameJoinEvent(client, gameJoinDto);
             }
         });
 

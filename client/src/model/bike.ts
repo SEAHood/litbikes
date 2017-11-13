@@ -74,7 +74,6 @@ module Model {
         }
 
         public updateFromDto( dto : BikeDto ) {
-
             this.setPos(dto.pos);
 
             this.spd = dto.spd;

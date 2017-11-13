@@ -27,7 +27,6 @@ public class GameEngine {
 	private static final int GAME_TICK_MS = 25;
 	
 	private GameEventListener eventListener;
-	private int pidGen = 0;
 	private long gameTick = 0;
 		
 	private final List<Bike> bikes;
@@ -54,15 +53,13 @@ public class GameEngine {
 		eventListener.gameStarted();
 	}
 	
-	public Bike newPlayer(String name) {
-		int pid = this.pidGen++;
+	public Bike playerJoin(int pid, String name) {
 		LOG.info("Creating new player with pid " + pid);
-		Bike newBike = new Bike(pid);
-		newBike.setName(name != null ? name : "Player " + pid);
-		newBike.init(getSpawnLocation(), true);
-		bikes.add( newBike );
+		Bike bike = new Bike(pid, name);
+		bike.init(getSpawnLocation(), true);
+		bikes.add( bike );
 		score.grantScore(pid, name, 0);
-		return newBike;
+		return bike;
 	}
 	
 	public void dropPlayer(int pid) {

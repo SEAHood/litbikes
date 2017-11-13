@@ -7,8 +7,9 @@ module Game {
     import BikeDto = Dto.BikeDto;
     import Vector = Util.Vector;
     import ClientUpdateDto = Dto.ClientUpdateDto;
-    import ClientRegistrationDto = Dto.ClientRegistrationDto;
-    import RegistrationDto = Dto.RegistrationDto;
+    import GameJoinDto = Dto.GameJoinDto;
+    import ClientGameJoinDto = Dto.ClientGameJoinDto;
+    import HelloDto = Dto.HelloDto;
     import NumberUtil = Util.NumberUtil;
     import ChatMessageDto = Dto.ChatMessageDto;
     import ScoreDto = Dto.ScoreDto;
@@ -21,6 +22,7 @@ module Game {
         private registered = false;
         private version ="0.1b";
         private gameStarted = false;
+        private gameJoined = false;
         private gameTickMs : number;
         private p5Instance : p5;
         private showDebug = false;
@@ -34,8 +36,12 @@ module Game {
         private debugFont;
 
         constructor() {
-            this.socket.on('registered', ( data : RegistrationDto ) => {
-                this.startGame(data);
+            this.socket.on('hello', ( data : HelloDto ) => {
+                this.initGame(data);
+            });
+
+            this.socket.on('joined-game', (data : GameJoinDto ) => {
+                this.joinGame(data);
             });
 
             setInterval(() => {
@@ -78,7 +84,6 @@ module Game {
             });
 
             $(document).on('keydown', ev => {
-
                 if ( $(ev.target).is('input') ) {
                     // Typing in chat, don't process as game keys
                     if ( ev.which === 13 ) { // enter
@@ -86,10 +91,17 @@ module Game {
                         this.socket.emit('chat-message', message);
                         $('#chat-input').val('');
                     }
-
                     return;
                 }
-
+                
+                // TODO Remove /////////////////////////////////////////
+                if (ev.which === 74) {                        
+                    let joinObj : ClientGameJoinDto = {
+                        name: "Test"
+                    };
+                    this.socket.emit('request-join-game', joinObj);
+                }
+                // TODO Remove /////////////////////////////////////////
 
                 if ( this.player ) {
                     enum Keys {
@@ -109,6 +121,7 @@ module Game {
                     let keyCode = ev.which;
                     let newVector = null;
                     let eventMatched = true;
+                    console.log(keyCode);
 
                     if (keyCode === Keys.UP_ARROW || keyCode === Keys.W) {
                         newVector = new Vector(0, -1);
@@ -148,25 +161,30 @@ module Game {
                     }
                 }
             });
+            
+            $(document).ready(() => {                
+                $('#info-container').hide();
+            });
 
-
-            let registrationDto : ClientRegistrationDto = {
-                name : "Johnson"
-            }
-            this.socket.emit('register', registrationDto);
+            this.socket.emit('hello');
         }
 
+        private joinGame( data : GameJoinDto ) {
+            $('#info-container').slideDown();
+            console.log(data);
+            this.player = new Bike(data.bike, true);
+            this.updateScores(data.scores);
+            this.gameJoined = true;
+        }
 
-        private startGame( data : RegistrationDto ) {
+        private initGame( data : HelloDto ) {
             if ( !data.gameSettings.gameTickMs ) {
                 console.error("Cannot start game - game tick interval is not defined");
             }
             this.gameTick = data.world.gameTick;
-            this.player = new Bike(data.bike, true);
             this.arena = new Arena(data.world.arena);
             this.gameTickMs = data.gameSettings.gameTickMs;
             
-            this.updateScores(data.scores);
             this.processWorldUpdate(data.world);
 
             this.p5Instance = new p5(this.sketch(), 'game-container');
@@ -177,7 +195,9 @@ module Game {
 
             setInterval(() => {
                 this.gameTick++;
-                this.player.update();
+                if (this.gameJoined) {
+                    this.player.update();
+                }
                 _.each( this.bikes, ( b : Bike ) => {
                     b.update();
                 });
@@ -185,6 +205,7 @@ module Game {
         }
 
         private processWorldUpdate( data : WorldUpdateDto ) {
+            console.log("Processing world update");
             let updatedBikes = _.pluck(data.bikes, 'pid');
             let existingBikes = _.pluck(this.bikes, 'pid');
             _.each( existingBikes, ( pid : number ) => {
@@ -194,7 +215,8 @@ module Game {
             });
 
             _.each( data.bikes, ( b : BikeDto ) => {
-                if ( b.pid === this.player.getPid() && this.player ) {
+                if ( this.gameJoined && b.pid === this.player.getPid() && this.player ) {
+                    console.log("Updating player from dto");
                     this.player.updateFromDto(b);
                 } else {
                     let bike = _.find(this.bikes, (bike:Bike) => bike.getPid() === b.pid);
@@ -213,7 +235,7 @@ module Game {
             $('#score ul').empty();
             let playerInTopFive = false;
             topFive.forEach((score: ScoreDto, i: number) => {
-                let isPlayer = score.pid == this.player.getPid();
+                let isPlayer =  this.gameJoined && score.pid == this.player.getPid();
                 playerInTopFive = isPlayer || playerInTopFive;
                 let li = isPlayer ? "<li style='color:yellow'>" : "<li>";
                 let position = "#" + (i + 1);
@@ -221,7 +243,7 @@ module Game {
                 $('#score ul').append(scoreElement);
             });
 
-            if (!playerInTopFive) {
+            if (this.gameJoined && !playerInTopFive) {
                 let playerScore = scores.filter(x => x.pid == this.player.getPid())[0];
                 if (!playerScore) {
                     return;
@@ -249,69 +271,74 @@ module Game {
                 p.textSize(15);
                 p.textAlign('left', 'top');
                 p.text("LitBikes " + this.version, 10, 10);
-                p.text(
-                    "fps: " + p.frameRate().toFixed(2) + "\n" +
-                    "ms: " + this.latency + "ms\n" +
-                    "pid: " + this.player.getPid() + "\n" +
-                    "pos: " + this.player.getPos().x.toFixed(0) + ", " + this.player.getPos().y.toFixed(0) + "\n" +
-                    "spd: "+ this.player.getSpd().x + ", " + this.player.getSpd().y + "\n" +
-                    "crashed: " + (this.player.isCrashed() ? "yes" : "no") + "\n" +
-                    "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
-                    "colour: " + this.player.getColour() + "\n" +
-                    "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n" +
-                    "other bikes: " + this.bikes.length + "\n"
-                , 10, 30, 300, 500);
+                if ( this.gameJoined ) {
+                    p.text(
+                        "fps: " + p.frameRate().toFixed(2) + "\n" +
+                        "ms: " + this.latency + "ms\n" +
+                        "pid: " + this.player.getPid() + "\n" +
+                        "pos: " + this.player.getPos().x.toFixed(0) + ", " + this.player.getPos().y.toFixed(0) + "\n" +
+                        "spd: "+ this.player.getSpd().x + ", " + this.player.getSpd().y + "\n" +
+                        "crashed: " + (this.player.isCrashed() ? "yes" : "no") + "\n" +
+                        "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
+                        "colour: " + this.player.getColour() + "\n" +
+                        "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n" +
+                        "other bikes: " + this.bikes.length + "\n"
+                    , 10, 30, 300, 500);
+                } else {
+                    p.text("Game not joined", 10, 30, 300, 500);
+                }
             }
 
             _.each( this.bikes, ( b : Bike ) => {
                 b.draw(p, false);
             });
 
-            this.player.draw(p, this.player.isRespawning());
+            if (this.gameJoined) {
+                this.player.draw(p, this.player.isRespawning());
 
-            if ( this.player.isCrashed() && this.player.isSpectating() && this.showRespawn ) {
+                if ( this.player.isCrashed() && this.player.isSpectating() && this.showRespawn ) {
 
-                let halfWidth = this.arena.dimensions.x / 2;
-                let halfHeight = this.arena.dimensions.y / 2;
+                    let halfWidth = this.arena.dimensions.x / 2;
+                    let halfHeight = this.arena.dimensions.y / 2;
 
-                p.noStroke();
-                p.fill('rgba(0,0,0,0.6)');
-                p.rect(0, halfHeight - 35, this.arena.dimensions.x, 100);
+                    p.noStroke();
+                    p.fill('rgba(0,0,0,0.6)');
+                    p.rect(0, halfHeight - 35, this.arena.dimensions.x, 100);
 
-                p.textFont(this.mainFont);
-                p.textAlign('center', 'top');
+                    p.textFont(this.mainFont);
+                    p.textAlign('center', 'top');
 
 
 
-                if ( this.player.isCrashed() ) {
-                    let crashedInto = this.player.getCrashedIntoName();
+                    if ( this.player.isCrashed() ) {
+                        let crashedInto = this.player.getCrashedIntoName();
+                        p.fill('rgba(125,249,255,0.50)');
+                        p.textSize(29);
+                        p.text("Killed by " + crashedInto,
+                            halfWidth + NumberUtil.randInt(0, 2), halfHeight - 30 + NumberUtil.randInt(0, 2));
+                        p.fill('rgba(255,255,255,0.80)');
+                        p.textSize(28);
+                        p.text("Killed by " + crashedInto,
+                            halfWidth, halfHeight - 30);
+                    }
+
                     p.fill('rgba(125,249,255,0.50)');
-                    p.textSize(29);
-                    p.text("Killed by " + crashedInto,
-                        halfWidth + NumberUtil.randInt(0, 2), halfHeight - 30 + NumberUtil.randInt(0, 2));
+                    p.textSize(33);
+                    p.text("Press 'R' to respawn",
+                        halfWidth + NumberUtil.randInt(0, 2), halfHeight + NumberUtil.randInt(0, 2));
+
                     p.fill('rgba(255,255,255,0.80)');
-                    p.textSize(28);
-                    p.text("Killed by " + crashedInto,
-                        halfWidth, halfHeight - 30);
+                    p.textSize(32);
+                    p.text("Press 'R' to respawn", halfWidth, halfHeight);
+
+                    p.fill('rgba(0,0,0,0.40)');
+                    p.fill(255);
+                    p.textFont(this.secondaryFont);
+                    p.textSize(15);
+                    p.text("Press 'H' to hide", halfWidth, halfHeight + 45);
                 }
-
-                p.fill('rgba(125,249,255,0.50)');
-                p.textSize(33);
-                p.text("Press 'R' to respawn",
-                    halfWidth + NumberUtil.randInt(0, 2), halfHeight + NumberUtil.randInt(0, 2));
-
-                p.fill('rgba(255,255,255,0.80)');
-                p.textSize(32);
-                p.text("Press 'R' to respawn", halfWidth, halfHeight);
-
-                p.fill('rgba(0,0,0,0.40)');
-                p.fill(255);
-                p.textFont(this.secondaryFont);
-                p.textSize(15);
-                p.text("Press 'H' to hide",
-                    halfWidth, halfHeight + 45);
-
-
+            } else {
+                // crap to draw when game not joined
             }
         }
 

@@ -18,11 +18,15 @@ module Dto {
         score: number;
     }
 
-    export interface RegistrationDto {
+    export interface HelloDto {
         gameSettings : GameSettingsDto;
         bike : BikeDto;
         arena : ArenaDto;
         world : WorldUpdateDto;
+    }
+
+    export interface GameJoinDto {
+        bike : BikeDto;
         scores : ScoreDto[];
     }
 
@@ -59,10 +63,6 @@ module Dto {
     export interface GameSettingsDto {
         gameTickMs : number;
     }
-
-    export interface ClientRegistrationDto {
-        name : string;
-    }
     
     export interface ClientUpdateDto {
         pid : number;
@@ -70,5 +70,9 @@ module Dto {
         ySpd : number;
         xPos : number;
         yPos : number;
+    }
+
+    export interface ClientGameJoinDto {
+        name : string;
     }
 }

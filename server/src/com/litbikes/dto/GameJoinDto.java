@@ -2,9 +2,7 @@ package com.litbikes.dto;
 
 import java.util.List;
 
-public class RegistrationDto {
+public class GameJoinDto {
 	public BikeDto bike;
-	public GameSettingsDto gameSettings;
-	public ServerWorldDto world;
 	public List<ScoreDto> scores;
 }

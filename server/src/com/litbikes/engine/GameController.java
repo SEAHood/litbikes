@@ -19,12 +19,15 @@ import com.litbikes.ai.Bot;
 import com.litbikes.ai.BotController;
 import com.litbikes.ai.BotIOClient;
 import com.litbikes.dto.ChatMessageDto;
-import com.litbikes.dto.ClientRegistrationDto;
+import com.litbikes.dto.ClientGameJoinDto;
 import com.litbikes.dto.ClientUpdateDto;
 import com.litbikes.dto.GameSettingsDto;
-import com.litbikes.dto.RegistrationDto;
+import com.litbikes.dto.HelloDto;
+import com.litbikes.dto.GameJoinDto;
 import com.litbikes.dto.ScoreDto;
 import com.litbikes.model.Bike;
+import com.litbikes.model.IPlayer;
+import com.litbikes.model.Player;
 
 interface GameEventListener {
 	void playerCrashed(Bike bike);
@@ -38,11 +41,13 @@ public class GameController implements GameEventListener {
 
 	private static Logger LOG = Log.getLogger(GameController.class);
 	private final SocketIOServer ioServer;
-	private final Map<UUID, Integer> sessionPids;
+	private final Map<UUID, IPlayer> sessionPlayers;
 	private final GameEngine game;
 	private final BotController botController;
+	private int pidGen = 0;
 	
-	private final static String C_REGISTERED = "registered";
+	private final static String C_HELLO = "hello";
+	private final static String C_JOINED_GAME = "joined-game";
 	
 	private int maxBots;
 	private Random random = new Random();
@@ -51,7 +56,7 @@ public class GameController implements GameEventListener {
 		ioServer = _ioServer;
 		maxBots = _maxBots;
 		game = new GameEngine(gameWidth, gameHeight);
-		sessionPids = new HashMap<>();
+		sessionPlayers = new HashMap<>();
 		botController = new BotController(this);
 	}
 	
@@ -60,7 +65,6 @@ public class GameController implements GameEventListener {
 		game.start();
 		botController.deployBots(maxBots);
 	}
-
 	
 	// START GAME EVENTS
 	private void setupGameListeners() {
@@ -94,22 +98,35 @@ public class GameController implements GameEventListener {
 	}
 	// END GAME EVENTS
 	
-	public void registerClient(SocketIOClient client, ClientRegistrationDto registrationDto) {
-		
-		Bike bike = game.newPlayer(registrationDto.name);
-		
-		sessionPids.put(client.getSessionId(), bike.getPid());
+	public void clientJoiningGame(SocketIOClient client, ClientGameJoinDto gameJoinDto) {		
+		Player player = (Player)sessionPlayers.get(client.getSessionId());
+		player.name = gameJoinDto.name;
+		player.bike = game.playerJoin(player.pid, player.name);		
 		
 		GameSettingsDto gameSettings = new GameSettingsDto();
 		gameSettings.gameTickMs = game.getGameTickMs();
 		
-		RegistrationDto dto = new RegistrationDto();
-		dto.bike = bike.getDto();
-		dto.gameSettings = gameSettings;		
-		dto.world = game.getWorldDto();
+		GameJoinDto dto = new GameJoinDto();
+		dto.bike = player.bike.getDto();
 		dto.scores = game.getScores();
 		
-		client.sendEvent(C_REGISTERED, dto);
+		client.sendEvent(C_JOINED_GAME, dto);
+	}
+	
+	public void clientHello(SocketIOClient client) {
+		int pid = pidGen++;
+		Player player = new Player(pid);
+		
+		sessionPlayers.put(client.getSessionId(), player);
+		
+		GameSettingsDto gameSettings = new GameSettingsDto();
+		gameSettings.gameTickMs = game.getGameTickMs();
+		
+		HelloDto dto = new HelloDto();
+		dto.gameSettings = gameSettings;		
+		dto.world = game.getWorldDto();
+		
+		client.sendEvent(C_HELLO, dto);
 	}
 	
 	public void sendWorldUpdate(SocketIOClient client) {
@@ -132,19 +149,19 @@ public class GameController implements GameEventListener {
 
 	public Bot createBot() {
 		String botName = "BOT#" + String.format("%04d", random.nextInt(10000));
-		Bike bike = game.newPlayer(botName);
+		int pid = pidGen++;
+		Bike bike = game.playerJoin(pid, botName);
 		Bot bot = new Bot(bike, game.getBikes(), game.getArena());
-		sessionPids.put(bot.getSessionId(), bot.getPid());
+		sessionPlayers.put(bot.getSessionId(), bot);
 		return bot;
 	}
 
 	public void clientDisconnectEvent(SocketIOClient client) {
 		try {
-        	Integer clientPid = sessionPids.get(client.getSessionId());            	
-        	if ( clientPid == null ) 
-        		return; // Client doesn't exist - what should we do here?
-        	
-    		game.dropPlayer(clientPid);
+        	IPlayer player = sessionPlayers.get(client.getSessionId());           	
+        	if ( player == null ) 
+        		return; // Client doesn't exist - what should we do here?   	
+    		game.dropPlayer(player.getPid());
 		} catch (Exception e) {
 			
 		}
@@ -153,21 +170,20 @@ public class GameController implements GameEventListener {
 	public void clientChatMessageEvent(SocketIOClient client, String message) {
     	LOG.info("Received chat message");
 
-    	Integer clientPid = sessionPids.get(client.getSessionId());            	
-    	if ( clientPid == null ) 
+    	IPlayer player = sessionPlayers.get(client.getSessionId());            	
+    	if ( player == null ) 
     		return; // Client doesn't exist - what should we do here?
-    	
-    	Bike sourceBike = game.getBikes().stream().filter(b -> b.getPid() == clientPid).findFirst().get();    	
-    	Color colour = sourceBike.getColour();
+    	 	
+    	Color colour = player.getBike().getColour();
     	String sourceColour = String.format("rgba(%s,%s,%s,%%A%%)", colour.getRed(), colour.getGreen(), colour.getBlue()); // TODO Override tostring on Color
-    	ChatMessageDto dto = new ChatMessageDto(sourceBike.getName(), sourceColour, message, false);
+    	ChatMessageDto dto = new ChatMessageDto(player.getName(), sourceColour, message, false);
 
     	broadcastData("chat-message", dto);		
 	}
 
 	public void clientUpdateEvent(SocketIOClient client, ClientUpdateDto updateDto) {
-    	Integer clientPid = sessionPids.get(client.getSessionId());     
-    	if ( clientPid == null ) 
+    	IPlayer player = sessionPlayers.get(client.getSessionId());
+    	if ( player == null ) 
     		return; // Client doesn't exist - what should we do here?
 		
     	if ( game.handleClientUpdate(updateDto) ) {
@@ -176,15 +192,20 @@ public class GameController implements GameEventListener {
 	}
 
 	public void clientRequestRespawnEvent(SocketIOClient client) {
-    	Integer clientPid = sessionPids.get(client.getSessionId());            	
-    	if ( clientPid == null ) 
+    	IPlayer player = sessionPlayers.get(client.getSessionId());      	
+    	if ( player == null ) 
     		return; // Client doesn't exist - what should we do here?
     	
-		LOG.info("Respawn request from " + clientPid);
-		game.requestRespawn(clientPid);
+		LOG.info("Respawn request from " + player.getName());
+		game.requestRespawn(player.getPid());
 		
 	}
 
+	public void clientHelloEvent(SocketIOClient client) {
+    	LOG.info("Received hello");
+    	clientHello(client);
+	}
+	
 	public void clientRequestWorldEvent(SocketIOClient client) {
     	sendWorldUpdate(client);
 	}
@@ -193,12 +214,13 @@ public class GameController implements GameEventListener {
 		client.sendEvent("keep-alive-ack");
 	}
 
-	public void clientRegisterEvent(SocketIOClient client, ClientRegistrationDto registrationDto) {
-    	LOG.info("Received register event");
-    	LOG.info(registrationDto.name);
-    	registerClient(client, registrationDto);
+	public void clientRequestGameJoinEvent(SocketIOClient client, ClientGameJoinDto gameJoinDto) {
+    	LOG.info("Received game join request event");
+    	clientJoiningGame(client, gameJoinDto);
     	
-    	String newPlayerMessage = registrationDto.name + " joined!";
+    	// TODO Make sure client isn't trying to rejoin - i.e. if they already have a name
+    	
+    	String newPlayerMessage = gameJoinDto.name + " joined!";
     	ChatMessageDto dto = new ChatMessageDto(null, null, newPlayerMessage, true);
     	broadcastData("chat-message", dto);
 	}

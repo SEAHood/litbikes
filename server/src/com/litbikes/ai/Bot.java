@@ -14,9 +14,10 @@ import org.eclipse.jetty.util.log.Logger;
 import com.litbikes.dto.ClientUpdateDto;
 import com.litbikes.model.Arena;
 import com.litbikes.model.Bike;
+import com.litbikes.model.IPlayer;
 import com.litbikes.model.TrailSegment;
 
-public class Bot {
+public class Bot implements IPlayer {
 	private static Logger LOG = Log.getLogger(Bot.class);
 	private static int AI_TICK_MS = 50;
 	private static int AI_RESPAWN_MS = 3000;
@@ -35,6 +36,18 @@ public class Bot {
 		arena = _arena;
 		bikes = _bikes;
 		ioClient = new BotIOClient(this);
+	}
+	
+	public int getPid() {
+		return pid;
+	}
+	
+	public String getName() {
+		return bike.getName(); //todo lazy lol
+	}
+	
+	public Bike getBike() {
+		return bike;
 	}
 	
 	public void attachController( BotController _controller ) {
@@ -86,10 +99,6 @@ public class Bot {
 	 					
 			lastPredictionTime = thisPredictionTime;
 		}	
-     }
-
-	public int getPid() {
-		return pid;
 	}
 
 	public UUID getSessionId() {
@@ -98,16 +107,21 @@ public class Bot {
 
 	class AILoop implements Runnable {
 	    public void run() {
-	    	if ( !bike.isCrashed() ) {
-		    	predictCollision();
-	    	} else {
-	    		try {
-					Thread.sleep(AI_RESPAWN_MS);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-	    		controller.sentRequestRespawn(ioClient);
-	    	}	    	
+	    	try {
+		    	if ( !bike.isCrashed() ) {
+			    	predictCollision();
+		    	} else {
+		    		try {
+						Thread.sleep(AI_RESPAWN_MS);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+		    		controller.sentRequestRespawn(ioClient);
+		    	}
+			} catch (Exception e) {
+				e.printStackTrace();
+				LOG.info(e.getMessage());
+			} 	
 	    }
 	}
 	

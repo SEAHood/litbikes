@@ -1,5 +1,5 @@
 package com.litbikes.dto;
 
-public class ClientRegistrationDto {
+public class ClientGameJoinDto {
 	public String name;
 }
