@@ -63,6 +63,33 @@ input:focus, textarea:focus {
 
 #game-container canvas { margin: 0 auto; }
 
+#welcome-container {
+    font-family: 'Visitor', Times, serif;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+}
+
+#player-name {
+    display: inline-block;
+}
+
+#player-name-input {
+    background-color: #222;
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 1);
+    width: 150px;
+}
+
+#player-name-submit {
+    color: #d35400;
+    cursor: pointer;
+}
+
+#player-name-submit:hover {
+    color: #e0874c;
+}
+
 #info-container {
     display: flex;
     flex-direction: row;

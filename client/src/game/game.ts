@@ -31,6 +31,9 @@ module Game {
         private latency : number;
         private gameTick : number;
 
+        private nameInputField : any;
+        private nameInputButton : any;
+
         private mainFont;
         private secondaryFont;
         private debugFont;
@@ -94,15 +97,6 @@ module Game {
                     return;
                 }
                 
-                // TODO Remove /////////////////////////////////////////
-                if (ev.which === 74) {                        
-                    let joinObj : ClientGameJoinDto = {
-                        name: "Test"
-                    };
-                    this.socket.emit('request-join-game', joinObj);
-                }
-                // TODO Remove /////////////////////////////////////////
-
                 if ( this.player ) {
                     enum Keys {
                         LEFT_ARROW = 37,
@@ -121,7 +115,6 @@ module Game {
                     let keyCode = ev.which;
                     let newVector = null;
                     let eventMatched = true;
-                    console.log(keyCode);
 
                     if (keyCode === Keys.UP_ARROW || keyCode === Keys.W) {
                         newVector = new Vector(0, -1);
@@ -162,19 +155,25 @@ module Game {
                 }
             });
             
-            $(document).ready(() => {                
-                $('#info-container').hide();
+            $(document).ready(() => {
+                $('#player-name-submit').on('click', () => {
+                    let name = $('#player-name-input').val();
+                    let joinObj : ClientGameJoinDto = {
+                        name: name
+                    };
+                    this.socket.emit('request-join-game', joinObj);
+                });
             });
 
             this.socket.emit('hello');
         }
 
         private joinGame( data : GameJoinDto ) {
+            $('#welcome-container').hide();
             $('#info-container').slideDown();
-            console.log(data);
+            this.gameJoined = true;
             this.player = new Bike(data.bike, true);
             this.updateScores(data.scores);
-            this.gameJoined = true;
         }
 
         private initGame( data : HelloDto ) {
@@ -203,9 +202,9 @@ module Game {
                 });
             }, this.gameTickMs);
         }
-
+        
         private processWorldUpdate( data : WorldUpdateDto ) {
-            console.log("Processing world update");
+            //console.log("Processing world update");
             let updatedBikes = _.pluck(data.bikes, 'pid');
             let existingBikes = _.pluck(this.bikes, 'pid');
             _.each( existingBikes, ( pid : number ) => {
@@ -216,7 +215,7 @@ module Game {
 
             _.each( data.bikes, ( b : BikeDto ) => {
                 if ( this.gameJoined && b.pid === this.player.getPid() && this.player ) {
-                    console.log("Updating player from dto");
+                    //console.log("Updating player from dto");
                     this.player.updateFromDto(b);
                 } else {
                     let bike = _.find(this.bikes, (bike:Bike) => bike.getPid() === b.pid);
@@ -269,22 +268,19 @@ module Game {
                 b.draw(p, false);
             });
 
+            let halfWidth = this.arena.dimensions.x / 2;
+            let halfHeight = this.arena.dimensions.y / 2;
+
             if (this.gameJoined) {
                 this.player.draw(p, this.player.isRespawning());
 
                 if ( this.player.isCrashed() && this.player.isSpectating() && this.showRespawn ) {
-
-                    let halfWidth = this.arena.dimensions.x / 2;
-                    let halfHeight = this.arena.dimensions.y / 2;
-
                     p.noStroke();
                     p.fill('rgba(0,0,0,0.6)');
                     p.rect(0, halfHeight - 35, this.arena.dimensions.x, 100);
 
                     p.textFont(this.mainFont);
                     p.textAlign('center', 'top');
-
-
 
                     if ( this.player.isCrashed() ) {
                         let crashedInto = this.player.getCrashedIntoName();
@@ -313,9 +309,7 @@ module Game {
                     p.textSize(15);
                     p.text("Press 'H' to hide", halfWidth, halfHeight + 45);
                 }
-            } else {
-                // crap to draw when game not joined
-            }
+            } 
             
             // Debug text
             if ( this.showDebug ) {
@@ -342,8 +336,6 @@ module Game {
                 }
             }
         }
-
-
 
         private setup( p : p5 ) {
             this.mainFont = p.loadFont('fonts/3Dventure.ttf');
