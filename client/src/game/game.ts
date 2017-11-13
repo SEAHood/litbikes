@@ -11,7 +11,6 @@ module Game {
     import ClientGameJoinDto = Dto.ClientGameJoinDto;
     import HelloDto = Dto.HelloDto;
     import NumberUtil = Util.NumberUtil;
-    import UrlUtil = Util.UrlUtil;
     import ChatMessageDto = Dto.ChatMessageDto;
     import ScoreDto = Dto.ScoreDto;
     export class Game {
