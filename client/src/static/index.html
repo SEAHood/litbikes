@@ -4,17 +4,11 @@
   <link rel="shortcut icon" href="img/fav.ico">
   <title>litbikes</title>
   <script src="js/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
-          integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
   <script src="js/socket.io.min.js"></script>
   <script src="js/p5.min.js"></script>
   <script src="js/underscore.min.js"></script>
   <script src="js/litbikes.js"></script>
-
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-        integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
   <link rel="stylesheet" href="css/litbikes.css">
-  <link rel="stylesheet" href="css/neon.css">
 </head>
 
 <body>
@@ -25,11 +19,11 @@
     <div id="game">
       <div id="game-container"></div>
       <div id="welcome-container">
-        <h2>welcome to litbikes</h2>
+        <div id="welcome-message">welcome to litbikes</div>
         <div id="player-name">
           Name:
-          <input id="player-name-input"/>
-          <a id="player-name-submit">Join Game</button>
+          <input id="player-name-input" spellcheck="false"/>
+          <a id="player-name-submit">Join Game</a>
         </div>
       </div>
       <div id="info-container" style="display: none">
@@ -40,6 +34,7 @@
           <input id="chat-input" type="text">
         </div>
         <div id="score-container">
+          <div id="score-header">🔥topbikes🔥</div>
           <div id="score">
             <ul></ul>
           </div>

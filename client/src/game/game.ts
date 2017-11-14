@@ -340,7 +340,7 @@ module Game {
         private setup( p : p5 ) {
             this.mainFont = p.loadFont('fonts/3Dventure.ttf');
             this.secondaryFont = p.loadFont('fonts/visitor.ttf');
-            this.debugFont = p.loadFont('fonts/monofur.ttf');
+            this.debugFont = p.loadFont('fonts/larabie.ttf');
             p.createCanvas(this.arena.dimensions.x, this.arena.dimensions.y);
         }
 

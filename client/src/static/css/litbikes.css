@@ -3,22 +3,29 @@
     src: url('../fonts/visitor.ttf');
 }
 
+@font-face {
+    font-family: Larabie;
+    src: url('../fonts/larabie.ttf');
+}
+
 body {
     padding: 0;
     margin: 0;
     background-color:#222;
     width: 100%;
     height: 100%;
+    font-size: 16px;
+    line-height: 1.4;
+    user-select: none;
 }
-canvas {
-    /* blue */
-    border: 1px solid rgba(125,249,255,0.6);
-    -webkit-box-shadow: 0 0 0 1px rgba(125,249,255,0.4);
-    -moz-box-shadow: 0 0 0 1px rgba(125,249,255,0.4);
-    box-shadow: 0 0 0 1px rgba(125,249,255,0.4);
 
+ul {
+    margin: 0;
+}
+
+canvas {
     /* grey */
-    border: 1px solid rgba(255, 255, 255, 0.7);
+    /* border: 1px solid rgba(255, 255, 255, 0.7); */
     -webkit-box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
     -moz-box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
@@ -48,6 +55,7 @@ input:focus, textarea:focus {
 }
 
 #title h1 {
+    cursor: default;
     margin: 0;
 }
 
@@ -67,6 +75,15 @@ input:focus, textarea:focus {
     font-family: 'Visitor', Times, serif;
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
+    width: 100%;
+}
+
+#welcome-message {
+    cursor: default;
+    color: white;
+    font-size: 1.3em;
+    letter-spacing:0.3em;
+    margin: 20px 0 10px 0;
 }
 
 #player-name {
@@ -74,16 +91,22 @@ input:focus, textarea:focus {
 }
 
 #player-name-input {
+    font-family: 'Larabie', Times, serif;
+    font-weight: 600;
+    font-size: 1.1em;
     background-color: #222;
     border: 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.7);
-    color: rgba(255, 255, 255, 1);
+    color: #d76519;
     width: 150px;
+    text-align: center;
 }
 
 #player-name-submit {
-    color: #d35400;
+    color: #d76519;
     cursor: pointer;
+    margin-left: 5px;
+    padding: 5px;
 }
 
 #player-name-submit:hover {
@@ -94,7 +117,8 @@ input:focus, textarea:focus {
     display: flex;
     flex-direction: row;
     width: 100%;
-    font-family: 'Monofur', Times, serif;
+    font-family: 'Larabie', Times, serif;
+    font-size: 0.8em;
     color: white;
     background-color: #333333;
 }
@@ -102,17 +126,23 @@ input:focus, textarea:focus {
 #score-container {
     width: 30%;
 
-    /* blue */
-    border: 1px solid rgba(125, 249, 255, 0.7);
-    -webkit-box-shadow: 0 0 0 1px rgba(125, 249, 255, 0.5);
-    -moz-box-shadow: 0 0 0 1px rgba(125, 249, 255, 0.5);
-    box-shadow: 0 0 0 1px rgba(125, 249, 255, 0.5);
-
     /* grey */
     border: 1px solid rgba(255, 255, 255, 0.7);
     -webkit-box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
     -moz-box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+    
+    border-top:0;
+    margin-top:1px;
+}
+
+#score-header {
+    font-family: 'Visitor', Times, serif;
+    width: 100%;
+    padding-top: 5px;
+    font-size: 1.2em;
+    letter-spacing:0.3em;
+    text-align: center;
 }
 
 #score ul {
@@ -120,17 +150,16 @@ input:focus, textarea:focus {
     padding: 5px 10px;
 }
 
+#score  li {
+    padding-bottom: 4px;
+}
+
 #chat-container {
     display: flex;
     flex-direction: column; /* put this if you want to stack elements vertically */
     width: 70%;
     height: 175px;
-
-    /* blue */
-    border: 1px solid rgba(125, 249, 255, 0.7);
-    -webkit-box-shadow: 0 0 0 1px rgba(125, 249, 255, 0.5);
-    -moz-box-shadow: 0 0 0 1px rgba(125, 249, 255, 0.5);
-    box-shadow: 0 0 0 1px rgba(125, 249, 255, 0.5);
+    user-select: all;
 
     /* grey */
     border: 1px solid rgba(255, 255, 255, 0.7);
@@ -143,7 +172,9 @@ input:focus, textarea:focus {
 }
 
 #chat-input {
+    font-family: 'Larabie', Times, serif;
     padding-left:3px;
+    color: white;
     border: none;
     border-top: 1px solid rgba(255, 255, 255, 0.6);
     -webkit-box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4);
