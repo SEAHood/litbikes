@@ -35,33 +35,14 @@ public class Bike implements ICollidable {
 		name = _name;
 	}
 
-	public void init(Vector pos, boolean newPlayer) {
-		this.pos = pos;
-		startPos = pos;
-
-		int dir = NumberUtil.randInt(1, 4);
-		switch (dir) {
-			case 1:
-				spd = new Vector(0, -1);
-				break;
-			case 2:
-				spd = new Vector(0, 1);
-				break;
-			case 3:
-				spd = new Vector(-1, 0);
-				break;
-			case 4:
-				spd = new Vector(1, 0);
-				break;
-			default:
-				spd = new Vector(0, 0);
-				break;
-		}
-
+	public void init(Spawn spawn, boolean newPlayer) {
+		pos = spawn.getPos();
+		spd = spawn.getSpd();
 		trail = new ArrayList<>();
 		crashed = false;
 		spectating = false;
 		crashedInto = null;
+		startPos = pos;
 		addTrailPoint();
 		
 		if ( newPlayer )
@@ -114,7 +95,7 @@ public class Bike implements ICollidable {
 		trail.add(new TrailSegment(segLine));
 	}
 	
-	public boolean checkCollision( List<TrailSegment> trail, int lookAhead ) {
+	public boolean collides( List<TrailSegment> trail, int lookAhead ) {
 		double aheadX = pos.x + (lookAhead * spd.x);
 		double aheadY = pos.y + (lookAhead * spd.y);
 		
@@ -126,7 +107,6 @@ public class Bike implements ICollidable {
 		}
 
 		return false;
-		
 	}
 		
 	public BikeDto getDto() {

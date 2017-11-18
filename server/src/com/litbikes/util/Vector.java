@@ -23,4 +23,9 @@ public class Vector {
 	public static Vector zero() {
 		return new Vector(0, 0);
 	}
+	
+	@Override
+	public String toString() {
+		return "(" + x + ", " + y + ")";
+	}
 }

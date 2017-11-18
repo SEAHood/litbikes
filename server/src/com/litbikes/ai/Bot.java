@@ -78,7 +78,7 @@ public class Bot implements IPlayer {
 				allTrails.addAll( b.getTrail(!isSelf) );
 			}
 			
-	 		boolean incCollision = bike.checkCollision( allTrails, dDist ) || arena.checkCollision(bike, dDist);
+	 		boolean incCollision = bike.collides( allTrails, dDist ) || arena.checkCollision(bike, dDist);
 			
 			if (incCollision) {
 	 			int newVal = Math.random() < 0.5 ? -1 : 1;

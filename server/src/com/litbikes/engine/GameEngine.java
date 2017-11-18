@@ -1,7 +1,9 @@
 package com.litbikes.engine;
 
+import java.awt.geom.Line2D;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -18,6 +20,8 @@ import com.litbikes.dto.ServerWorldDto;
 import com.litbikes.model.Arena;
 import com.litbikes.model.Bike;
 import com.litbikes.model.ICollidable;
+import com.litbikes.model.Spawn;
+import com.litbikes.model.TrailSegment;
 import com.litbikes.model.Wall;
 import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
@@ -56,8 +60,8 @@ public class GameEngine {
 	public Bike playerJoin(int pid, String name) {
 		LOG.info("Creating new player with pid " + pid);
 		Bike bike = new Bike(pid, name);
-		bike.init(getSpawnLocation(), true);
-		bikes.add( bike );
+		bike.init(findSpawn(), true);
+		bikes.add(bike);
 		score.grantScore(pid, name, 0);
 		return bike;
 	}
@@ -106,13 +110,36 @@ public class GameEngine {
 	public void requestRespawn(int pid) {
 		Bike bike = bikes.stream().filter(b -> b.getPid() == pid).findFirst().get();
 		if ( bike != null && bike.isCrashed() ) {
-			bike.init(getSpawnLocation(), false);
+			bike.init(findSpawn(), false);
 			eventListener.playerSpawned(pid);
 		}		
 	}
 	
-	private Vector getSpawnLocation() {
-		return new Vector(NumberUtil.randInt(20, gameWidth - 20), NumberUtil.randInt(20, gameHeight - 20));
+	public Spawn findSpawn() {
+		Spawn spawn = new Spawn(gameWidth, gameHeight);
+		int i = 0;
+		while (!spawnIsAcceptable(spawn) && i++ < 10) {
+			spawn = new Spawn(gameWidth, gameHeight);
+		}
+		return spawn;
+	}
+	
+	public boolean spawnIsAcceptable(Spawn spawn) {
+
+		int limit = 50; // Distance to nearest trail
+		List<TrailSegment> trails = bikes.stream().map(m -> m.getTrail(true)).flatMap(Collection::stream).collect(Collectors.toList());
+		
+		double aheadX = spawn.getPos().x + (limit * spawn.getSpd().x);
+		double aheadY = spawn.getPos().y + (limit * spawn.getSpd().y);
+		
+		Line2D line = new Line2D.Double(spawn.getPos().x, spawn.getPos().y, aheadX, aheadY);
+					
+		for ( TrailSegment segment : trails ) {
+			if ( line.intersectsLine(segment.getLine()) ) 
+				return false;	
+		}
+		
+		return true;
 	}
 	
 	public List<ScoreDto> getScores() {
@@ -132,15 +159,9 @@ public class GameEngine {
 		    	//Increment tick count first
 		    	gameTick++;
 	
-				long cTim = System.currentTimeMillis();
-				if ( cTim - tim > 1000 )
-				{
-					//LOG.info(bikes.get(0).toString());
-					tim = cTim;
-				}
-		    	
 		    	List<Bike> activeBikes = bikes.stream().filter(b -> b.isActive()).collect(Collectors.toList());
 	
+		    	// Todo async these?
 		    	for ( Bike bike : activeBikes ) {
 		    		
 		    		bike.updatePosition(1);
@@ -148,7 +169,7 @@ public class GameEngine {
 	
 					for ( Bike b : activeBikes ) {
 						boolean isSelf = b.getPid() == bike.getPid();
-						collided = collided || bike.checkCollision( b.getTrail(!isSelf), 1 );
+						collided = collided || bike.collides( b.getTrail(!isSelf), 1 );
 						if ( collided ) {
 							bike.setCrashedInto(b);
 							break;
