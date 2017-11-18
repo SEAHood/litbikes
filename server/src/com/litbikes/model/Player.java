@@ -22,7 +22,7 @@ public class Player implements IPlayer {
 	}
 	
 	public boolean isAlive() {
-		return bike.isActive();
+		return bike != null && bike.isActive();
 	}
 	
 	public boolean isHuman() {

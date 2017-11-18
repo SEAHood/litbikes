@@ -37,10 +37,6 @@ public class BotController {
 		LOG.info("Destroying " + count + " bots - ");
 		List<Bot> doomedBots = new ArrayList<>();
 		
-		bots.subList(0, count).clear();
-
-		LOG.info("Current bot count: " + bots.size());
-		
 		for ( int i = 0; i < count; i++ ) {
 			doomedBots.add(bots.get(i));
 		}
@@ -49,6 +45,8 @@ public class BotController {
 			gameController.botDestroyed(b);
 			bots.remove(b);
 		}
+		
+		LOG.info("Current bot count: " + bots.size());
 	}
 	
 	public int getBotCount() {
