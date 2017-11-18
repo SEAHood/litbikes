@@ -50,6 +50,14 @@ public class Bot implements IPlayer {
 		return bike;
 	}
 	
+	public boolean isAlive() {
+		return bike.isActive();
+	}
+	
+	public boolean isHuman() {
+		return false;
+	}
+	
 	public void attachController( BotController _controller ) {
 		controller = _controller;
 	}

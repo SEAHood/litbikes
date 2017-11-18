@@ -20,4 +20,12 @@ public class Player implements IPlayer {
 	public Bike getBike() {
 		return bike;
 	}
+	
+	public boolean isAlive() {
+		return bike.isActive();
+	}
+	
+	public boolean isHuman() {
+		return true;
+	}
 }

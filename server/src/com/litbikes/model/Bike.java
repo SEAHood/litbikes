@@ -11,7 +11,6 @@ import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
 import com.litbikes.dto.BikeDto;
-import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
 
 public class Bike implements ICollidable {

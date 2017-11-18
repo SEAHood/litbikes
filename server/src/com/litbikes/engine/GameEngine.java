@@ -23,7 +23,6 @@ import com.litbikes.model.ICollidable;
 import com.litbikes.model.Spawn;
 import com.litbikes.model.TrailSegment;
 import com.litbikes.model.Wall;
-import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
 
 public class GameEngine {
