@@ -27,7 +27,7 @@ public class Bot implements IPlayer {
 	private List<Bike> bikes;
 	private Arena arena;
 	long lastPredictionTime;
-	long predictionCooldown = 200;
+	long predictionCooldown = 100;
 	BotController controller;
 	
 	public Bot( Bike _bike, List<Bike> _bikes, Arena _arena ) {
