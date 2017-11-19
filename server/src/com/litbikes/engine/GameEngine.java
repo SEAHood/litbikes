@@ -160,39 +160,47 @@ public class GameEngine {
 	
 		    	List<Bike> activeBikes = bikes.stream().filter(b -> b.isActive()).collect(Collectors.toList());
 	
-		    	// Todo async these?
+		    	List<Thread> threads = new ArrayList<>();
 		    	for ( Bike bike : activeBikes ) {
-		    		
-		    		bike.updatePosition(1);
-					boolean collided = false;
-	
-					for ( Bike b : activeBikes ) {
-						boolean isSelf = b.getPid() == bike.getPid();
-						collided = collided || bike.collides( b.getTrail(!isSelf), 1 );
-						if ( collided ) {
-							bike.setCrashedInto(b);
-							break;
-						}
-					}
-					
-					if ( arena.checkCollision(bike, 1) ) {
-						collided = true;
-						bike.setCrashedInto(new Wall());						
-					}
-	
-					if ( collided ) {
-						bike.crash();
-						bike.setSpectating(true);
-						eventListener.playerCrashed(bike);
-						if ( bike.getCrashedInto() != null ) {
-							ICollidable crashedInto = bike.getCrashedInto();
-							if ( crashedInto.getId() != bike.getPid() ) {
-								score.grantScore(crashedInto.getId(), crashedInto.getName(), 1);
-								eventListener.scoreUpdated(score.getScores());
+		    		Thread t = new Thread(() -> {
+			    		bike.updatePosition(1);
+						boolean collided = false;
+		
+						for ( Bike b : activeBikes ) {
+							boolean isSelf = b.getPid() == bike.getPid();
+							collided = collided || bike.collides( b.getTrail(!isSelf), 1 );
+							if ( collided ) {
+								bike.setCrashedInto(b);
+								break;
 							}
 						}
-					}	
+						
+						if ( arena.checkCollision(bike, 1) ) {
+							collided = true;
+							bike.setCrashedInto(new Wall());						
+						}
+		
+						if ( collided ) {
+							bike.crash();
+							bike.setSpectating(true);
+							eventListener.playerCrashed(bike);
+							if ( bike.getCrashedInto() != null ) {
+								ICollidable crashedInto = bike.getCrashedInto();
+								if ( crashedInto.getId() != bike.getPid() ) {
+									score.grantScore(crashedInto.getId(), crashedInto.getName(), 1);
+									eventListener.scoreUpdated(score.getScores());
+								}
+							}
+						}	
+		    		});
+		    		
+		    		threads.add(t);
+		    		t.start();
 		    	}
+		    	
+		    	for ( int i = 0; i < threads.size(); i++ )
+		    		threads.get(i).join();
+		    	
 			} catch (Exception e) {
 				e.printStackTrace();
 				LOG.info(e.getMessage());

@@ -181,10 +181,10 @@ public class GameController implements GameEventListener {
         	if ( player == null ) 
         		return; // Client doesn't exist - what should we do here?   	
     		game.dropPlayer(player.getPid());
-    		balanceBots();
 		} catch (Exception e) {
 			
 		}
+		balanceBots();
 	}
 
 	public void clientChatMessageEvent(SocketIOClient client, String message) {
@@ -231,6 +231,7 @@ public class GameController implements GameEventListener {
 	}
 
 	public void clientKeepAliveEvent(SocketIOClient client) {
+		// todo time out client after 2 missed keep alives or something?
 		client.sendEvent("keep-alive-ack");
 	}
 
