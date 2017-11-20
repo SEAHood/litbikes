@@ -48,6 +48,7 @@ public class GameController implements GameEventListener {
 	
 	private final static String C_HELLO = "hello";
 	private final static String C_JOINED_GAME = "joined-game";
+	private final static String C_ERROR = "error";
 	
 	private int minPlayers;
 	private Random random = new Random();
@@ -142,7 +143,13 @@ public class GameController implements GameEventListener {
 	}
 	
 	// CLIENT EVENTS
-	public void clientJoiningGame(SocketIOClient client, ClientGameJoinDto gameJoinDto) {		
+	public void clientJoiningGame(SocketIOClient client, ClientGameJoinDto gameJoinDto) {
+		if (!gameJoinDto.isValid()) {
+			// TODO Implement some error handling
+			client.sendEvent(C_ERROR, "invalid name");
+			return;
+		}
+		
 		Player player = (Player)sessionPlayers.get(client.getSessionId());
 		player.name = gameJoinDto.name;
 		player.bike = game.playerJoin(player.pid, player.name);		

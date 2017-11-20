@@ -105,8 +105,9 @@ input:focus, textarea:focus {
 #player-name-submit {
     color: #d76519;
     cursor: pointer;
-    margin-left: 5px;
+    margin-top: 10px;
     padding: 5px;
+    display: block;
 }
 
 #player-name-submit:hover {
