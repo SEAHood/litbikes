@@ -162,7 +162,16 @@ module Game {
                 }
             });
             
-            $(document).ready(() => {
+            $(document).ready(() => {                
+                $('#player-name-input').on('input', () => {
+                    let name = $('#player-name-input').val();
+                    if (name.length < 2 || name.length > 10) {
+                        $('#player-name-submit').hide();
+                    } else {
+                        $('#player-name-submit').show();
+                    }
+                });
+                
                 $('#player-name-submit').on('click', () => {
                     let name = $('#player-name-input').val();
                     let joinObj : ClientGameJoinDto = {
