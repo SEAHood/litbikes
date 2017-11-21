@@ -5,6 +5,7 @@ import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import org.eclipse.jetty.util.log.Log;
@@ -21,7 +22,7 @@ public class Bike implements ICollidable {
 	private Vector pos;
 	private Vector spd;
 	private double spdMag = 1.5;
-	private List<TrailSegment> trail;
+	private CopyOnWriteArrayList<TrailSegment> trail;
 	private boolean crashed;
 	private boolean spectating;
 	private Vector startPos;
@@ -37,7 +38,7 @@ public class Bike implements ICollidable {
 	public void init(Spawn spawn, boolean newPlayer) {
 		pos = spawn.getPos();
 		spd = spawn.getSpd();
-		trail = new ArrayList<>();
+		trail = new CopyOnWriteArrayList<>();
 		crashed = false;
 		spectating = false;
 		crashedInto = null;
