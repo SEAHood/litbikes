@@ -30,6 +30,7 @@ module Game {
         private timeKeepAliveSent : number;
         private latency : number;
         private gameTick : number;
+        private messageCount : number;
 
         private nameInputField : any;
         private nameInputButton : any;
@@ -84,6 +85,12 @@ module Game {
 
                 $('#chat-log ul').append(chatElement);
                 $('#chat-log').scrollTop($('#chat-log')[0].scrollHeight);
+
+                if ( $('#message-list li').length > 250 ) {
+                    $('#message-list li').first().remove();
+                }
+
+                this.messageCount = $("#message-list li").length;
             });
 
             $(document).on('keydown', ev => {
@@ -329,7 +336,8 @@ module Game {
                         "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
                         "colour: " + this.player.getColour() + "\n" +
                         "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n" +
-                        "other bikes: " + (this.bikes.length - 1) + "\n"
+                        "other bikes: " + this.bikes.length + "\n" +
+                        "chat message count: " + this.messageCount + "\n"
                     , 10, 30, 300, 500);
                 } else {
                     p.text("Game not joined", 10, 30, 300, 500);
