@@ -23,7 +23,7 @@ public class BotController {
 	}
 		
 	private void deployBots(int count) {
-		LOG.info("Deploying " + count + " bots");
+		LOG.info("Creating " + count + " bots");
 		for ( int i = 0; i < count; i++ ) {
 			Bot bot = gameController.botCreated();
 			bot.attachController(this);
@@ -34,7 +34,7 @@ public class BotController {
 	}
 	
 	private void destroyBots(int count) {
-		LOG.info("Destroying " + count + " bots - ");
+		LOG.info("Destroying " + count + " bots");
 		List<Bot> doomedBots = new ArrayList<>();
 		
 		for ( int i = 0; i < count; i++ ) {
