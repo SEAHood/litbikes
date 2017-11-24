@@ -97,9 +97,14 @@ module Game {
                 if ( $(ev.target).is('input') ) {
                     // Typing in chat, don't process as game keys
                     if ( ev.which === 13 ) { // enter
-                        let message = $('#chat-input').val();
-                        this.socket.emit('chat-message', message);
-                        $('#chat-input').val('');
+                        if ($(ev.target).is('#player-name-input')) { // enter when inside player name box
+                            let name = $('#player-name-input').val();
+                            this.requestJoinGame(name);
+                        } else if ($(ev.target).is('#chat-input')) { // enter when inside chat box
+                            let message = $('#chat-input').val();
+                            this.socket.emit('chat-message', message);
+                            $('#chat-input').val('');
+                        }
                     }
                     return;
                 }
@@ -174,14 +179,18 @@ module Game {
                 
                 $('#player-name-submit').on('click', () => {
                     let name = $('#player-name-input').val();
-                    let joinObj : ClientGameJoinDto = {
-                        name: name
-                    };
-                    this.socket.emit('request-join-game', joinObj);
+                    this.requestJoinGame(name);
                 });
             });
 
             this.socket.emit('hello');
+        }
+
+        private requestJoinGame(name : string) {
+            let joinObj : ClientGameJoinDto = {
+                name: name
+            };
+            this.socket.emit('request-join-game', joinObj);
         }
 
         private joinGame( data : GameJoinDto ) {
