@@ -99,11 +99,15 @@ module Game {
                     if ( ev.which === 13 ) { // enter
                         if ($(ev.target).is('#player-name-input')) { // enter when inside player name box
                             let name = $('#player-name-input').val();
-                            this.requestJoinGame(name);
+                            if (this.nameIsValid(name)) {
+                                this.requestJoinGame(name);
+                            }                            
                         } else if ($(ev.target).is('#chat-input')) { // enter when inside chat box
                             let message = $('#chat-input').val();
-                            this.socket.emit('chat-message', message);
-                            $('#chat-input').val('');
+                            if (message.trim() != "") {
+                                this.socket.emit('chat-message', message);
+                                $('#chat-input').val('');
+                            }
                         }
                     }
                     return;
@@ -170,10 +174,10 @@ module Game {
             $(document).ready(() => {                
                 $('#player-name-input').on('input', () => {
                     let name = $('#player-name-input').val();
-                    if (name.length < 2 || name.length > 10) {
-                        $('#player-name-submit').hide();
-                    } else {
+                    if (this.nameIsValid(name)) {
                         $('#player-name-submit').show();
+                    } else {
+                        $('#player-name-submit').hide();
                     }
                 });
                 
@@ -186,7 +190,11 @@ module Game {
             this.socket.emit('hello');
         }
 
-        private requestJoinGame(name : string) {
+        private nameIsValid(name: string): boolean {
+            return name.trim().length > 1 && name.trim().length <= 15;
+        }
+
+        private requestJoinGame(name: string) {
             let joinObj : ClientGameJoinDto = {
                 name: name
             };
@@ -258,12 +266,16 @@ module Game {
             let topFive = _.first(scores, 5);
             $('#score ul').empty();
             let playerInTopFive = false;
-            topFive.forEach((score: ScoreDto, i: number) => {
-                let isPlayer =  this.gameJoined && score.pid == this.player.getPid();
+            topFive.forEach((score: ScoreDto, i: number) => {                
+                let isPlayer = this.gameJoined && score.pid == this.player.getPid();
+                let player : Bike = _.first(this.bikes.filter((b: Bike) => b.getPid() == score.pid));
                 playerInTopFive = isPlayer || playerInTopFive;
                 let li = isPlayer ? "<li style='color:yellow'>" : "<li>";
                 let position = "#" + (i + 1);
-                let scoreElement = li + position + ": " + score.name + " - " + score.score + "</li>";
+                let bikeColour = !player || isPlayer 
+                    ? "inherit"
+                    :  player.getColour().replace('%A%', '1');
+                let scoreElement = li + position + ": <span style='color:" + bikeColour + "'>" + score.name + "</span> - " + score.score + "</li>";
                 $('#score ul').append(scoreElement);
             });
 

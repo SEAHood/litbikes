@@ -4,8 +4,6 @@ public class ClientGameJoinDto {
 	public String name;
 	
 	public boolean isValid() {
-		if (name.length() < 2 || name.length() > 10)
-			return false;
-		return true;
+		return name.length() > 1 || name.length() <= 15;
 	}
 }

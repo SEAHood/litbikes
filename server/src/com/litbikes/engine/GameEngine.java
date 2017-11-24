@@ -125,7 +125,7 @@ public class GameEngine {
 	
 	public boolean spawnIsAcceptable(Spawn spawn) {
 
-		int limit = 50; // Distance to nearest trail
+		int limit = 80; // Distance to nearest trail
 		List<TrailSegment> trails = bikes.stream().map(m -> m.getTrail(true)).flatMap(Collection::stream).collect(Collectors.toList());
 		
 		double aheadX = spawn.getPos().x + (limit * spawn.getSpd().x);

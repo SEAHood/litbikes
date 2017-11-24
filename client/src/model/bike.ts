@@ -169,13 +169,10 @@ module Model {
                 p.noStroke();
                 p.fill(bikeColour);
                 p.ellipse(this.pos.x, this.pos.y, 5, 5);
-                
-                // Score
-                /*
-                p.textSize(15);
-                p.textAlign('center', 'middle');
-                p.text(this.score+"", this.pos.x, this.pos.y - 10);
-                */
+                             
+                // p.textSize(15);
+                // p.textAlign('center', 'middle');
+                // p.text(this.name, this.pos.x, this.pos.y - 15);                
 
                 // Draw crashing
                 if ( this.isCrashing() ) {
