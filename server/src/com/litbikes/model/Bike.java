@@ -169,9 +169,9 @@ public class Bike implements ICollidable {
 			return trail.subList(0, Math.max(trail.size() - 1, 0));
 		
 		List<TrailSegment> trailWithHead = new ArrayList<>(trail);
-		
+
 		if ( trail.size() > 0 ) {
-			Line2D lastSeg = trailWithHead.get(trail.size() - 1).getLine();
+			Line2D lastSeg = trail.get(trail.size() - 1).getLine();
 			Line2D headLine = new Line2D.Double(lastSeg.getX2(), lastSeg.getY2(), pos.x, pos.y);		
 			trailWithHead.add(new TrailSegment(headLine));
 		} else {
