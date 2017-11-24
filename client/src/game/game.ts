@@ -320,14 +320,20 @@ module Game {
                     p.textAlign('center', 'top');
 
                     if ( this.player.isCrashed() ) {
-                        let crashedInto = this.player.getCrashedIntoName();
+                        let suicide = this.player.getCrashedInto() == this.player.getPid();
+                        let crashText = "";
+                        if (suicide) {
+                            crashText = "You killed yourself, idiot";
+                        } else {
+                            crashText = "Killed by " + this.player.getCrashedIntoName();
+                        }
                         p.fill('rgba(125,249,255,0.50)');
                         p.textSize(29);
-                        p.text("Killed by " + crashedInto,
+                        p.text(crashText,
                             halfWidth + NumberUtil.randInt(0, 2), halfHeight - 30 + NumberUtil.randInt(0, 2));
                         p.fill('rgba(255,255,255,0.80)');
                         p.textSize(28);
-                        p.text("Killed by " + crashedInto,
+                        p.text(crashText,
                             halfWidth, halfHeight - 30);
                     }
 
