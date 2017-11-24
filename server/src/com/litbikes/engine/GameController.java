@@ -137,7 +137,7 @@ public class GameController implements GameEventListener {
 				.map(p -> p.getValue())
 				.filter(p -> p.isHuman() && p.isAlive())
 				.count();
-		int requiredBots = minPlayers - totalHumans;
+		int requiredBots = Math.max(0, minPlayers - totalHumans);
 		LOG.info("Balancing game - " + totalHumans + " humans and " + requiredBots + " bots");
 		botController.setBotCount(requiredBots);
 	}

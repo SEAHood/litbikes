@@ -54,6 +54,8 @@ public class BotController {
 	}
 	
 	public void setBotCount(int botCount) {
+		if (botCount < 0) 
+			return;		
 		LOG.info("Setting bot count to " + botCount);
 		int currentBotCount = bots.size();
 		int botDeficit = botCount - currentBotCount;
