@@ -123,7 +123,7 @@ module Model {
             this.addTrailSegment();
         }
 
-        public draw( p : p5, identify : boolean ) {
+        public draw( p : p5, identify : boolean, showName : boolean ) {
 
             if ( this.isVisible() ) {
 
@@ -170,9 +170,11 @@ module Model {
                 p.fill(bikeColour);
                 p.ellipse(this.pos.x, this.pos.y, 5, 5);
                              
-                // p.textSize(15);
-                // p.textAlign('center', 'middle');
-                // p.text(this.name, this.pos.x, this.pos.y - 15);                
+                if (showName) {
+                    p.textSize(15);
+                    p.textAlign('center', 'middle');
+                    p.text(this.name, this.pos.x, Math.max(0, this.pos.y - 15));
+                }
 
                 // Draw crashing
                 if ( this.isCrashing() ) {

@@ -31,6 +31,7 @@ module Game {
         private latency : number;
         private gameTick : number;
         private messageCount : number;
+        private tabPressed : boolean;
 
         private nameInputField : any;
         private nameInputButton : any;
@@ -93,6 +94,30 @@ module Game {
                 this.messageCount = $("#message-list li").length;
             });
 
+            enum Keys {
+                LEFT_ARROW = 37,
+                UP_ARROW = 38,
+                RIGHT_ARROW = 39,
+                DOWN_ARROW = 40,
+                W = 87,
+                A = 65,
+                S = 83,
+                D = 68,
+                R = 82,
+                F3 = 114,
+                H = 72,
+                TAB = 9
+            };
+
+            $(document).on('keyup', ev => {
+                let keyCode = ev.which;
+                if ( this.player ) {
+                    if (keyCode === Keys.TAB) {
+                        this.tabPressed = false;
+                    }
+                }
+            });
+
             $(document).on('keydown', ev => {
                 if ( $(ev.target).is('input') ) {
                     // Typing in chat, don't process as game keys
@@ -114,19 +139,6 @@ module Game {
                 }
                 
                 if ( this.player ) {
-                    enum Keys {
-                        LEFT_ARROW = 37,
-                        UP_ARROW = 38,
-                        RIGHT_ARROW = 39,
-                        DOWN_ARROW = 40,
-                        W = 87,
-                        A = 65,
-                        S = 83,
-                        D = 68,
-                        R = 82,
-                        F3 = 114,
-                        H = 72
-                    }
 
                     let keyCode = ev.which;
                     let newVector = null;
@@ -146,6 +158,8 @@ module Game {
                         this.socket.emit('request-respawn');
                     } else if (keyCode === Keys.H) {
                         this.showRespawn = !this.showRespawn;
+                    } else if (keyCode === Keys.TAB) {
+                        this.tabPressed = true;
                     } else {
                         eventMatched = false;
                     }
@@ -302,14 +316,14 @@ module Game {
             this.arena.draw(p);
 
             _.each( this.bikes, ( b : Bike ) => {
-                b.draw(p, false);
+                b.draw(p, false, this.tabPressed);
             });
 
             let halfWidth = this.arena.dimensions.x / 2;
             let halfHeight = this.arena.dimensions.y / 2;
 
             if (this.gameJoined) {
-                this.player.draw(p, this.player.isRespawning());
+                this.player.draw(p, this.player.isRespawning(), this.tabPressed);
 
                 if ( this.player.isCrashed() && this.player.isSpectating() && this.showRespawn ) {
                     p.noStroke();
