@@ -76,7 +76,7 @@ public class GameEngine {
 		if ( data.isValid() ) {			
 			if ( bikes.size() > 0 ) {				
 				Bike bike = bikes.stream().filter(b -> b.getPid() == data.pid).findFirst().get();				
-				bike.setSpd( new Vector(data.xSpd, data.ySpd) );
+				bike.setSpd( new Vector(data.xDir, data.yDir) );
 			}						
 			return true;
 		} else 
@@ -128,8 +128,8 @@ public class GameEngine {
 		int limit = 80; // Distance to nearest trail
 		List<TrailSegment> trails = bikes.stream().map(m -> m.getTrail(true)).flatMap(Collection::stream).collect(Collectors.toList());
 		
-		double aheadX = spawn.getPos().x + (limit * spawn.getSpd().x);
-		double aheadY = spawn.getPos().y + (limit * spawn.getSpd().y);
+		double aheadX = spawn.getPos().x + (limit * spawn.getDir().x);
+		double aheadY = spawn.getPos().y + (limit * spawn.getDir().y);
 		
 		Line2D line = new Line2D.Double(spawn.getPos().x, spawn.getPos().y, aheadX, aheadY);
 					

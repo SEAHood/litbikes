@@ -20,8 +20,8 @@ public class Bike implements ICollidable {
 	private int pid;
 	private String name;
 	private Vector pos;
-	private Vector spd;
-	private double spdMag = 1.5;
+	private Vector dir;
+	private double spd = 1.5;
 	private CopyOnWriteArrayList<TrailSegment> trail;
 	private boolean crashed;
 	private boolean spectating;
@@ -37,7 +37,7 @@ public class Bike implements ICollidable {
 
 	public void init(Spawn spawn, boolean newPlayer) {
 		pos = spawn.getPos();
-		spd = spawn.getSpd();
+		dir = spawn.getDir();
 		trail = new CopyOnWriteArrayList<>();
 		crashed = false;
 		spectating = false;
@@ -78,8 +78,8 @@ public class Bike implements ICollidable {
 
 	public void updatePosition(double speedModifier) {
 		if ( !crashed ) {			
-	        double xDiff = spd.x * spdMag * speedModifier;
-	        double yDiff = spd.y * spdMag * speedModifier;
+	        double xDiff = dir.x * spd * speedModifier;
+	        double yDiff = dir.y * spd * speedModifier;
 			pos.add(new Vector(xDiff, yDiff));
 		}
 	}
@@ -96,8 +96,8 @@ public class Bike implements ICollidable {
 	}
 	
 	public boolean collides( List<TrailSegment> trail, int lookAhead ) {
-		double aheadX = pos.x + (lookAhead * spd.x);
-		double aheadY = pos.y + (lookAhead * spd.y);
+		double aheadX = pos.x + (lookAhead * dir.x);
+		double aheadY = pos.y + (lookAhead * dir.y);
 		
 		Line2D line = new Line2D.Double(pos.x, pos.y, aheadX, aheadY);
 					
@@ -114,8 +114,8 @@ public class Bike implements ICollidable {
 		dto.pid = pid;
 		dto.name = name;
 		dto.pos = new Vector(pos.x, pos.y);
-		dto.spd = new Vector(spd.x, spd.y);
-		dto.spdMag = spdMag;
+		dto.dir = new Vector(dir.x, dir.y);
+		dto.spd = spd;
 		dto.trail = trail.stream()
                 .map(tp -> tp.getDto())
                 .collect(Collectors.toList());
@@ -153,14 +153,14 @@ public class Bike implements ICollidable {
 	}
 
 	public Vector getSpd() {
-		return spd;
+		return dir;
 	}
 
 	public void setSpd(Vector spd) {
-        if ( ( this.spd.x == 0 && spd.x == 0 ) || ( this.spd.y == 0 && spd.y == 0 ) )
+        if ( ( this.dir.x == 0 && spd.x == 0 ) || ( this.dir.y == 0 && spd.y == 0 ) )
             return;
                 
-		this.spd = spd;
+		this.dir = spd;
 		addTrailPoint();
 	}
 
@@ -230,7 +230,7 @@ public class Bike implements ICollidable {
 	
 	@Override
 	public String toString() {
-		return pid + ": p(" + pos.x + ", " + pos.y + "), s(" + spd.x + ", " + spd.y +"), " + (crashed?"crashed":"not crashed");
+		return pid + ": p(" + pos.x + ", " + pos.y + "), s(" + dir.x + ", " + dir.y +"), " + (crashed?"crashed":"not crashed");
 	}
 	
 }

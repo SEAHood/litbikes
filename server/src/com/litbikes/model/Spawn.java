@@ -17,7 +17,7 @@ public class Spawn {
 		return pos;
 	}
 
-	public Vector getSpd() {
+	public Vector getDir() {
 		return spd;
 	}
 

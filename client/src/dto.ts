@@ -5,8 +5,8 @@ module Dto {
         pid: number;
         name: string;
         pos: Vector;
-        spd: Vector;
-        spdMag: number;
+        dir: Vector;
+        spd: number;
         crashed: boolean;
         crashing: boolean;
         crashedInto: number;
@@ -66,8 +66,8 @@ module Dto {
     
     export interface ClientUpdateDto {
         pid : number;
-        xSpd : number;
-        ySpd : number;
+        xDir : number;
+        yDir : number;
         xPos : number;
         yPos : number;
     }

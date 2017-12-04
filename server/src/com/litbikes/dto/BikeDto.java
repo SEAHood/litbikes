@@ -8,8 +8,8 @@ public class BikeDto {
 	public int pid;
 	public String name;
 	public Vector pos;
-	public Vector spd;
-	public double spdMag;
+	public Vector dir;
+	public double spd;
 	public List<TrailSegmentDto> trail;
 	public boolean crashed;
 	public Integer crashedInto;

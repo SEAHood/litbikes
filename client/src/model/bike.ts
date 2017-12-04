@@ -8,10 +8,10 @@ module Model {
         private pid: number;
         private name: string;
         private pos : Vector;
-        private spd : Vector;
+        private dir : Vector;
         private trail: TrailSegment[];
 
-        private spdMag: number;
+        private spd: number;
         private crashed: boolean;
         private crashing: boolean;
         private respawning: boolean;
@@ -34,11 +34,11 @@ module Model {
             this.pid = bikeDto.pid;
             this.name = bikeDto.name;
             this.setPos(new Vector( bikeDto.pos.x, bikeDto.pos.y ));
-            this.spd = new Vector( bikeDto.spd.x, bikeDto.spd.y );
+            this.dir = new Vector( bikeDto.dir.x, bikeDto.dir.y );
             this.crashed = bikeDto.crashed;
             this.spectating = bikeDto.spectating;
             this.deathTimestamp = bikeDto.deathTimestamp;
-            this.spdMag = bikeDto.spdMag;
+            this.spd = bikeDto.spd;
             this.colour = bikeDto.colour;
             this.crashedInto = bikeDto.crashedInto;
             this.crashedIntoName = bikeDto.crashedIntoName;
@@ -59,8 +59,8 @@ module Model {
 
         public update() {
             if ( this.canMove() ) {
-                let xDiff = this.spd.x * this.spdMag;// * this.timeDilation.x;
-                let yDiff = this.spd.y * this.spdMag;// * this.timeDilation.y;
+                let xDiff = this.dir.x * this.spd;// * this.timeDilation.x;
+                let yDiff = this.dir.y * this.spd;// * this.timeDilation.y;
                 this.setPos(new Vector(this.pos.x + xDiff, this.pos.y + yDiff));
             }
 
@@ -76,8 +76,8 @@ module Model {
         public updateFromDto( dto : BikeDto ) {
             this.setPos(dto.pos);
 
+            this.dir = dto.dir;
             this.spd = dto.spd;
-            this.spdMag = dto.spdMag;
             this.trail = [];
             this.colour = dto.colour;
             _.each(dto.trail, (seg : TrailSegmentDto) => {
@@ -116,7 +116,7 @@ module Model {
         }
 
         public crash( timeOfCrash?: number ) {
-            this.spd = new Vector(0, 0);
+            this.dir = new Vector(0, 0);
             this.crashed = true;
             this.crashing = true;
             this.deathTimestamp = timeOfCrash || Math.floor(Date.now());
@@ -205,8 +205,8 @@ module Model {
         public setPos( pos : Vector ) {
             this.pos = pos;
         }
-        public getSpd() : Vector {
-            return this.spd;
+        public getDir() : Vector {
+            return this.dir;
         }
         public getColour() : String {
             return this.colour;

@@ -175,8 +175,8 @@ module Game {
                         // TODO MOVE THIS SOMEWHERE ELSE
                         let updateDto : ClientUpdateDto = {
                             pid : this.player.getPid(),
-                            xSpd : newVector.x,
-                            ySpd : newVector.y,
+                            xDir : newVector.x,
+                            yDir : newVector.y,
                             xPos : this.player.getPos().x,
                             yPos : this.player.getPos().y
                         };
@@ -381,7 +381,7 @@ module Game {
                         "ms: " + this.latency + "ms\n" +
                         "pid: " + this.player.getPid() + "\n" +
                         "pos: " + this.player.getPos().x.toFixed(0) + ", " + this.player.getPos().y.toFixed(0) + "\n" +
-                        "spd: "+ this.player.getSpd().x + ", " + this.player.getSpd().y + "\n" +
+                        "dir: "+ this.player.getDir().x + ", " + this.player.getDir().y + "\n" +
                         "crashed: " + (this.player.isCrashed() ? "yes" : "no") + "\n" +
                         "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
                         "colour: " + this.player.getColour() + "\n" +

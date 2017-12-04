@@ -95,11 +95,11 @@ public class Bot implements IPlayer {
 	 			updateDto.pid = pid;
 	 			
 	 			if ( bike.getSpd().x != 0 ) {
-	 				updateDto.xSpd = 0;
-	 				updateDto.ySpd = newVal;
+	 				updateDto.xDir = 0;
+	 				updateDto.yDir = newVal;
 	 			} else if ( bike.getSpd().y != 0 ) {
-	 				updateDto.xSpd = newVal;
-	 				updateDto.ySpd = 0;
+	 				updateDto.xDir = newVal;
+	 				updateDto.yDir = 0;
 	 			}
 	 			
 	 			controller.sentUpdate(ioClient, updateDto);
