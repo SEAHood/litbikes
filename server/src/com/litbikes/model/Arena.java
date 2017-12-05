@@ -4,22 +4,22 @@ import com.litbikes.dto.ArenaDto;
 import com.litbikes.util.Vector;
 
 public class Arena {
-	public Vector dimensions;
+	public int size;
 	
-	public Arena( Vector dimensions ) {
-		this.dimensions = dimensions;
+	public Arena( int gameSize ) {
+		size = gameSize;
 	}
 	
 	public ArenaDto getDto() {
 		ArenaDto dto = new ArenaDto();
-		dto.dimensions = this.dimensions;
+		dto.size = this.size;
 		return dto;
 	}
 	
 	public boolean checkCollision( Bike bike, int lookAhead ) {		
 		Vector bPos = bike.getPos();
-		double collisionX = bPos.x + (lookAhead * bike.getSpd().x);
-		double collisionY = bPos.y + (lookAhead * bike.getSpd().y);
-		return collisionX >= dimensions.x || collisionX <= 0 || collisionY >= dimensions.y || collisionY <= 0;
+		double collisionX = bPos.x + (lookAhead * bike.getDir().x);
+		double collisionY = bPos.y + (lookAhead * bike.getDir().y);
+		return collisionX >= size || collisionX <= 0 || collisionY >= size || collisionY <= 0;
 	}
 }

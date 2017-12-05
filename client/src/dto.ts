@@ -31,7 +31,7 @@ module Dto {
     }
 
     export interface ArenaDto {
-        dimensions: Vector;
+        size: number;
     }
 
     export interface TrailSegmentDto {

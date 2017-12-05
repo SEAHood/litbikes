@@ -21,7 +21,7 @@ public class Bike implements ICollidable {
 	private String name;
 	private Vector pos;
 	private Vector dir;
-	private double spd = 1.5;
+	private double spd;
 	private CopyOnWriteArrayList<TrailSegment> trail;
 	private boolean crashed;
 	private boolean spectating;
@@ -38,6 +38,7 @@ public class Bike implements ICollidable {
 	public void init(Spawn spawn, boolean newPlayer) {
 		pos = spawn.getPos();
 		dir = spawn.getDir();
+		spd = spawn.getSpd();
 		trail = new CopyOnWriteArrayList<>();
 		crashed = false;
 		spectating = false;
@@ -76,10 +77,10 @@ public class Bike implements ICollidable {
         return Color.decode(colour);		
 	}
 
-	public void updatePosition(double speedModifier) {
+	public void updatePosition() {
 		if ( !crashed ) {			
-	        double xDiff = dir.x * spd * speedModifier;
-	        double yDiff = dir.y * spd * speedModifier;
+	        double xDiff = dir.x * spd;
+	        double yDiff = dir.y * spd;
 			pos.add(new Vector(xDiff, yDiff));
 		}
 	}
@@ -152,15 +153,19 @@ public class Bike implements ICollidable {
 		this.pos = pos;
 	}
 
-	public Vector getSpd() {
+	public Vector getDir() {
 		return dir;
 	}
 
-	public void setSpd(Vector spd) {
-        if ( ( this.dir.x == 0 && spd.x == 0 ) || ( this.dir.y == 0 && spd.y == 0 ) )
+	public void setSpd(double spd) {
+		this.spd = spd;
+	}
+
+	public void setDir(Vector dir) {
+        if ( ( this.dir.x == 0 && dir.x == 0 ) || ( this.dir.y == 0 && dir.y == 0 ) )
             return;
                 
-		this.dir = spd;
+		this.dir = dir;
 		addTrailPoint();
 	}
 
@@ -196,7 +201,7 @@ public class Bike implements ICollidable {
 	
 	public void crash() {
 		this.setCrashed(true);
-		this.setSpd(Vector.zero());
+		this.setDir(Vector.zero());
 		addTrailPoint();
 	}
 	

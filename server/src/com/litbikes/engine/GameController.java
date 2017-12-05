@@ -53,10 +53,10 @@ public class GameController implements GameEventListener {
 	private int minPlayers;
 	private Random random = new Random();
 		
-	public GameController( SocketIOServer _ioServer, int _minPlayers, int gameWidth, int gameHeight ) {
+	public GameController( SocketIOServer _ioServer, int _minPlayers, int gameSize ) {
 		ioServer = _ioServer;
 		minPlayers = _minPlayers;
-		game = new GameEngine(gameWidth, gameHeight);
+		game = new GameEngine(gameSize);
 		sessionPlayers = new HashMap<>();
 		botController = new BotController(this);
 	}

@@ -1,6 +1,7 @@
 package com.litbikes.engine;
 
 import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +27,8 @@ import com.litbikes.model.Wall;
 import com.litbikes.util.Vector;
 
 public class GameEngine {
+	public static final double BASE_BIKE_SPEED = 1.5;
+	
 	private static Logger LOG = Log.getLogger(GameEngine.class);
 	private static final int GAME_TICK_MS = 25;
 	
@@ -36,16 +39,13 @@ public class GameEngine {
 	private final Arena arena;
 	private final ScoreKeeper score;
 
-	private final int gameWidth;
-	private final int gameHeight;
+	private final int gameSize;
 	
-	public GameEngine(int gameWidth, int gameHeight) {
-		Vector arenaDim = new Vector(gameWidth, gameHeight);
-		arena = new Arena(arenaDim);
+	public GameEngine(int gameSize) {
+		arena = new Arena(gameSize);
 		bikes = new ArrayList<>();
 		score = new ScoreKeeper();
-		this.gameWidth = gameWidth;
-		this.gameHeight = gameHeight;
+		this.gameSize = gameSize;
 	}
 	
 	public void start() {
@@ -76,7 +76,7 @@ public class GameEngine {
 		if ( data.isValid() ) {			
 			if ( bikes.size() > 0 ) {				
 				Bike bike = bikes.stream().filter(b -> b.getPid() == data.pid).findFirst().get();				
-				bike.setSpd( new Vector(data.xDir, data.yDir) );
+				bike.setDir( new Vector(data.xDir, data.yDir) );
 			}						
 			return true;
 		} else 
@@ -115,10 +115,10 @@ public class GameEngine {
 	}
 	
 	public Spawn findSpawn() {
-		Spawn spawn = new Spawn(gameWidth, gameHeight);
+		Spawn spawn = new Spawn(gameSize);
 		int i = 0;
 		while (!spawnIsAcceptable(spawn) && i++ < 10) {
-			spawn = new Spawn(gameWidth, gameHeight);
+			spawn = new Spawn(gameSize);
 		}
 		return spawn;
 	}
@@ -163,7 +163,20 @@ public class GameEngine {
 		    	List<Thread> threads = new ArrayList<>();
 		    	for ( Bike bike : activeBikes ) {
 		    		Thread t = new Thread(() -> {
-			    		bike.updatePosition(1);
+
+		    			Point2D center = new Point2D.Double(gameSize/2, gameSize/2);
+		    			Point2D bikePos = new Point2D.Double(bike.getPos().x, bike.getPos().y);
+		    			double distance = bikePos.distance(center);
+		    			double oldMin = 0;
+		    			double oldMax = gameSize/2;
+		    			double newMin = 0;
+		    			double newMax = 1;
+		    			double oldRange = oldMax - oldMin;
+		    			double newRange = newMax - newMin;
+    					double spdModifier = ((distance - oldMin) * newRange / oldRange) + newMin; // Trust me
+    							
+    					bike.setSpd(BASE_BIKE_SPEED + spdModifier);
+			    		bike.updatePosition();
 						boolean collided = false;
 		
 						for ( Bike b : activeBikes ) {

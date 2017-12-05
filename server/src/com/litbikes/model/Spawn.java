@@ -1,16 +1,19 @@
 package com.litbikes.model;
 
+import com.litbikes.engine.GameEngine;
 import com.litbikes.util.NumberUtil;
 import com.litbikes.util.Vector;
 
 public class Spawn {
 	
 	private final Vector pos;
-	private final Vector spd;
+	private final Vector dir;
+	private final double spd;
 	
-	public Spawn(int gameWidth, int gameHeight) {
-		pos = createSpawnPosition(gameWidth, gameHeight);
-		spd = createSpawnSpeed();
+	public Spawn(int gameSize) {
+		pos = createSpawnPosition(gameSize);
+		dir = createSpawnDir();
+		spd = GameEngine.BASE_BIKE_SPEED;
 	}
 
 	public Vector getPos() {
@@ -18,34 +21,31 @@ public class Spawn {
 	}
 
 	public Vector getDir() {
+		return dir;
+	}
+	
+	public double getSpd() {
 		return spd;
 	}
 
-	private Vector createSpawnPosition(int gameWidth, int gameHeight) {
-		return new Vector(NumberUtil.randInt(20, gameWidth - 20), NumberUtil.randInt(20, gameHeight - 20));
+	private Vector createSpawnPosition(int gameSize) {
+		return new Vector(NumberUtil.randInt(20, gameSize - 20), NumberUtil.randInt(20, gameSize - 20));
 	}
 	
-	private Vector createSpawnSpeed() {
-		Vector spd;
+	private Vector createSpawnDir() {
 		int dir = NumberUtil.randInt(1, 4);
 		switch (dir) {
 			case 1:
-				spd = new Vector(0, -1);
-				break;
+				return new Vector(0, -1);
 			case 2:
-				spd = new Vector(0, 1);
-				break;
+				return new Vector(0, 1);
 			case 3:
-				spd = new Vector(-1, 0);
-				break;
+				return new Vector(-1, 0);
 			case 4:
-				spd = new Vector(1, 0);
-				break;
+				return new Vector(1, 0);
 			default:
-				spd = new Vector(0, 0); // Won't happen
-				break;
+				return new Vector(0, 0); // Won't happen
 		}
-		return spd;
 	}
 	
 }

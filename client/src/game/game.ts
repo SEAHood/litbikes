@@ -25,7 +25,7 @@ module Game {
         private gameJoined = false;
         private gameTickMs : number;
         private p5Instance : p5;
-        private showDebug = false;
+        private showDebug = true;
         private showRespawn = true;
         private timeKeepAliveSent : number;
         private latency : number;
@@ -236,8 +236,8 @@ module Game {
             this.p5Instance = new p5(this.sketch(), 'game-container');
             this.gameStarted = true;
             
-            $('#game').width(this.arena.dimensions.x);
-            $('#game').height(this.arena.dimensions.y);
+            $('#game').width(this.arena.size);
+            $('#game').height(this.arena.size);
 
             setInterval(() => {
                 this.gameTick++;
@@ -319,8 +319,8 @@ module Game {
                 b.draw(p, false, this.tabPressed);
             });
 
-            let halfWidth = this.arena.dimensions.x / 2;
-            let halfHeight = this.arena.dimensions.y / 2;
+            let halfWidth = this.arena.size / 2;
+            let halfHeight = this.arena.size / 2;
 
             if (this.gameJoined) {
                 this.player.draw(p, this.player.isRespawning(), this.tabPressed);
@@ -328,7 +328,7 @@ module Game {
                 if ( this.player.isCrashed() && this.player.isSpectating() && this.showRespawn ) {
                     p.noStroke();
                     p.fill('rgba(0,0,0,0.6)');
-                    p.rect(0, halfHeight - 35, this.arena.dimensions.x, 100);
+                    p.rect(0, halfHeight - 35, this.arena.size, 100);
 
                     p.textFont(this.mainFont);
                     p.textAlign('center', 'top');
@@ -382,6 +382,7 @@ module Game {
                         "pid: " + this.player.getPid() + "\n" +
                         "pos: " + this.player.getPos().x.toFixed(0) + ", " + this.player.getPos().y.toFixed(0) + "\n" +
                         "dir: "+ this.player.getDir().x + ", " + this.player.getDir().y + "\n" +
+                        "spd: "+ this.player.getSpd() + "\n" +
                         "crashed: " + (this.player.isCrashed() ? "yes" : "no") + "\n" +
                         "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
                         "colour: " + this.player.getColour() + "\n" +
@@ -399,7 +400,7 @@ module Game {
             this.mainFont = p.loadFont('fonts/3Dventure.ttf');
             this.secondaryFont = p.loadFont('fonts/visitor.ttf');
             this.debugFont = p.loadFont('fonts/larabie.ttf');
-            p.createCanvas(this.arena.dimensions.x, this.arena.dimensions.y);
+            p.createCanvas(this.arena.size, this.arena.size);
         }
 
     }

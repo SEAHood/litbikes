@@ -15,8 +15,7 @@ public class Launcher {
 
 		int port = 8080;
 		int maxBots = 5;
-		int gameWidth = 600;
-		int gameHeight = 600;
+		int gameSize = 600;
 
 		if ( params.get("p") != null ) // port
 			port = Integer.parseInt( params.get("p").get(0) );
@@ -24,20 +23,18 @@ public class Launcher {
 		if ( params.get("b") != null ) // bots
 			maxBots = Integer.parseInt( params.get("b").get(0) );
 				
-		if ( params.get("s") != null && params.get("s").size() == 2) { // game size
-			gameWidth = Integer.parseInt( params.get("s").get(0) );
-			gameHeight = Integer.parseInt( params.get("s").get(1) );			
+		if ( params.get("s") != null ) { // game size
+			gameSize = Integer.parseInt( params.get("s").get(0) );	
 		}
 		
 		final Integer _port = new Integer(port);
 		final Integer _maxBots = new Integer(maxBots); 
-		final Integer _gameWidth = new Integer(gameWidth); 
-		final Integer _gameHeight = new Integer(gameHeight); 
+		final Integer _gameSize = new Integer(gameSize);
 		
 		Thread gameServerThread = new Thread( new Runnable() {
 			@Override
 			public void run() {
-				GameServer game = new GameServer(9092, _maxBots, _gameWidth, _gameHeight);
+				GameServer game = new GameServer(9092, _maxBots, _gameSize);
 				game.start();	
 			}
 		}, "GameServer");

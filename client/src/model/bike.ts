@@ -208,6 +208,9 @@ module Model {
         public getDir() : Vector {
             return this.dir;
         }
+        public getSpd() : number {
+            return this.spd;
+        }
         public getColour() : String {
             return this.colour;
         }

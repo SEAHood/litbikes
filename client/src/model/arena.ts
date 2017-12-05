@@ -5,11 +5,11 @@ module Model {
     import NumberUtil = Util.NumberUtil;
     export class Arena {
 
-        public dimensions : Vector;
+        public size : number;
         private spacing = 10;
 
         constructor( dto : ArenaDto ) {
-            this.dimensions = dto.dimensions;
+            this.size = dto.size;
         }
 
         public draw( p : p5 ) {
@@ -18,12 +18,12 @@ module Model {
             p.strokeWeight(1);
             p.stroke('rgba(125,249,255,0.10)');
 
-            for (var i = 0; i < this.dimensions.x; i += this.spacing ) {
-                p.line(i, 0, i, this.dimensions.y);
+            for (var i = 0; i < this.size; i += this.spacing ) {
+                p.line(i, 0, i, this.size);
             }
 
-            for (var i = 0; i < this.dimensions.y; i += this.spacing ) {
-                p.line(0, i, this.dimensions.x, i);
+            for (var i = 0; i < this.size; i += this.spacing ) {
+                p.line(0, i, this.size, i);
             }
 
         }
