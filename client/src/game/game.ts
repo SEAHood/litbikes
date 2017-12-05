@@ -32,6 +32,8 @@ module Game {
         private gameTick : number;
         private messageCount : number;
         private tabPressed : boolean;
+        private serverTimeoutTimer : number;
+        private serverTimedOut : boolean = false;
 
         private nameInputField : any;
         private nameInputButton : any;
@@ -57,6 +59,7 @@ module Game {
             this.socket.on('keep-alive-ack', data => {
                 let timeNow = new Date().getTime();
                 this.latency = timeNow - this.timeKeepAliveSent;
+                this.refreshServerTimeout();
             });
 
             this.socket.on('world-update', ( data : WorldUpdateDto ) => {
@@ -208,6 +211,15 @@ module Game {
             return name.trim().length > 1 && name.trim().length <= 15;
         }
 
+        private refreshServerTimeout() {
+            if (this.serverTimeoutTimer) {
+                clearInterval(this.serverTimeoutTimer);
+                this.serverTimeoutTimer = null;
+            }
+            this.serverTimedOut = false;
+            this.serverTimeoutTimer = setInterval(() => this.serverTimedOut = true, 5000);
+        }
+
         private requestJoinGame(name: string) {
             let joinObj : ClientGameJoinDto = {
                 name: name
@@ -313,14 +325,40 @@ module Game {
         }
 
         private draw( p : p5 ) {
-            this.arena.draw(p);
+            let halfWidth = this.arena.size / 2;
+            let halfHeight = this.arena.size / 2;
 
+            this.arena.draw(p);
+            
             _.each( this.bikes, ( b : Bike ) => {
                 b.draw(p, false, this.tabPressed);
             });
 
-            let halfWidth = this.arena.size / 2;
-            let halfHeight = this.arena.size / 2;
+            if ( this.serverTimedOut ) {
+                p.noStroke();
+                p.fill('rgba(0,0,0,0.6)');
+                p.rect(0, halfHeight - 35, this.arena.size, 55);
+
+                p.textFont(this.mainFont);
+                p.textAlign('center', 'top');
+
+                p.fill('rgba(125,249,255,0.50)');
+                p.textSize(29);
+                p.text("He's dead, Jim",
+                    halfWidth + NumberUtil.randInt(0, 2), halfHeight - 30 + NumberUtil.randInt(0, 2));
+                p.fill('rgba(255,255,255,0.80)');
+                p.textSize(28);
+                p.text("He's dead, Jim",
+                    halfWidth, halfHeight - 30);
+
+                p.fill('rgba(0,0,0,0.40)');
+                p.fill(255);
+                p.textFont(this.secondaryFont);
+                p.textSize(15);
+                p.text("Lost connection to the server", halfWidth, halfHeight);
+
+                return;
+            }
 
             if (this.gameJoined) {
                 this.player.draw(p, this.player.isRespawning(), this.tabPressed);
