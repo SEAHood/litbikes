@@ -170,7 +170,7 @@ public class GameEngine {
 		    			double oldMin = 0;
 		    			double oldMax = gameSize/2;
 		    			double newMin = 0;
-		    			double newMax = 1;
+		    			double newMax = 0.5;
 		    			double oldRange = oldMax - oldMin;
 		    			double newRange = newMax - newMin;
     					double spdModifier = ((distance - oldMin) * newRange / oldRange) + newMin; // Trust me
