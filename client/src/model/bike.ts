@@ -75,7 +75,6 @@ module Model {
 
         public updateFromDto( dto : BikeDto ) {
             this.setPos(dto.pos);
-
             this.dir = dto.dir;
             this.spd = dto.spd;
             this.trail = [];
@@ -210,6 +209,9 @@ module Model {
         }
         public getSpd() : number {
             return this.spd;
+        }
+        public setSpd( spd : number ) {
+            this.spd = spd;
         }
         public getColour() : String {
             return this.colour;

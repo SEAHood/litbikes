@@ -78,7 +78,7 @@ public class GameController implements GameEventListener {
 			public void run() {
 				broadcastWorldUpdate();
 			}
-		}, 0, 100, TimeUnit.MILLISECONDS);
+		}, 0, 250, TimeUnit.MILLISECONDS);
 	}
 
 	public void playerCrashed( Bike bike ) {

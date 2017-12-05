@@ -25,7 +25,7 @@ module Game {
         private gameJoined = false;
         private gameTickMs : number;
         private p5Instance : p5;
-        private showDebug = true;
+        private showDebug = false;
         private showRespawn = true;
         private timeKeepAliveSent : number;
         private latency : number;
@@ -251,15 +251,36 @@ module Game {
             $('#game').width(this.arena.size);
             $('#game').height(this.arena.size);
 
+            // MAIN UPDATE LOOP
             setInterval(() => {
                 this.gameTick++;
+                var baseSpeed = 1.5; // TODO: Get this from the server!
                 if (this.gameJoined) {
+                    let spdModifier = this.calculateSpeedModifier(this.player);
+                    this.player.setSpd(baseSpeed + spdModifier)
                     this.player.update();
                 }
-                _.each( this.bikes, ( b : Bike ) => {
+                _.each( this.bikes, ( b : Bike ) => {                    
+                    let spdModifier = this.calculateSpeedModifier(b);                         
+                    b.setSpd(baseSpeed + spdModifier);
                     b.update();
                 });
             }, this.gameTickMs);
+        }
+
+        private calculateSpeedModifier( b : Bike ): number {            
+            let gameSize = this.arena.size;
+            let center = new Vector(gameSize/2, gameSize/2);
+            let bikePos = new Vector(b.getPos().x, b.getPos().y),
+                distance = Vector.distance(bikePos, center),
+                oldMin = 0,
+                oldMax = gameSize/2,
+                newMin = 0,
+                newMax = 0.5,
+                oldRange = oldMax - oldMin,
+                newRange = newMax - newMin,
+                spdModifier = ((distance - oldMin) * newRange / oldRange) + newMin; // Trust me
+            return spdModifier;
         }
         
         private processWorldUpdate( data : WorldUpdateDto ) {
@@ -274,7 +295,6 @@ module Game {
 
             _.each( data.bikes, ( b : BikeDto ) => {
                 if ( this.gameJoined && b.pid === this.player.getPid() && this.player ) {
-                    //console.log("Updating player from dto");
                     this.player.updateFromDto(b);
                 } else {
                     let bike = _.find(this.bikes, (bike:Bike) => bike.getPid() === b.pid);

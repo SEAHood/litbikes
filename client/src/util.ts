@@ -9,6 +9,12 @@ module Util {
             this.y = y;
         }
 
+        public static distance(v1 : Vector, v2 : Vector): number {
+            var a = v1.x - v2.x;
+            var b = v1.y - v2.y;            
+            return Math.sqrt( a*a + b*b );
+        }
+
         /*constructor(obj: any) {
             if ( !!obj.x && !!obj.y ) {
                 this.x = obj.x;
