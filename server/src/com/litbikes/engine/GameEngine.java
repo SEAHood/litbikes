@@ -1,11 +1,12 @@
 package com.litbikes.engine;
 
 import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -38,8 +39,11 @@ public class GameEngine {
 	private final List<Bike> bikes;
 	private final Arena arena;
 	private final ScoreKeeper score;
-
-	private final int gameSize;
+	private final int gameSize;	
+	
+	private Timer roundTimer;
+	private int roundTimeLeft;
+	private boolean roundInProgress = false;
 	
 	public GameEngine(int gameSize) {
 		arena = new Arena(gameSize);
@@ -56,6 +60,37 @@ public class GameEngine {
 		eventListener.gameStarted();
 	}
 	
+	public void startRound(int duration, boolean force) {
+		if (!roundInProgress || force) {
+			roundTimeLeft = duration;
+			roundTimer = new Timer();
+			TimerTask t = new TimerTask() {
+				public void run() {
+					if (roundTimeLeft == 0) {
+						endRound();
+						return;
+					}
+					roundTimeLeft--;
+				}
+			};
+			roundTimer.scheduleAtFixedRate(t, 1000, 1000);
+			for (Bike b : bikes) {
+				b.init(findSpawn(), false);
+			}
+			roundInProgress = true;
+			eventListener.roundStarted();
+		}
+	}
+	
+	private void endRound() {
+		roundTimer.cancel();
+		roundInProgress = false;
+		for (Bike b : bikes) {
+			b.setSpectating(true);
+		}
+		eventListener.roundEnded();
+	}
+		
 	public Bike playerJoin(int pid, String name) {
 		LOG.info("Creating new player with pid " + pid);
 		Bike bike = new Bike(pid, name);
@@ -95,6 +130,8 @@ public class GameEngine {
 
 		Instant now = Instant.now();
 		worldDto.timestamp = now.getEpochSecond();
+		worldDto.roundInProgress = roundInProgress;
+		worldDto.roundTimeLeft = roundTimeLeft;
 		worldDto.gameTick = gameTick;
 		worldDto.arena = arena.getDto();
 		worldDto.bikes = bikesDto;
@@ -158,61 +195,67 @@ public class GameEngine {
 		    	//Increment tick count first
 		    	gameTick++;
 	
-		    	List<Bike> activeBikes = bikes.stream().filter(b -> b.isActive()).collect(Collectors.toList());
-	
-		    	List<Thread> threads = new ArrayList<>();
-		    	for ( Bike bike : activeBikes ) {
-		    		Thread t = new Thread(() -> {
-
-		    			Point2D center = new Point2D.Double(gameSize/2, gameSize/2);
-		    			Point2D bikePos = new Point2D.Double(bike.getPos().x, bike.getPos().y);
-		    			double distance = bikePos.distance(center);
-		    			double oldMin = 0;
-		    			double oldMax = gameSize/2;
-		    			double newMin = 0;
-		    			double newMax = 0.5;
-		    			double oldRange = oldMax - oldMin;
-		    			double newRange = newMax - newMin;
-    					double spdModifier = ((distance - oldMin) * newRange / oldRange) + newMin; // Trust me
-    							
-    					bike.setSpd(BASE_BIKE_SPEED + spdModifier);
-			    		bike.updatePosition();
-						boolean collided = false;
-		
-						for ( Bike b : activeBikes ) {
-							boolean isSelf = b.getPid() == bike.getPid();
-							collided = collided || bike.collides( b.getTrail(!isSelf), 1 );
-							if ( collided ) {
-								bike.setCrashedInto(b);
-								break;
-							}
-						}
-						
-						if ( arena.checkCollision(bike, 1) ) {
-							collided = true;
-							bike.setCrashedInto(new Wall());						
-						}
-		
-						if ( collided ) {
-							bike.crash();
-							bike.setSpectating(true);
-							eventListener.playerCrashed(bike);
-							if ( bike.getCrashedInto() != null ) {
-								ICollidable crashedInto = bike.getCrashedInto();
-								if ( crashedInto.getId() != bike.getPid() ) {
-									score.grantScore(crashedInto.getId(), crashedInto.getName(), 1);
-									eventListener.scoreUpdated(score.getScores());
+		    	if (roundInProgress) {
+		    		
+			    	List<Bike> activeBikes = bikes.stream().filter(b -> b.isActive()).collect(Collectors.toList());	
+			    	List<Thread> threads = new ArrayList<>();
+			    	for ( Bike bike : activeBikes ) {
+			    		Thread t = new Thread(() -> {
+			    			
+			    			// Faster father from center - disabled temporarily
+			    			/* 
+			    			Point2D center = new Point2D.Double(gameSize/2, gameSize/2);
+			    			Point2D bikePos = new Point2D.Double(bike.getPos().x, bike.getPos().y);
+			    			double distance = bikePos.distance(center);
+			    			double oldMin = 0;
+			    			double oldMax = gameSize/2;
+			    			double newMin = 0;
+			    			double newMax = 0.5;
+			    			double oldRange = oldMax - oldMin;
+			    			double newRange = newMax - newMin;
+	    					double spdModifier = ((distance - oldMin) * newRange / oldRange) + newMin; // Trust me
+	    							
+	    					bike.setSpd(BASE_BIKE_SPEED + spdModifier);*/
+	    					
+				    		bike.updatePosition();
+							boolean collided = false;
+			
+							for ( Bike b : activeBikes ) {
+								boolean isSelf = b.getPid() == bike.getPid();
+								collided = collided || bike.collides( b.getTrail(!isSelf), 1 );
+								if ( collided ) {
+									bike.setCrashedInto(b);
+									break;
 								}
 							}
-						}	
-		    		});
+							
+							if ( arena.checkCollision(bike, 1) ) {
+								collided = true;
+								bike.setCrashedInto(new Wall());						
+							}
+			
+							if ( collided ) {
+								bike.crash();
+								bike.setSpectating(true);
+								eventListener.playerCrashed(bike);
+								if ( bike.getCrashedInto() != null ) {
+									ICollidable crashedInto = bike.getCrashedInto();
+									if ( crashedInto.getId() != bike.getPid() ) {
+										score.grantScore(crashedInto.getId(), crashedInto.getName(), 1);
+										eventListener.scoreUpdated(score.getScores());
+									}
+								}
+							}	
+			    		});
+			    		
+			    		threads.add(t);
+			    		t.start();
+			    	}
+			    	
+			    	for ( int i = 0; i < threads.size(); i++ )
+			    		threads.get(i).join();
 		    		
-		    		threads.add(t);
-		    		t.start();
 		    	}
-		    	
-		    	for ( int i = 0; i < threads.size(); i++ )
-		    		threads.get(i).join();
 		    	
 			} catch (Exception e) {
 				e.printStackTrace();

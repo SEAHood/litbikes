@@ -25,11 +25,13 @@ module Game {
         private gameJoined = false;
         private gameTickMs : number;
         private p5Instance : p5;
-        private showDebug = false;
+        private showDebug = true;
         private showRespawn = true;
         private timeKeepAliveSent : number;
         private latency : number;
         private gameTick : number;
+        private roundInProgress: boolean;
+        private roundTimeLeft: number;
         private messageCount : number;
         private tabPressed : boolean;
         private serverTimeoutTimer : number;
@@ -256,13 +258,15 @@ module Game {
                 this.gameTick++;
                 var baseSpeed = 1.5; // TODO: Get this from the server!
                 if (this.gameJoined) {
-                    let spdModifier = this.calculateSpeedModifier(this.player);
-                    this.player.setSpd(baseSpeed + spdModifier)
+                    // Faster farther from center - disabled just now
+                    //let spdModifier = this.calculateSpeedModifier(this.player);
+                    //this.player.setSpd(baseSpeed + spdModifier)
                     this.player.update();
                 }
-                _.each( this.bikes, ( b : Bike ) => {                    
-                    let spdModifier = this.calculateSpeedModifier(b);                         
-                    b.setSpd(baseSpeed + spdModifier);
+                _.each( this.bikes, ( b : Bike ) => {
+                    // Faster farther from center - disabled just now      
+                    //let spdModifier = this.calculateSpeedModifier(b);                         
+                    //b.setSpd(baseSpeed + spdModifier);
                     b.update();
                 });
             }, this.gameTickMs);
@@ -284,6 +288,8 @@ module Game {
         }
         
         private processWorldUpdate( data : WorldUpdateDto ) {
+            this.roundInProgress = data.roundInProgress;
+            this.roundTimeLeft = data.roundTimeLeft;
             //console.log("Processing world update");
             let updatedBikes = _.pluck(data.bikes, 'pid');
             let existingBikes = _.pluck(this.bikes, 'pid');
@@ -445,6 +451,8 @@ module Game {
                         "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
                         "colour: " + this.player.getColour() + "\n" +
                         "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n" +
+                        "round in progress: " + (this.roundInProgress ? "yes" : "no") + "\n" + 
+                        "round time left: " + this.roundTimeLeft + "\n" + 
                         "other bikes: " + this.bikes.length + "\n" +
                         "chat message count: " + this.messageCount + "\n"
                     , 10, 30, 300, 500);

@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -21,9 +23,9 @@ import com.litbikes.ai.BotIOClient;
 import com.litbikes.dto.ChatMessageDto;
 import com.litbikes.dto.ClientGameJoinDto;
 import com.litbikes.dto.ClientUpdateDto;
+import com.litbikes.dto.GameJoinDto;
 import com.litbikes.dto.GameSettingsDto;
 import com.litbikes.dto.HelloDto;
-import com.litbikes.dto.GameJoinDto;
 import com.litbikes.dto.ScoreDto;
 import com.litbikes.model.Bike;
 import com.litbikes.model.IPlayer;
@@ -34,6 +36,8 @@ interface GameEventListener {
 	void playerSpawned(int pid);
 	void scoreUpdated(List<ScoreDto> scores);
 	void gameStarted();
+	void roundStarted();
+	void roundEnded();
 }
 
 // Manages connections between high level game components
@@ -65,6 +69,7 @@ public class GameController implements GameEventListener {
 		setupGameListeners();
 		game.start();
 		balanceBots();
+		game.startRound(10, false);
 	}
 	
 	// START GAME EVENTS
@@ -96,6 +101,21 @@ public class GameController implements GameEventListener {
 
 	public void scoreUpdated(List<ScoreDto> scores) {
 		broadcastData("score-update", scores);
+	}
+	
+	public void roundStarted() {
+		
+	}
+	
+	public void roundEnded() {
+		// todo: score stuff
+		Timer t = new Timer();
+		TimerTask task = new TimerTask() {
+			public void run() {
+				game.startRound(10, false);
+			}
+		};
+		t.schedule(task, 3000);
 	}
 	// END GAME EVENTS
 

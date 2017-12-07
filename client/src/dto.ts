@@ -42,6 +42,8 @@ module Dto {
     export interface WorldUpdateDto {
         timestamp: number;
         gameTick: number;
+        roundInProgress: boolean;
+        roundTimeLeft: number;
         bikes: BikeDto[];
         arena: ArenaDto;
     }
