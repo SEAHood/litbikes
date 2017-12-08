@@ -25,13 +25,15 @@ module Game {
         private gameJoined = false;
         private gameTickMs : number;
         private p5Instance : p5;
-        private showDebug = true;
+        private showDebug = false;
         private showRespawn = true;
         private timeKeepAliveSent : number;
         private latency : number;
         private gameTick : number;
         private roundInProgress: boolean;
         private roundTimeLeft: number;
+        private timeUntilNextRound: number;
+        private currentWinner: number;
         private messageCount : number;
         private tabPressed : boolean;
         private serverTimeoutTimer : number;
@@ -290,6 +292,8 @@ module Game {
         private processWorldUpdate( data : WorldUpdateDto ) {
             this.roundInProgress = data.roundInProgress;
             this.roundTimeLeft = data.roundTimeLeft;
+            this.timeUntilNextRound = data.timeUntilNextRound;
+            this.currentWinner = data.currentWinner;
             //console.log("Processing world update");
             let updatedBikes = _.pluck(data.bikes, 'pid');
             let existingBikes = _.pluck(this.bikes, 'pid');
@@ -355,10 +359,12 @@ module Game {
             let halfHeight = this.arena.size / 2;
 
             this.arena.draw(p);
-            
-            _.each( this.bikes, ( b : Bike ) => {
-                b.draw(p, false, this.tabPressed);
-            });
+        
+            if (this.roundInProgress) {
+                _.each( this.bikes, ( b : Bike ) => {
+                    b.draw(p, false, this.tabPressed);
+                });
+            }
 
             if ( this.serverTimedOut ) {
                 p.noStroke();
@@ -389,7 +395,7 @@ module Game {
             if (this.gameJoined) {
                 this.player.draw(p, this.player.isRespawning(), this.tabPressed);
 
-                if ( this.player.isCrashed() && this.player.isSpectating() && this.showRespawn ) {
+                if ( this.player.isCrashed() && this.player.isSpectating() && this.showRespawn && this.roundInProgress ) {
                     p.noStroke();
                     p.fill('rgba(0,0,0,0.6)');
                     p.rect(0, halfHeight - 35, this.arena.size, 100);
@@ -431,6 +437,38 @@ module Game {
                     p.text("Press 'H' to hide", halfWidth, halfHeight + 45);
                 }
             } 
+
+            if (!this.roundInProgress) {
+                let winner = this.gameJoined && this.currentWinner === this.player.getPid()
+                    ? this.player
+                    : _.find(this.bikes, (bike:Bike) => bike.getPid() === this.currentWinner);
+                
+                let winnerName = "The Wall";
+                if (winner)
+                    winnerName = winner.getName();
+
+                p.noStroke();
+                p.fill('rgba(0,0,0,0.6)');
+                p.rect(0, halfHeight - 35, this.arena.size, 55);
+
+                p.textFont(this.mainFont);
+                p.textAlign('center', 'top');
+
+                p.fill('rgba(125,249,255,0.50)');
+                p.textSize(29);
+                p.text(winnerName + " won!",
+                    halfWidth + NumberUtil.randInt(0, 2), halfHeight - 30 + NumberUtil.randInt(0, 2));
+                p.fill('rgba(255,255,255,0.80)');
+                p.textSize(28);
+                p.text(winnerName + " won!",
+                    halfWidth, halfHeight - 30);
+
+                p.fill('rgba(0,0,0,0.40)');
+                p.fill(255);
+                p.textFont(this.secondaryFont);
+                p.textSize(15);
+                p.text("Next round starting in " + this.timeUntilNextRound + " seconds", halfWidth, halfHeight);
+            }
             
             // Debug text
             if ( this.showDebug ) {
@@ -453,6 +491,7 @@ module Game {
                         "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n" +
                         "round in progress: " + (this.roundInProgress ? "yes" : "no") + "\n" + 
                         "round time left: " + this.roundTimeLeft + "\n" + 
+                        "time until next round: " + this.timeUntilNextRound + "\n" + 
                         "other bikes: " + this.bikes.length + "\n" +
                         "chat message count: " + this.messageCount + "\n"
                     , 10, 30, 300, 500);

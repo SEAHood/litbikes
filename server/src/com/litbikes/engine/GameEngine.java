@@ -43,6 +43,7 @@ public class GameEngine {
 	
 	private Timer roundTimer;
 	private int roundTimeLeft;
+	private int timeUntilNextRound;
 	private boolean roundInProgress = false;
 	
 	public GameEngine(int gameSize) {
@@ -60,25 +61,49 @@ public class GameEngine {
 		eventListener.gameStarted();
 	}
 	
-	public void startRound(int duration, boolean force) {
-		if (!roundInProgress || force) {
-			roundTimeLeft = duration;
-			roundTimer = new Timer();
-			TimerTask t = new TimerTask() {
+	// duration and delay = seconds
+	public void startRound(int duration, int delay, boolean force) {
+		if (!roundInProgress || force) {			
+			
+			timeUntilNextRound = delay;
+			
+			Timer countdownTimer = new Timer();
+			TimerTask countdownTask = new TimerTask() {
 				public void run() {
-					if (roundTimeLeft == 0) {
-						endRound();
-						return;
-					}
-					roundTimeLeft--;
+					timeUntilNextRound--;
 				}
 			};
-			roundTimer.scheduleAtFixedRate(t, 1000, 1000);
-			for (Bike b : bikes) {
-				b.init(findSpawn(), false);
-			}
-			roundInProgress = true;
-			eventListener.roundStarted();
+			
+			Timer delayTimer = new Timer();
+			TimerTask delayTask = new TimerTask() {
+				public void run() {
+					
+					roundTimeLeft = duration;
+					roundTimer = new Timer();
+					TimerTask t = new TimerTask() {
+						public void run() {
+							if (roundTimeLeft == 0) {
+								endRound();
+								return;
+							}
+							roundTimeLeft--;
+						}
+					};
+					roundTimer.scheduleAtFixedRate(t, 1000, 1000);
+					for (Bike b : bikes) {
+						b.init(findSpawn(), false);
+					}	
+					score.reset();
+					roundInProgress = true;
+					countdownTimer.cancel();
+					eventListener.roundStarted();
+					LOG.info("Round started. Duration: " + duration + " seconds");
+				}
+			};
+			
+			if (delay > 0)
+				countdownTimer.scheduleAtFixedRate(countdownTask, 0, 1000);
+			delayTimer.schedule(delayTask, delay * 1000);
 		}
 	}
 	
@@ -89,6 +114,7 @@ public class GameEngine {
 			b.setSpectating(true);
 		}
 		eventListener.roundEnded();
+		LOG.info("Round ended - winner: " + score.getCurrentWinnerName());
 	}
 		
 	public Bike playerJoin(int pid, String name) {
@@ -132,6 +158,8 @@ public class GameEngine {
 		worldDto.timestamp = now.getEpochSecond();
 		worldDto.roundInProgress = roundInProgress;
 		worldDto.roundTimeLeft = roundTimeLeft;
+		worldDto.timeUntilNextRound = timeUntilNextRound;
+		worldDto.currentWinner = score.getCurrentWinner();
 		worldDto.gameTick = gameTick;
 		worldDto.arena = arena.getDto();
 		worldDto.bikes = bikesDto;
@@ -240,7 +268,7 @@ public class GameEngine {
 								eventListener.playerCrashed(bike);
 								if ( bike.getCrashedInto() != null ) {
 									ICollidable crashedInto = bike.getCrashedInto();
-									if ( crashedInto.getId() != bike.getPid() ) {
+									if ( !(crashedInto instanceof Wall) && crashedInto.getId() != bike.getPid() ) {
 										score.grantScore(crashedInto.getId(), crashedInto.getName(), 1);
 										eventListener.scoreUpdated(score.getScores());
 									}
@@ -270,6 +298,10 @@ public class GameEngine {
 
 	public List<Bike> getBikes() {
 		return bikes;
+	}
+
+	public int getRoundTimeLeft() {
+		return roundTimeLeft;
 	}
 	
 }

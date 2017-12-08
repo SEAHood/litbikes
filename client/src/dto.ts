@@ -44,6 +44,8 @@ module Dto {
         gameTick: number;
         roundInProgress: boolean;
         roundTimeLeft: number;
+        timeUntilNextRound: number;
+        currentWinner: number;
         bikes: BikeDto[];
         arena: ArenaDto;
     }

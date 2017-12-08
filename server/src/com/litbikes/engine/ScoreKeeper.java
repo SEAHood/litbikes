@@ -1,6 +1,8 @@
 package com.litbikes.engine;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -52,6 +54,26 @@ public class ScoreKeeper {
 	
 	public void reset() {
 		scores.clear();
+	}
+
+	public int getCurrentWinner() {
+		if (scores.size() <= 0) return -1;
+		Collections.sort(scores, new SortByScore());
+		return scores.get(0).pid;
+	}
+	
+	class SortByScore implements Comparator<ScoreDto>
+	{
+	    public int compare(ScoreDto a, ScoreDto b)
+	    {
+	        return b.score - a.score;
+	    }
+	}
+
+	public String getCurrentWinnerName() {
+		if (scores.size() <= 0) return "Unknown";
+		Collections.sort(scores, new SortByScore());
+		return scores.get(0).name;
 	}
 	
 }

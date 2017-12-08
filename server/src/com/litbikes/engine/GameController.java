@@ -53,6 +53,9 @@ public class GameController implements GameEventListener {
 	private final static String C_HELLO = "hello";
 	private final static String C_JOINED_GAME = "joined-game";
 	private final static String C_ERROR = "error";
+
+	private final static int ROUND_TIME = 300;
+	private final static int ROUND_DELAY = 15;
 	
 	private int minPlayers;
 	private Random random = new Random();
@@ -69,7 +72,7 @@ public class GameController implements GameEventListener {
 		setupGameListeners();
 		game.start();
 		balanceBots();
-		game.startRound(10, false);
+		game.startRound(ROUND_TIME, 0, false);
 	}
 	
 	// START GAME EVENTS
@@ -80,10 +83,22 @@ public class GameController implements GameEventListener {
 	public void gameStarted() {		
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 		executor.scheduleAtFixedRate(new Runnable() {
-			public void run() {
+			public void run() {								
 				broadcastWorldUpdate();
 			}
 		}, 0, 250, TimeUnit.MILLISECONDS);
+				
+		ScheduledExecutorService executorHACK = Executors.newScheduledThreadPool(1);
+		executorHACK.scheduleAtFixedRate(new Runnable() {
+			public void run() {				
+				int timeLeft = game.getRoundTimeLeft();
+				if (timeLeft > 0 && (timeLeft < 10 || timeLeft % 10 == 0)) {
+			    	String msg = "Round ending in " + timeLeft + " seconds";
+			    	ChatMessageDto dto = new ChatMessageDto(null, null, msg, true);
+			    	broadcastData("chat-message", dto);
+				}
+			}
+		}, 0, 1, TimeUnit.SECONDS);
 	}
 
 	public void playerCrashed( Bike bike ) {
@@ -104,7 +119,9 @@ public class GameController implements GameEventListener {
 	}
 	
 	public void roundStarted() {
-		
+    	String msg = "Round started!";
+    	ChatMessageDto dto = new ChatMessageDto(null, null, msg, true);
+    	broadcastData("chat-message", dto);
 	}
 	
 	public void roundEnded() {
@@ -112,10 +129,14 @@ public class GameController implements GameEventListener {
 		Timer t = new Timer();
 		TimerTask task = new TimerTask() {
 			public void run() {
-				game.startRound(10, false);
+				game.startRound(ROUND_TIME, ROUND_DELAY, false);
 			}
 		};
 		t.schedule(task, 3000);
+		
+    	String msg = "Round ended!";
+    	ChatMessageDto dto = new ChatMessageDto(null, null, msg, true);
+    	broadcastData("chat-message", dto);    	
 	}
 	// END GAME EVENTS
 
