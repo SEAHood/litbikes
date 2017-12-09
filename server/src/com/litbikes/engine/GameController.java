@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -81,21 +79,28 @@ public class GameController implements GameEventListener {
 	}	
 	
 	public void gameStarted() {		
-		ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+		ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
 		executor.scheduleAtFixedRate(new Runnable() {
-			public void run() {								
-				broadcastWorldUpdate();
+			public void run() {
+				try {
+					broadcastWorldUpdate();					
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}, 0, 250, TimeUnit.MILLISECONDS);
 				
-		ScheduledExecutorService executorHACK = Executors.newScheduledThreadPool(1);
-		executorHACK.scheduleAtFixedRate(new Runnable() {
-			public void run() {				
-				int timeLeft = game.getRoundTimeLeft();
-				if (timeLeft > 0 && (timeLeft < 10 || timeLeft % 10 == 0)) {
-			    	String msg = "Round ending in " + timeLeft + " seconds";
-			    	ChatMessageDto dto = new ChatMessageDto(null, null, msg, true);
-			    	broadcastData("chat-message", dto);
+		executor.scheduleAtFixedRate(new Runnable() {
+			public void run() {		
+				try {		
+					int timeLeft = game.getRoundTimeLeft();
+					if (timeLeft > 0 && (timeLeft < 10 || timeLeft % 10 == 0)) {
+				    	String msg = "Round ending in " + timeLeft + " seconds";
+				    	ChatMessageDto dto = new ChatMessageDto(null, null, msg, true);
+				    	broadcastData("chat-message", dto);
+					}			
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
 		}, 0, 1, TimeUnit.SECONDS);
@@ -122,17 +127,11 @@ public class GameController implements GameEventListener {
     	String msg = "Round started!";
     	ChatMessageDto dto = new ChatMessageDto(null, null, msg, true);
     	broadcastData("chat-message", dto);
+		broadcastData("score-update", game.getScores());
 	}
 	
 	public void roundEnded() {
-		// todo: score stuff
-		Timer t = new Timer();
-		TimerTask task = new TimerTask() {
-			public void run() {
-				game.startRound(ROUND_TIME, ROUND_DELAY, false);
-			}
-		};
-		t.schedule(task, 3000);
+		game.startRound(ROUND_TIME, ROUND_DELAY, false);
 		
     	String msg = "Round ended!";
     	ChatMessageDto dto = new ChatMessageDto(null, null, msg, true);

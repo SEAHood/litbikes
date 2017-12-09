@@ -122,14 +122,14 @@ input:focus, textarea:focus {
     font-family: 'Larabie', Times, serif;
     font-size: 0.8em;
     color: white;
-    background-color: #222;
+    background-color: rgba(33, 33, 33, 0.3);
 }
 
 #score-container {
     width: 30%;
 
     /* grey */
-    border: 1px solid rgba(255, 255, 255, 0.7);
+    /* border: 1px solid rgba(255, 255, 255, 0.7); */
     -webkit-box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
     -moz-box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
@@ -164,7 +164,7 @@ input:focus, textarea:focus {
     user-select: all;
 
     /* grey */
-    border: 1px solid rgba(255, 255, 255, 0.7);
+    /* border: 1px solid rgba(255, 255, 255, 0.7); */
     -webkit-box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
     -moz-box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);

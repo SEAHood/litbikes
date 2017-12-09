@@ -368,7 +368,7 @@ module Game {
 
             if ( this.serverTimedOut ) {
                 p.noStroke();
-                p.fill('rgba(0,0,0,0.6)');
+                p.fill('rgba(0,0,0,0.4)');
                 p.rect(0, halfHeight - 35, this.arena.size, 55);
 
                 p.textFont(this.mainFont);
@@ -393,11 +393,13 @@ module Game {
             }
 
             if (this.gameJoined) {
-                this.player.draw(p, this.player.isRespawning(), this.tabPressed);
+                if (this.roundInProgress) {
+                    this.player.draw(p, this.player.isRespawning(), this.tabPressed);
+                }
 
                 if ( this.player.isCrashed() && this.player.isSpectating() && this.showRespawn && this.roundInProgress ) {
                     p.noStroke();
-                    p.fill('rgba(0,0,0,0.6)');
+                    p.fill('rgba(0,0,0,0.4)');
                     p.rect(0, halfHeight - 35, this.arena.size, 100);
 
                     p.textFont(this.mainFont);
@@ -448,7 +450,7 @@ module Game {
                     winnerName = winner.getName();
 
                 p.noStroke();
-                p.fill('rgba(0,0,0,0.6)');
+                p.fill('rgba(0,0,0,0.4)');
                 p.rect(0, halfHeight - 35, this.arena.size, 55);
 
                 p.textFont(this.mainFont);
@@ -467,7 +469,7 @@ module Game {
                 p.fill(255);
                 p.textFont(this.secondaryFont);
                 p.textSize(15);
-                p.text("Next round starting in " + this.timeUntilNextRound + " seconds", halfWidth, halfHeight);
+                p.text("Next round starting in " + this.timeUntilNextRound + " second" + (this.timeUntilNextRound === 1 ? "" : "s"), halfWidth, halfHeight);
             }
             
             // Debug text

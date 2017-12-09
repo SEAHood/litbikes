@@ -1,18 +1,18 @@
 package com.litbikes.engine;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.litbikes.dto.ScoreDto;
 
 public class ScoreKeeper {
-	private final List<ScoreDto> scores;
+	private final CopyOnWriteArrayList<ScoreDto> scores;
 	
 	public ScoreKeeper() {
-		scores = new ArrayList<>();
+		scores = new CopyOnWriteArrayList<>();
 	}
 	
 	public void grantScore( int pid, String name, int score ) {

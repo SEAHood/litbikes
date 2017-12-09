@@ -92,7 +92,7 @@ public class GameEngine {
 					roundTimer.scheduleAtFixedRate(t, 1000, 1000);
 					for (Bike b : bikes) {
 						b.init(findSpawn(), false);
-					}	
+					}
 					score.reset();
 					roundInProgress = true;
 					countdownTimer.cancel();
@@ -102,7 +102,7 @@ public class GameEngine {
 			};
 			
 			if (delay > 0)
-				countdownTimer.scheduleAtFixedRate(countdownTask, 0, 1000);
+				countdownTimer.scheduleAtFixedRate(countdownTask, 1000, 1000);
 			delayTimer.schedule(delayTask, delay * 1000);
 		}
 	}
