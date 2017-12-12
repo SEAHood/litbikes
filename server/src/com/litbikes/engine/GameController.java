@@ -26,7 +26,6 @@ import com.litbikes.dto.GameSettingsDto;
 import com.litbikes.dto.HelloDto;
 import com.litbikes.dto.ScoreDto;
 import com.litbikes.model.Bike;
-import com.litbikes.model.IPlayer;
 import com.litbikes.model.Player;
 
 interface GameEventListener {
@@ -43,7 +42,7 @@ public class GameController implements GameEventListener {
 
 	private static Logger LOG = Log.getLogger(GameController.class);
 	private final SocketIOServer ioServer;
-	private final Map<UUID, IPlayer> sessionPlayers;
+	private final Map<UUID, Integer> sessionPlayers; //session ID -> engine player ID
 	private final GameEngine game;
 	private final BotController botController;
 	private int pidGen = 0;
@@ -143,7 +142,7 @@ public class GameController implements GameEventListener {
 	public void sendWorldUpdate(SocketIOClient client) {
 		if ( client != null ) {
 			if ( client instanceof BotIOClient ) 
-				((BotIOClient)client).updateBot(game.getBikes(), game.getArena());
+				((BotIOClient)client).updateBot(game.getPlayers(), game.getArena());
 			else
 				client.sendEvent("world-update", game.getWorldDto());
 		}
@@ -151,7 +150,7 @@ public class GameController implements GameEventListener {
 	
 	public void broadcastWorldUpdate() {
 		ioServer.getBroadcastOperations().sendEvent("world-update", game.getWorldDto());
-		botController.doUpdate(game.getBikes(), game.getArena());
+		botController.doUpdate(game.getPlayers(), game.getArena());
 	}
 	
 	public void broadcastData(String key, Object obj) {
@@ -161,9 +160,10 @@ public class GameController implements GameEventListener {
 	public Bot botCreated() {
 		String botName = "BOT#" + String.format("%04d", random.nextInt(10000));
 		int pid = pidGen++;
-		Bike bike = game.playerJoin(pid, botName);
-		Bot bot = new Bot(bike, game.getBikes(), game.getArena());
-		sessionPlayers.put(bot.getSessionId(), bot);
+		Player player = game.playerJoin(pid, botName);
+		Bot bot = new Bot(player.getPid(), game.getPlayers(), game.getArena());
+		bot.setBike(player.getBike());
+		sessionPlayers.put(bot.getSessionId(), pid);
 		return bot;
 	}
 	
@@ -173,8 +173,7 @@ public class GameController implements GameEventListener {
 	}
 	
 	private void balanceBots() {
-		int totalHumans = (int)sessionPlayers.entrySet().stream()
-				.map(p -> p.getValue())
+		int totalHumans = (int) game.getPlayers().stream()
 				.filter(p -> p.isHuman() && p.isAlive())
 				.count();
 		int requiredBots = Math.max(0, minPlayers - totalHumans);
@@ -190,15 +189,15 @@ public class GameController implements GameEventListener {
 			return;
 		}
 		
-		Player player = (Player)sessionPlayers.get(client.getSessionId());
-		player.name = gameJoinDto.name;
-		player.bike = game.playerJoin(player.pid, player.name);		
+		int pid = sessionPlayers.get(client.getSessionId());
+		String name = gameJoinDto.name;
+		Player player = game.playerJoin(pid, name);
 		
 		GameSettingsDto gameSettings = new GameSettingsDto();
 		gameSettings.gameTickMs = game.getGameTickMs();
 		
 		GameJoinDto dto = new GameJoinDto();
-		dto.bike = player.bike.getDto();
+		dto.player = player.getDto();
 		dto.scores = game.getScores();
 		
 		balanceBots();
@@ -207,10 +206,8 @@ public class GameController implements GameEventListener {
 	}
 	
 	public void clientHello(SocketIOClient client) {
-		int pid = pidGen++;
-		Player player = new Player(pid);
-		
-		sessionPlayers.put(client.getSessionId(), player);
+		int pid = pidGen++;		
+		sessionPlayers.put(client.getSessionId(), pid);
 		
 		GameSettingsDto gameSettings = new GameSettingsDto();
 		gameSettings.gameTickMs = game.getGameTickMs();
@@ -224,23 +221,24 @@ public class GameController implements GameEventListener {
 	
 	public void clientDisconnectEvent(SocketIOClient client) {
 		try {
-        	IPlayer player = sessionPlayers.get(client.getSessionId());           	
-        	if ( player == null ) 
-        		return; // Client doesn't exist - what should we do here?   	
-    		game.dropPlayer(player.getPid());
+        	Integer pid = sessionPlayers.get(client.getSessionId());           	
+        	if ( pid == null ) 
+        		throw new Exception("sessionPlayers value was null.. this really shouldn't have happened");  	
+    		game.dropPlayer(pid);
 		} catch (Exception e) {
 			
 		}
 		balanceBots();
 	}
 
-	public void clientChatMessageEvent(SocketIOClient client, String message) {
+	public void clientChatMessageEvent(SocketIOClient client, String message) throws Exception {
     	LOG.info("Received chat message");
 
-    	IPlayer player = sessionPlayers.get(client.getSessionId());            	
-    	if ( player == null ) 
-    		return; // Client doesn't exist - what should we do here?
+    	Integer pid = sessionPlayers.get(client.getSessionId());            	
+    	if ( pid == null ) 
+    		throw new Exception("sessionPlayers value was null.. this really shouldn't have happened"); 
     	 	
+    	Player player = game.getPlayer(pid);
     	Color colour = player.getBike().getColour();
     	String sourceColour = String.format("rgba(%s,%s,%s,%%A%%)", colour.getRed(), colour.getGreen(), colour.getBlue()); // TODO Override tostring on Color
     	ChatMessageDto dto = new ChatMessageDto(player.getName(), sourceColour, message, false);
@@ -248,21 +246,22 @@ public class GameController implements GameEventListener {
     	broadcastData("chat-message", dto);		
 	}
 
-	public void clientUpdateEvent(SocketIOClient client, ClientUpdateDto updateDto) {
-    	IPlayer player = sessionPlayers.get(client.getSessionId());
-    	if ( player == null ) 
-    		return; // Client doesn't exist - what should we do here?
+	public void clientUpdateEvent(SocketIOClient client, ClientUpdateDto updateDto) throws Exception {
+    	Integer pid = sessionPlayers.get(client.getSessionId());
+    	if ( pid == null ) 
+    		throw new Exception("sessionPlayers value was null.. this really shouldn't have happened"); 
 		
     	if ( game.handleClientUpdate(updateDto) ) {
     		broadcastWorldUpdate();
     	}		
 	}
 
-	public void clientRequestRespawnEvent(SocketIOClient client) {
-    	IPlayer player = sessionPlayers.get(client.getSessionId());      	
-    	if ( player == null ) 
-    		return; // Client doesn't exist - what should we do here?
-    	
+	public void clientRequestRespawnEvent(SocketIOClient client) throws Exception {
+    	Integer pid = sessionPlayers.get(client.getSessionId());
+    	if ( pid == null ) 
+    		throw new Exception("sessionPlayers value was null.. this really shouldn't have happened"); 
+
+    	Player player = game.getPlayer(pid);
 		LOG.info("Respawn request from " + player.getName());
 		game.requestRespawn(player.getPid());
 		

@@ -22,6 +22,7 @@ import com.litbikes.dto.ServerWorldDto;
 import com.litbikes.model.Arena;
 import com.litbikes.model.Bike;
 import com.litbikes.model.ICollidable;
+import com.litbikes.model.Player;
 import com.litbikes.model.Spawn;
 import com.litbikes.model.TrailSegment;
 import com.litbikes.model.Wall;
@@ -36,7 +37,7 @@ public class GameEngine {
 	private GameEventListener eventListener;
 	private long gameTick = 0;
 		
-	private final List<Bike> bikes;
+	private final List<Player> players;
 	private final Arena arena;
 	private final ScoreKeeper score;
 	private final int gameSize;	
@@ -48,7 +49,7 @@ public class GameEngine {
 	
 	public GameEngine(int gameSize) {
 		arena = new Arena(gameSize);
-		bikes = new ArrayList<>();
+		players = new ArrayList<>();
 		score = new ScoreKeeper();
 		this.gameSize = gameSize;
 	}
@@ -90,8 +91,8 @@ public class GameEngine {
 						}
 					};
 					roundTimer.scheduleAtFixedRate(t, 1000, 1000);
-					for (Bike b : bikes) {
-						b.init(findSpawn(), false);
+					for (Player p : players) {
+						p.getBike().init(findSpawn(), false);
 					}
 					score.reset();
 					roundInProgress = true;
@@ -110,34 +111,53 @@ public class GameEngine {
 	private void endRound() {
 		roundTimer.cancel();
 		roundInProgress = false;
-		for (Bike b : bikes) {
-			b.setSpectating(true);
+		for (Player p : players) {
+			p.getBike().setSpectating(true);
 		}
 		eventListener.roundEnded();
 		LOG.info("Round ended - winner: " + score.getCurrentWinnerName());
 	}
 		
-	public Bike playerJoin(int pid, String name) {
+	public Player playerJoin(int pid, String name) {
 		LOG.info("Creating new player with pid " + pid);
+		
+		Player player = new Player(pid);
+		player.setName(name);
+		
 		Bike bike = new Bike(pid, name);
 		bike.init(findSpawn(), true);
-		bikes.add(bike);
+		player.setBike(bike);
+		
+		players.add(player);
 		score.grantScore(pid, name, 0);
-		return bike;
+		return player;
 	}
 	
 	public void dropPlayer(int pid) {
-		Bike bike = bikes.stream().filter(b -> b.getPid() == pid).findFirst().get();
-		bikes.remove(bike);
+		Player player = players.stream()
+				.filter(b -> b.getPid() == pid)
+				.findFirst()
+				.orElse(null);
+		if (player == null)
+			return;
+		players.remove(player);
 		score.removeScore(pid);
 		LOG.info("Dropped player " + pid);
 	}
 	
 	public boolean handleClientUpdate(ClientUpdateDto data) {
 		if ( data.isValid() ) {			
-			if ( bikes.size() > 0 ) {				
-				Bike bike = bikes.stream().filter(b -> b.getPid() == data.pid).findFirst().get();				
+			if ( players.size() > 0 ) {				
+				Player player = players.stream()
+						.filter(b -> b.getPid() == data.pid)
+						.findFirst()
+						.orElse(null);
+				if (player == null)
+					return false;
+				
+				Bike bike = player.getBike();
 				bike.setDir( new Vector(data.xDir, data.yDir) );
+				player.updateBike(bike);
 			}						
 			return true;
 		} else 
@@ -148,8 +168,8 @@ public class GameEngine {
 		ServerWorldDto worldDto = new ServerWorldDto();
 		List<BikeDto> bikesDto = new ArrayList<>();
 
-		for ( Bike bike : bikes ) {
-			BikeDto bikeDto = bike.getDto();
+		for ( Player player : players ) {
+			BikeDto bikeDto = player.getBike().getDto();
 			bikeDto.score = score.getScore(bikeDto.pid);
 			bikesDto.add( bikeDto );
 		}
@@ -172,9 +192,12 @@ public class GameEngine {
 	}
 
 	public void requestRespawn(int pid) {
-		Bike bike = bikes.stream().filter(b -> b.getPid() == pid).findFirst().get();
-		if ( bike != null && bike.isCrashed() ) {
-			bike.init(findSpawn(), false);
+		Player player = players.stream()
+				.filter(b -> b.getPid() == pid)
+				.findFirst()
+				.orElse(null);
+		if ( player != null && player.getBike().isCrashed() ) {
+			player.respawn(findSpawn());
 			eventListener.playerSpawned(pid);
 		}		
 	}
@@ -191,7 +214,10 @@ public class GameEngine {
 	public boolean spawnIsAcceptable(Spawn spawn) {
 
 		int limit = 80; // Distance to nearest trail
-		List<TrailSegment> trails = bikes.stream().map(m -> m.getTrail(true)).flatMap(Collection::stream).collect(Collectors.toList());
+		List<TrailSegment> trails = players.stream()
+				.map(m -> m.getBike().getTrail(true))
+				.flatMap(Collection::stream)
+				.collect(Collectors.toList());
 		
 		double aheadX = spawn.getPos().x + (limit * spawn.getDir().x);
 		double aheadY = spawn.getPos().y + (limit * spawn.getDir().y);
@@ -225,9 +251,11 @@ public class GameEngine {
 	
 		    	if (roundInProgress) {
 		    		
-			    	List<Bike> activeBikes = bikes.stream().filter(b -> b.isActive()).collect(Collectors.toList());	
+			    	List<Player> activePlayers = players.stream()
+			    			.filter(b -> b.isAlive())
+			    			.collect(Collectors.toList());	
 			    	List<Thread> threads = new ArrayList<>();
-			    	for ( Bike bike : activeBikes ) {
+			    	for ( Player player : activePlayers ) {
 			    		Thread t = new Thread(() -> {
 			    			
 			    			// Faster father from center - disabled temporarily
@@ -244,15 +272,15 @@ public class GameEngine {
 	    					double spdModifier = ((distance - oldMin) * newRange / oldRange) + newMin; // Trust me
 	    							
 	    					bike.setSpd(BASE_BIKE_SPEED + spdModifier);*/
-	    					
+	    					Bike bike = player.getBike();
 				    		bike.updatePosition();
 							boolean collided = false;
 			
-							for ( Bike b : activeBikes ) {
-								boolean isSelf = b.getPid() == bike.getPid();
-								collided = collided || bike.collides( b.getTrail(!isSelf), 1 );
+							for ( Player p : activePlayers ) {
+								boolean isSelf = p.getPid() == player.getPid();
+								collided = collided || bike.collides( p.getBike().getTrail(!isSelf), 1 );
 								if ( collided ) {
-									bike.setCrashedInto(b);
+									bike.setCrashedInto(p.getBike());
 									break;
 								}
 							}
@@ -274,6 +302,7 @@ public class GameEngine {
 									}
 								}
 							}	
+							player.updateBike(bike);
 			    		});
 			    		
 			    		threads.add(t);
@@ -296,8 +325,12 @@ public class GameEngine {
 		return arena;
 	}
 
-	public List<Bike> getBikes() {
-		return bikes;
+	public List<Player> getPlayers() {
+		return players;
+	}
+
+	public Player getPlayer(int pid) {
+		return players.stream().filter(p -> p.getPid() == pid).findFirst().orElse(null);
 	}
 
 	public int getRoundTimeLeft() {

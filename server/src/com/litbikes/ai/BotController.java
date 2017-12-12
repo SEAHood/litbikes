@@ -9,7 +9,7 @@ import org.eclipse.jetty.util.log.Logger;
 import com.litbikes.dto.ClientUpdateDto;
 import com.litbikes.engine.GameController;
 import com.litbikes.model.Arena;
-import com.litbikes.model.Bike;
+import com.litbikes.model.Player;
 
 public class BotController {
 	
@@ -66,7 +66,7 @@ public class BotController {
 		}		
 	}
 
-	public void doUpdate( List<Bike> bikes, Arena arena ) {
+	public void doUpdate( List<Player> bikes, Arena arena ) {
 		for ( Bot bot : bots ) {
 			bot.updateWorld(bikes, arena);
 		}
@@ -77,10 +77,20 @@ public class BotController {
 	}
 
 	public void sentUpdate( BotIOClient client, ClientUpdateDto updateDto ) {
-		gameController.clientUpdateEvent(client, updateDto);
+		try {
+			gameController.clientUpdateEvent(client, updateDto);
+		} catch (Exception e) {
+			LOG.warn("Client couldn't update - what happened?");
+			e.printStackTrace();
+		}
 	}
 
 	public void sentRequestRespawn( BotIOClient client ) {
-		gameController.clientRequestRespawnEvent(client);
+		try {
+			gameController.clientRequestRespawnEvent(client);
+		} catch (Exception e) {
+			LOG.warn("Client couldn't update - what happened?");
+			e.printStackTrace();
+		}
 	}
 }

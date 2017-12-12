@@ -12,7 +12,7 @@ import com.corundumstudio.socketio.SocketIONamespace;
 import com.corundumstudio.socketio.Transport;
 import com.corundumstudio.socketio.protocol.Packet;
 import com.litbikes.model.Arena;
-import com.litbikes.model.Bike;
+import com.litbikes.model.Player;
 
 // TODO : Could probably extend this to make the bots completely separate from the game controller
 // Override client send() implementation to send data to bot instead 
@@ -31,7 +31,7 @@ public class BotIOClient implements SocketIOClient {
 		return sessionId;
 	}	
 
-	public void updateBot(List<Bike> bikes, Arena arena) {
+	public void updateBot(List<Player> bikes, Arena arena) {
 		bot.updateWorld(bikes, arena);
 	}
 	

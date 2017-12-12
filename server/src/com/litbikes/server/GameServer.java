@@ -82,7 +82,12 @@ public class GameServer {
             @Override
             public void onData(final SocketIOClient client, String data, final AckRequest ackRequest) {
             	super.onData(client, data, ackRequest);
-            	gameController.clientRequestRespawnEvent(client);
+            	try {
+					gameController.clientRequestRespawnEvent(client);
+				} catch (Exception e) {
+					LOG.warn("Client was null, this wasn't meant to happen");
+					e.printStackTrace();
+				}
             }
         });
 
@@ -91,7 +96,12 @@ public class GameServer {
             public void onData(final SocketIOClient client, ClientUpdateDto updateDto, final AckRequest ackRequest) {
             	super.onData(client, updateDto, ackRequest);
             	if (updateDto != null)
-            		gameController.clientUpdateEvent(client, updateDto);
+					try {
+						gameController.clientUpdateEvent(client, updateDto);
+					} catch (Exception e) {
+						LOG.warn("Client was null, this wasn't meant to happen");
+						e.printStackTrace();
+					}
             }
         });
 
@@ -99,7 +109,12 @@ public class GameServer {
             @Override
             public void onData(final SocketIOClient client, String message, final AckRequest ackRequest) {
             	super.onData(client, message, ackRequest);
-            	gameController.clientChatMessageEvent(client, message);
+            	try {
+					gameController.clientChatMessageEvent(client, message);
+				} catch (Exception e) {
+					LOG.warn("Client was null, this wasn't meant to happen");
+					e.printStackTrace();
+				}
             }
         });
         

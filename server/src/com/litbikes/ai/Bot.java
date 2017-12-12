@@ -13,47 +13,28 @@ import org.eclipse.jetty.util.log.Logger;
 
 import com.litbikes.dto.ClientUpdateDto;
 import com.litbikes.model.Arena;
-import com.litbikes.model.Bike;
-import com.litbikes.model.IPlayer;
+import com.litbikes.model.Player;
 import com.litbikes.model.TrailSegment;
 
-public class Bot implements IPlayer {
+public class Bot extends Player {
 	private static Logger LOG = Log.getLogger(Bot.class);
 	private static int AI_TICK_MS = 50;
 	private static int AI_RESPAWN_MS = 3000;
-	private final int pid;
 	private final BotIOClient ioClient;
-	private Bike bike;
-	private List<Bike> bikes;
+	private List<Player> players;
 	private Arena arena;
 	long lastPredictionTime;
 	long predictionCooldown = 100;
 	BotController controller;
 	
-	public Bot( Bike _bike, List<Bike> _bikes, Arena _arena ) {
-		pid = _bike.getPid();
-		bike = _bike;
+	public Bot( int pid, List<Player> _players, Arena _arena ) {
+		super(pid);
 		arena = _arena;
-		bikes = _bikes;
+		players = _players;
 		ioClient = new BotIOClient(this);
 	}
 	
-	public int getPid() {
-		return pid;
-	}
-	
-	public String getName() {
-		return bike.getName(); //todo lazy lol
-	}
-	
-	public Bike getBike() {
-		return bike;
-	}
-	
-	public boolean isAlive() {
-		return bike.isActive();
-	}
-	
+	@Override
 	public boolean isHuman() {
 		return false;
 	}
@@ -62,9 +43,9 @@ public class Bot implements IPlayer {
 		controller = _controller;
 	}
 	
-	public void updateWorld( List<Bike> _bikes, Arena _arena ) {
+	public void updateWorld( List<Player> _players, Arena _arena ) {
 		arena = _arena;
-		bikes = _bikes;
+		players = _players;
 	}
 	
 	public void start() {
@@ -78,12 +59,12 @@ public class Bot implements IPlayer {
 		long thisPredictionTime = System.currentTimeMillis();
 		if ( thisPredictionTime - lastPredictionTime > predictionCooldown ) {
 	 		int dDist = 20;
- 			List<Bike> activeBikes = bikes.stream().filter(b -> b.isActive()).collect(Collectors.toList());
+ 			List<Player> activePlayers = players.stream().filter(b -> b.isAlive()).collect(Collectors.toList());
     	  		
 			List<TrailSegment> allTrails = new ArrayList<>();
-			for ( Bike b : activeBikes ) {
-				boolean isSelf = b.getPid() == pid;
-				allTrails.addAll( b.getTrail(!isSelf) );
+			for ( Player p : activePlayers ) {
+				boolean isSelf = p.getPid() == pid;
+				allTrails.addAll( p.getBike().getTrail(!isSelf) );
 			}
 			
 	 		boolean incCollision = bike.collides( allTrails, dDist ) || arena.checkCollision(bike, dDist);
