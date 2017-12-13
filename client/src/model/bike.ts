@@ -13,29 +13,33 @@ module Model {
         private crashing: boolean;
         private respawning: boolean;
         private lastRespawn: number; // Respawn timestamp
-        private isPlayer: boolean;
 
         private colour: string;
         private trailOpacity: number;
 
         private idRingBlinkTime: number;
         private idRingBlinkOn: boolean;
+        private idRingSize: number;
+        private idRingPulseCount = 0;
+        private idRingPulseMax = 2;
+        private idRingDuration = 1500; //ms
 
-        constructor( bikeDto: BikeDto, isPlayer: boolean ) {
-            this.setPos(new Vector( bikeDto.pos.x, bikeDto.pos.y ));
-            this.dir = new Vector( bikeDto.dir.x, bikeDto.dir.y );
+        constructor(bikeDto: BikeDto) {
+            this.setPos(new Vector(bikeDto.pos.x, bikeDto.pos.y));
+            this.dir = new Vector(bikeDto.dir.x, bikeDto.dir.y);
             this.spd = bikeDto.spd;
             this.colour = bikeDto.colour;
-            this.isPlayer = isPlayer;
 
             this.trail = [];
             _.each(bikeDto.trail, (seg : TrailSegmentDto) => {
-                this.trail.push( TrailSegment.fromDto(seg) );
+                this.trail.push(TrailSegment.fromDto(seg));
             });
 
             this.trailOpacity = 1;
             this.idRingBlinkTime = -1;
             this.idRingBlinkOn = false;
+            this.idRingSize = 0;
+            this.respawning = true;
         }
 
         public update(canMove: boolean) {
@@ -55,7 +59,7 @@ module Model {
         }
 
         public updateFromDto( dto : BikeDto ) {
-            this.setPos(dto.pos);
+            this.pos = dto.pos;
             this.dir = dto.dir;
             this.spd = dto.spd;
             this.trail = [];
@@ -64,7 +68,7 @@ module Model {
                 this.trail.push( TrailSegment.fromDto(seg) );
             });
 
-            if ( this.respawning && Date.now() - 2100 > this.lastRespawn ) {
+            if ( this.respawning && Date.now() - this.idRingDuration > this.lastRespawn ) {
                 this.respawning = false;
             }
         }
@@ -79,34 +83,37 @@ module Model {
         }
         
         public crash( timeOfCrash?: number ) {
-            console.log("Crash!");
             this.dir = new Vector(0, 0);
             this.crashing = true;
             this.addTrailSegment();
         }
 
-        public uncrash( timeOfCrash?: number ) {
+        public respawned( timeOfCrash?: number ) {
             this.respawning = true;
             this.crashing = false;
             this.trailOpacity = 1;
             this.lastRespawn = Date.now();
-            this.respawning = true;
         }
 
-        public draw( p : p5, showName : boolean ) {
+        public draw(p: p5, showRespawnRing: boolean, isControlledPlayer: boolean) {
             // Respawning effect
-            if ( this.respawning && this.isPlayer ) {
-                if (this.idRingBlinkOn) {
-                    p.fill('rgba(0,0,0,0)');
-                    p.strokeWeight(2);
-                    p.stroke(255);
-                    p.ellipse(this.pos.x, this.pos.y, 50, 50);
-                    p.ellipse(this.pos.x, this.pos.y, 20, 20);
-                }
-
-                if (Date.now() - 150 > this.idRingBlinkTime) {
-                    this.idRingBlinkTime = Date.now();
-                    this.idRingBlinkOn = !this.idRingBlinkOn;
+            if (this.respawning && showRespawnRing) {
+                let innerRingSize = Math.max(0, this.idRingSize - 10);
+                p.fill('rgba(0,0,0,0)');
+                p.stroke(255);
+                p.strokeWeight(2);
+                p.ellipse(this.pos.x, this.pos.y, this.idRingSize, this.idRingSize);
+                p.stroke(this.colour.replace('%A%', '1'));
+                p.strokeWeight(1);
+                p.ellipse(this.pos.x, this.pos.y, innerRingSize, innerRingSize);
+                this.idRingSize = this.idRingSize + 1.5;
+                if (this.idRingSize > 50) {
+                    this.idRingSize = 0;
+                    this.idRingPulseCount++;
+                    if (this.idRingPulseCount >= this.idRingPulseMax) {
+                        this.respawning = false;
+                        this.idRingPulseCount = 0;
+                    }
                 }
             }
             
@@ -131,18 +138,12 @@ module Model {
             p.endShape();
 
             // Draw bike
-            let bikeColour = this.isPlayer 
+            let bikeColour = isControlledPlayer
                 ? "rgb(255, 255, 255)"
                 :  this.colour.replace('%A%', '1');
             p.noStroke();
             p.fill(bikeColour);
             p.ellipse(this.pos.x, this.pos.y, 5, 5);
-                            
-            if (showName) {
-                p.textSize(15);
-                p.textAlign('center', 'middle');
-                p.text("not workin soz", this.pos.x, Math.max(0, this.pos.y - 15));
-            }
 
             // Draw crashing
             if ( this.crashing ) {

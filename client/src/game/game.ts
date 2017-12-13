@@ -236,10 +236,17 @@ module Game {
             $('#welcome-container').hide();
             $('#info-container').slideDown();
             this.gameJoined = true;
-            this.player = new Player(data.player.pid);
-            let bike = new Bike(data.player.bike, true);
-            this.player.setName(data.player.name);
-            this.player.setBike(bike);
+            this.player = new Player(
+                data.player.pid, 
+                data.player.name, 
+                new Bike(data.player.bike), 
+                data.player.crashed,
+                data.player.spectating,
+                data.player.deathTimestamp,
+                data.player.crashedInto,
+                data.player.crashedIntoName,
+                data.player.score,
+                true);
             this.updateScores(data.scores);
         }
 
@@ -298,8 +305,6 @@ module Game {
             this.roundTimeLeft = data.roundTimeLeft;
             this.timeUntilNextRound = data.timeUntilNextRound;
             this.currentWinner = data.currentWinner;
-            //console.log("Processing world update");
-            console.log(data.players);
             let updatedPlayers = _.pluck(data.players, 'pid');
             let existingPlayers = _.pluck(this.players, 'pid');
             _.each( existingPlayers, ( pid : number ) => {
@@ -316,10 +321,17 @@ module Game {
                     if ( existingPlayer ) {
                         existingPlayer.updateFromDto(p);
                     } else {
-                        let player = new Player(p.pid);
-                        let bike = new Bike(p.bike, true);
-                        player.setName(p.name);
-                        player.setBike(new Bike(p.bike, false));                        
+                        let player = new Player(
+                            p.pid, 
+                            p.name, 
+                            new Bike(p.bike), 
+                            p.crashed,
+                            p.spectating,
+                            p.deathTimestamp,
+                            p.crashedInto,
+                            p.crashedIntoName,
+                            p.score,
+                            false);             
                         this.players.push(player);
                     }
                 }

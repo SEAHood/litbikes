@@ -10,10 +10,25 @@ module Model {
         private crashedInto: number; // pid last crashed into
         private crashedIntoName: string;
         private score: number;
-        private isPlayer: boolean;
+        private isControlledPlayer: boolean;
 
-        constructor(pid: number) {
+        constructor(pid: number, name: string, bike: Bike, crashed: boolean, 
+            spectating: boolean, deathTimestamp: number, crashedInto: number, 
+            crashedIntoName: string, score: number, isControlledPlayer: boolean) {
             this.pid = pid;
+            this.name = name;
+            this.bike = bike;
+            this.crashed = crashed;
+            this.spectating = spectating;
+            this.deathTimestamp = deathTimestamp;
+            this.crashedInto = crashedInto;
+            this.crashedIntoName  = crashedIntoName;
+            this.score = score;
+            this.isControlledPlayer = isControlledPlayer;
+            
+            if (this.isAlive) {
+                this.bike.respawned();
+            }
         }
 
         public getPid(): number {
@@ -56,19 +71,27 @@ module Model {
 
         public draw( p : p5, showName : boolean ) {
             if (this.isVisible()) {
-                this.bike.draw(p, showName);
+                let showRespawnRing = this.isAlive() && this.isControlledPlayer;
+                this.bike.draw(p, showRespawnRing, this.isControlledPlayer);
+                
+                if (showName) {
+                    p.textSize(15);
+                    p.textAlign('center', 'middle');
+                    p.text(this.name, this.bike.getPos().x, Math.max(0, this.bike.getPos().y - 15));
+                }
             }
         }
 
         public updateFromDto( dto : PlayerDto ) {
-            console.log(dto);
+            let wasAlive = this.isAlive();
+
             if ( !this.crashed && dto.crashed ) {
                 this.bike.crash();
                 this.deathTimestamp = dto.deathTimestamp || Math.floor(Date.now());
             }
 
-            if ( this.crashed && !dto.crashed ) {
-                this.bike.uncrash();
+            if (!dto.crashed && (this.crashed || (this.spectating && !dto.spectating))) {
+                this.bike.respawned();
             }
 
             this.crashed = dto.crashed;
@@ -76,9 +99,7 @@ module Model {
             this.crashedIntoName = dto.crashedIntoName;
             this.spectating = dto.spectating;
             this.score = dto.score;
-
             this.bike.updateFromDto(dto.bike);
-            console.log(this);
         }
     }
 }
