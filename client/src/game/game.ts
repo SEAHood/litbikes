@@ -1,10 +1,11 @@
-
 module Game {
 
     import Bike = Model.Bike;
+    import Player = Model.Player;
     import Arena = Model.Arena;
     import WorldUpdateDto = Dto.WorldUpdateDto;
     import BikeDto = Dto.BikeDto;
+    import PlayerDto = Dto.PlayerDto;
     import Vector = Util.Vector;
     import ClientUpdateDto = Dto.ClientUpdateDto;
     import GameJoinDto = Dto.GameJoinDto;
@@ -14,11 +15,11 @@ module Game {
     import ChatMessageDto = Dto.ChatMessageDto;
     import ScoreDto = Dto.ScoreDto;
     export class Game {
-        private player : Bike;
+        private player : Player;
         private host = 'http://' + window.location.hostname + ':9092';
         private socket = io.connect(this.host);
         private arena : Arena;
-        private bikes : Bike[] = [];
+        private players : Player[] = [];
         private registered = false;
         private version ="0.1b";
         private gameStarted = false;
@@ -184,8 +185,8 @@ module Game {
                             pid : this.player.getPid(),
                             xDir : newVector.x,
                             yDir : newVector.y,
-                            xPos : this.player.getPos().x,
-                            yPos : this.player.getPos().y
+                            xPos : this.player.getBike().getPos().x,
+                            yPos : this.player.getBike().getPos().y
                         };
                         this.socket.emit('update', updateDto);
                     }
@@ -235,7 +236,10 @@ module Game {
             $('#welcome-container').hide();
             $('#info-container').slideDown();
             this.gameJoined = true;
-            this.player = new Bike(data.bike, true);
+            this.player = new Player(data.player.pid);
+            let bike = new Bike(data.player.bike, true);
+            this.player.setName(data.player.name);
+            this.player.setBike(bike);
             this.updateScores(data.scores);
         }
 
@@ -265,11 +269,11 @@ module Game {
                     //this.player.setSpd(baseSpeed + spdModifier)
                     this.player.update();
                 }
-                _.each( this.bikes, ( b : Bike ) => {
+                _.each(this.players, (p : Player) => {
                     // Faster farther from center - disabled just now      
                     //let spdModifier = this.calculateSpeedModifier(b);                         
                     //b.setSpd(baseSpeed + spdModifier);
-                    b.update();
+                    p.update();
                 });
             }, this.gameTickMs);
         }
@@ -295,23 +299,28 @@ module Game {
             this.timeUntilNextRound = data.timeUntilNextRound;
             this.currentWinner = data.currentWinner;
             //console.log("Processing world update");
-            let updatedBikes = _.pluck(data.bikes, 'pid');
-            let existingBikes = _.pluck(this.bikes, 'pid');
-            _.each( existingBikes, ( pid : number ) => {
-                if ( !_.contains(updatedBikes, pid ) ) {
-                    this.bikes = _.reject(this.bikes, ( b : Bike ) => b.getPid() === pid );
+            console.log(data.players);
+            let updatedPlayers = _.pluck(data.players, 'pid');
+            let existingPlayers = _.pluck(this.players, 'pid');
+            _.each( existingPlayers, ( pid : number ) => {
+                if ( !_.contains(updatedPlayers, pid ) ) {
+                    this.players = _.reject(this.players, (p : Player) => p.getPid() === pid );
                 }
             });
 
-            _.each( data.bikes, ( b : BikeDto ) => {
-                if ( this.gameJoined && b.pid === this.player.getPid() && this.player ) {
-                    this.player.updateFromDto(b);
+            _.each( data.players, ( p : PlayerDto ) => {
+                if ( this.gameJoined && p.pid === this.player.getPid() && this.player ) {
+                    this.player.updateFromDto(p);
                 } else {
-                    let bike = _.find(this.bikes, (bike:Bike) => bike.getPid() === b.pid);
-                    if ( bike ) {
-                        bike.updateFromDto(b);
+                    let existingPlayer = _.find(this.players, (ep: Player) => ep.getPid() === p.pid);
+                    if ( existingPlayer ) {
+                        existingPlayer.updateFromDto(p);
                     } else {
-                        this.bikes.push(new Bike(b, false));
+                        let player = new Player(p.pid);
+                        let bike = new Bike(p.bike, true);
+                        player.setName(p.name);
+                        player.setBike(new Bike(p.bike, false));                        
+                        this.players.push(player);
                     }
                 }
             });
@@ -324,13 +333,13 @@ module Game {
             let playerInTopFive = false;
             topFive.forEach((score: ScoreDto, i: number) => {                
                 let isPlayer = this.gameJoined && score.pid == this.player.getPid();
-                let player : Bike = _.first(this.bikes.filter((b: Bike) => b.getPid() == score.pid));
+                let player: Player = _.first(this.players.filter((p: Player) => p.getPid() == score.pid));
                 playerInTopFive = isPlayer || playerInTopFive;
                 let li = isPlayer ? "<li style='color:yellow'>" : "<li>";
                 let position = "#" + (i + 1);
                 let bikeColour = !player || isPlayer 
                     ? "inherit"
-                    :  player.getColour().replace('%A%', '1');
+                    :  player.getBike().getColour().replace('%A%', '1');
                 let scoreElement = li + position + ": <span style='color:" + bikeColour + "'>" + score.name + "</span> - " + score.score + "</li>";
                 $('#score ul').append(scoreElement);
             });
@@ -361,8 +370,8 @@ module Game {
             this.arena.draw(p);
         
             if (this.roundInProgress) {
-                _.each( this.bikes, ( b : Bike ) => {
-                    b.draw(p, false, this.tabPressed);
+                _.each( this.players, ( player: Player ) => {
+                    player.draw(p, this.tabPressed);
                 });
             }
 
@@ -394,7 +403,7 @@ module Game {
 
             if (this.gameJoined) {
                 if (this.roundInProgress) {
-                    this.player.draw(p, this.player.isRespawning(), this.tabPressed);
+                    this.player.draw(p, this.tabPressed);
                 }
 
                 if ( this.player.isCrashed() && this.player.isSpectating() && this.showRespawn && this.roundInProgress ) {
@@ -443,7 +452,7 @@ module Game {
             if (!this.roundInProgress) {
                 let winner = this.gameJoined && this.currentWinner === this.player.getPid()
                     ? this.player
-                    : _.find(this.bikes, (bike:Bike) => bike.getPid() === this.currentWinner);
+                    : _.find(this.players, (player: Player) => player.getPid() === this.currentWinner);
                 
                 let winnerName = "The Wall";
                 if (winner)
@@ -480,21 +489,22 @@ module Game {
                 p.textAlign('left', 'top');
                 p.text("LitBikes " + this.version, 10, 10);
                 if ( this.gameJoined ) {
+                    let playerBike = this.player.getBike();
                     p.text(
                         "fps: " + p.frameRate().toFixed(2) + "\n" +
                         "ms: " + this.latency + "ms\n" +
                         "pid: " + this.player.getPid() + "\n" +
-                        "pos: " + this.player.getPos().x.toFixed(0) + ", " + this.player.getPos().y.toFixed(0) + "\n" +
-                        "dir: "+ this.player.getDir().x + ", " + this.player.getDir().y + "\n" +
-                        "spd: "+ this.player.getSpd() + "\n" +
+                        "pos: " + playerBike.getPos().x.toFixed(0) + ", " + playerBike.getPos().y.toFixed(0) + "\n" +
+                        "dir: "+ playerBike.getDir().x + ", " + playerBike.getDir().y + "\n" +
+                        "spd: "+ playerBike.getSpd() + "\n" +
                         "crashed: " + (this.player.isCrashed() ? "yes" : "no") + "\n" +
-                        "crashing: " + (this.player.isCrashing() ? "yes" : "no") + "\n" +
-                        "colour: " + this.player.getColour() + "\n" +
+                        "crashing: " + (playerBike.isCrashing() ? "yes" : "no") + "\n" +
+                        "colour: " + playerBike.getColour() + "\n" +
                         "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n" +
                         "round in progress: " + (this.roundInProgress ? "yes" : "no") + "\n" + 
                         "round time left: " + this.roundTimeLeft + "\n" + 
                         "time until next round: " + this.timeUntilNextRound + "\n" + 
-                        "other bikes: " + this.bikes.length + "\n" +
+                        "other players: " + this.players.length + "\n" +
                         "chat message count: " + this.messageCount + "\n"
                     , 10, 30, 300, 500);
                 } else {

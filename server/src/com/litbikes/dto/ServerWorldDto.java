@@ -10,6 +10,6 @@ public class ServerWorldDto {
 	public int timeUntilNextRound;
 	public int currentWinner;
 	public int roundTimeLeft;
-	public List<BikeDto> bikes;
+	public List<PlayerDto> players;
 	public ArenaDto arena;
 }

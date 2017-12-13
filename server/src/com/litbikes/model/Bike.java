@@ -8,48 +8,29 @@ import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
-
 import com.litbikes.dto.BikeDto;
 import com.litbikes.util.Vector;
 
-public class Bike implements ICollidable {
-	private static Logger LOG = Log.getLogger(Bike.class);
-	
-	private int pid;
-	private String name;
+public class Bike {
+	//private static Logger LOG = Log.getLogger(Bike.class);	
 	private Vector pos;
 	private Vector dir;
 	private double spd;
 	private CopyOnWriteArrayList<TrailSegment> trail;
-	private boolean crashed;
-	private boolean spectating;
 	private Vector startPos;
 	private Color colour;
-	private ICollidable crashedInto;
 	private Random random = new Random();
 	
-	public Bike(int _pid, String _name) {
-		pid = _pid;
-		name = _name;
-	}
-
 	public void init(Spawn spawn, boolean newPlayer) {
 		pos = spawn.getPos();
 		dir = spawn.getDir();
 		spd = spawn.getSpd();
 		trail = new CopyOnWriteArrayList<>();
-		crashed = false;
-		spectating = false;
-		crashedInto = null;
 		startPos = pos;
 		addTrailPoint();
 		
 		if ( newPlayer )
-			colour = generateBikeColour();
-		
-		LOG.info("Bike " + pid + " initialised");		
+			colour = generateBikeColour();			
 	}
 	
 	private Color generateBikeColour() 
@@ -77,12 +58,10 @@ public class Bike implements ICollidable {
         return Color.decode(colour);		
 	}
 
-	public void updatePosition() {
-		if ( !crashed ) {			
-	        double xDiff = dir.x * spd;
-	        double yDiff = dir.y * spd;
-			pos.add(new Vector(xDiff, yDiff));
-		}
+	public void updatePosition() {		
+        double xDiff = dir.x * spd;
+        double yDiff = dir.y * spd;
+		pos.add(new Vector(xDiff, yDiff));
 	}
 	
 	private void addTrailPoint() {
@@ -112,37 +91,14 @@ public class Bike implements ICollidable {
 		
 	public BikeDto getDto() {
 		BikeDto dto = new BikeDto();
-		dto.pid = pid;
-		dto.name = name;
 		dto.pos = new Vector(pos.x, pos.y);
 		dto.dir = new Vector(dir.x, dir.y);
 		dto.spd = spd;
 		dto.trail = trail.stream()
                 .map(tp -> tp.getDto())
                 .collect(Collectors.toList());
-		dto.crashed = crashed;
-		dto.crashedInto = crashedInto != null ? crashedInto.getId() : null;
-		dto.crashedIntoName = crashedInto != null ? crashedInto.getName() : null;
-		dto.spectating = spectating;
 		dto.colour = String.format("rgba(%s,%s,%s,%%A%%)", colour.getRed(), colour.getGreen(), colour.getBlue());
 		return dto;
-	}
-
-	public int getPid() {
-		return pid;
-	}
-	
-	@Override
-	public int getId() {
-		return pid;
-	}
-	
-	public String getName() {
-		return name;
-	}
-	
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	public Vector getPos() {
@@ -187,55 +143,18 @@ public class Bike implements ICollidable {
 		return trailWithHead;
 	}
 
-	public boolean isCrashed() {
-		return crashed;
-	}
-
-	public void setCrashed(boolean dead) {
-		this.crashed = dead;
-	}
-
 	public Color getColour() {
 		return colour;
 	}
 	
 	public void crash() {
-		this.setCrashed(true);
 		this.setDir(Vector.zero());
 		addTrailPoint();
-	}
-	
-	public boolean isSpectating() {
-		return spectating;
-	}
-
-	public void setSpectating(boolean spectating) {
-		this.spectating = spectating;
-	}
-	
-	public boolean isActive() {
-		return !isCrashed() && !isSpectating();
-	}
-
-
-	public ICollidable getCrashedInto() {
-		return crashedInto;
-	}
-	
-	public boolean crashedIntoSelf() {
-		if (crashedInto == null)
-			return false;
-		return crashedInto.getId() == pid;
-	}
-
-	public void setCrashedInto(ICollidable crashedInto) {
-		this.crashedInto = crashedInto;
-	}
-	
+	}	
 	
 	@Override
 	public String toString() {
-		return pid + ": p(" + pos.x + ", " + pos.y + "), s(" + dir.x + ", " + dir.y +"), " + (crashed?"crashed":"not crashed");
+		return "bike s(" + pos.x + ", " + pos.y + "), s(" + dir.x + ", " + dir.y +")";
 	}
 	
 }

@@ -25,11 +25,10 @@ import com.litbikes.dto.GameJoinDto;
 import com.litbikes.dto.GameSettingsDto;
 import com.litbikes.dto.HelloDto;
 import com.litbikes.dto.ScoreDto;
-import com.litbikes.model.Bike;
 import com.litbikes.model.Player;
 
 interface GameEventListener {
-	void playerCrashed(Bike bike);
+	void playerCrashed(Player player);
 	void playerSpawned(int pid);
 	void scoreUpdated(List<ScoreDto> scores);
 	void gameStarted();
@@ -105,9 +104,9 @@ public class GameController implements GameEventListener {
 		}, 0, 1, TimeUnit.SECONDS);
 	}
 
-	public void playerCrashed( Bike bike ) {
-		String crashedInto = bike.crashedIntoSelf() ? "their own trail!" : bike.getCrashedInto().getName();
-    	String playerCrashedMessage = bike.getName() + " crashed into " + crashedInto;
+	public void playerCrashed( Player player ) {
+		String crashedInto = player.crashedIntoSelf() ? "their own trail!" : player.getCrashedInto().getName();
+    	String playerCrashedMessage = player.getName() + " crashed into " + crashedInto;
 		LOG.info(playerCrashedMessage);
     	ChatMessageDto dto = new ChatMessageDto(null, null, playerCrashedMessage, true);
     	broadcastData("chat-message", dto);
@@ -160,21 +159,22 @@ public class GameController implements GameEventListener {
 	public Bot botCreated() {
 		String botName = "BOT#" + String.format("%04d", random.nextInt(10000));
 		int pid = pidGen++;
-		Player player = game.playerJoin(pid, botName);
-		Bot bot = new Bot(player.getPid(), game.getPlayers(), game.getArena());
+		Player player = game.playerJoin(pid, botName, false);
+		Bot bot = new Bot(player.getId(), game.getPlayers(), game.getArena());
+		bot.setName(botName);
 		bot.setBike(player.getBike());
 		sessionPlayers.put(bot.getSessionId(), pid);
 		return bot;
 	}
 	
 	public void botDestroyed(Bot bot) {
-		game.dropPlayer(bot.getPid());
+		game.dropPlayer(bot.getId());
 		sessionPlayers.remove(bot.getSessionId());
 	}
 	
 	private void balanceBots() {
 		int totalHumans = (int) game.getPlayers().stream()
-				.filter(p -> p.isHuman() && p.isAlive())
+				.filter(p -> p.isHuman())
 				.count();
 		int requiredBots = Math.max(0, minPlayers - totalHumans);
 		LOG.info("Balancing game - " + totalHumans + " humans and " + requiredBots + " bots");
@@ -191,7 +191,7 @@ public class GameController implements GameEventListener {
 		
 		int pid = sessionPlayers.get(client.getSessionId());
 		String name = gameJoinDto.name;
-		Player player = game.playerJoin(pid, name);
+		Player player = game.playerJoin(pid, name, true);
 		
 		GameSettingsDto gameSettings = new GameSettingsDto();
 		gameSettings.gameTickMs = game.getGameTickMs();
@@ -223,7 +223,7 @@ public class GameController implements GameEventListener {
 		try {
         	Integer pid = sessionPlayers.get(client.getSessionId());           	
         	if ( pid == null ) 
-        		throw new Exception("sessionPlayers value was null.. this really shouldn't have happened");  	
+        		return;//throw new Exception("sessionPlayers value was null.. this really shouldn't have happened");
     		game.dropPlayer(pid);
 		} catch (Exception e) {
 			
@@ -236,7 +236,7 @@ public class GameController implements GameEventListener {
 
     	Integer pid = sessionPlayers.get(client.getSessionId());            	
     	if ( pid == null ) 
-    		throw new Exception("sessionPlayers value was null.. this really shouldn't have happened"); 
+    		return;//throw new Exception("sessionPlayers value was null.. this really shouldn't have happened");
     	 	
     	Player player = game.getPlayer(pid);
     	Color colour = player.getBike().getColour();
@@ -249,7 +249,7 @@ public class GameController implements GameEventListener {
 	public void clientUpdateEvent(SocketIOClient client, ClientUpdateDto updateDto) throws Exception {
     	Integer pid = sessionPlayers.get(client.getSessionId());
     	if ( pid == null ) 
-    		throw new Exception("sessionPlayers value was null.. this really shouldn't have happened"); 
+    		return;//throw new Exception("sessionPlayers value was null.. this really shouldn't have happened");
 		
     	if ( game.handleClientUpdate(updateDto) ) {
     		broadcastWorldUpdate();
@@ -259,11 +259,11 @@ public class GameController implements GameEventListener {
 	public void clientRequestRespawnEvent(SocketIOClient client) throws Exception {
     	Integer pid = sessionPlayers.get(client.getSessionId());
     	if ( pid == null ) 
-    		throw new Exception("sessionPlayers value was null.. this really shouldn't have happened"); 
+    		throw new Exception("sessionPlayers value was null.. this really shouldn't have happened");
 
     	Player player = game.getPlayer(pid);
 		LOG.info("Respawn request from " + player.getName());
-		game.requestRespawn(player.getPid());
+		game.requestRespawn(player.getId());
 		
 	}
 

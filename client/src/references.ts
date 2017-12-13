@@ -7,4 +7,5 @@
 /// <reference path="model/arena.ts" />
 /// <reference path="model/trailSegment.ts" />
 /// <reference path="model/bike.ts" />
+/// <reference path="model/player.ts" />
 /// <reference path="game/game.ts" />

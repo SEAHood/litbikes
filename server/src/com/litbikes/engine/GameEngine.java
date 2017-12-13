@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
-import com.litbikes.dto.BikeDto;
 import com.litbikes.dto.ClientUpdateDto;
+import com.litbikes.dto.PlayerDto;
 import com.litbikes.dto.ScoreDto;
 import com.litbikes.dto.ServerWorldDto;
 import com.litbikes.model.Arena;
@@ -78,27 +78,30 @@ public class GameEngine {
 			Timer delayTimer = new Timer();
 			TimerTask delayTask = new TimerTask() {
 				public void run() {
-					
-					roundTimeLeft = duration;
-					roundTimer = new Timer();
-					TimerTask t = new TimerTask() {
-						public void run() {
-							if (roundTimeLeft == 0) {
-								endRound();
-								return;
+					try {
+						roundTimeLeft = duration;
+						roundTimer = new Timer();
+						TimerTask t = new TimerTask() {
+							public void run() {
+								if (roundTimeLeft == 0) {
+									endRound();
+									return;
+								}
+								roundTimeLeft--;
 							}
-							roundTimeLeft--;
+						};
+						roundTimer.scheduleAtFixedRate(t, 1000, 1000);
+						for (Player p : players) {
+							p.respawn(findSpawn());
 						}
-					};
-					roundTimer.scheduleAtFixedRate(t, 1000, 1000);
-					for (Player p : players) {
-						p.getBike().init(findSpawn(), false);
+						score.reset();
+						roundInProgress = true;
+						countdownTimer.cancel();
+						eventListener.roundStarted();
+						LOG.info("Round started. Duration: " + duration + " seconds");
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-					score.reset();
-					roundInProgress = true;
-					countdownTimer.cancel();
-					eventListener.roundStarted();
-					LOG.info("Round started. Duration: " + duration + " seconds");
 				}
 			};
 			
@@ -112,19 +115,19 @@ public class GameEngine {
 		roundTimer.cancel();
 		roundInProgress = false;
 		for (Player p : players) {
-			p.getBike().setSpectating(true);
+			p.setSpectating(true);
 		}
 		eventListener.roundEnded();
 		LOG.info("Round ended - winner: " + score.getCurrentWinnerName());
 	}
 		
-	public Player playerJoin(int pid, String name) {
+	public Player playerJoin(int pid, String name, boolean isHuman) {
 		LOG.info("Creating new player with pid " + pid);
 		
-		Player player = new Player(pid);
+		Player player = new Player(pid, isHuman);
 		player.setName(name);
 		
-		Bike bike = new Bike(pid, name);
+		Bike bike = new Bike();
 		bike.init(findSpawn(), true);
 		player.setBike(bike);
 		
@@ -135,7 +138,7 @@ public class GameEngine {
 	
 	public void dropPlayer(int pid) {
 		Player player = players.stream()
-				.filter(b -> b.getPid() == pid)
+				.filter(p -> p.getId() == pid)
 				.findFirst()
 				.orElse(null);
 		if (player == null)
@@ -149,7 +152,7 @@ public class GameEngine {
 		if ( data.isValid() ) {			
 			if ( players.size() > 0 ) {				
 				Player player = players.stream()
-						.filter(b -> b.getPid() == data.pid)
+						.filter(p -> p.getId() == data.pid)
 						.findFirst()
 						.orElse(null);
 				if (player == null)
@@ -166,12 +169,12 @@ public class GameEngine {
 	
 	public ServerWorldDto getWorldDto() {
 		ServerWorldDto worldDto = new ServerWorldDto();
-		List<BikeDto> bikesDto = new ArrayList<>();
-
+		List<PlayerDto> playersDto = new ArrayList<>();
+		
 		for ( Player player : players ) {
-			BikeDto bikeDto = player.getBike().getDto();
-			bikeDto.score = score.getScore(bikeDto.pid);
-			bikesDto.add( bikeDto );
+			PlayerDto playerDto = player.getDto();
+			playerDto.score = score.getScore(playerDto.pid);
+			playersDto.add( playerDto );
 		}
 
 		Instant now = Instant.now();
@@ -182,7 +185,7 @@ public class GameEngine {
 		worldDto.currentWinner = score.getCurrentWinner();
 		worldDto.gameTick = gameTick;
 		worldDto.arena = arena.getDto();
-		worldDto.bikes = bikesDto;
+		worldDto.players = playersDto;
 		
 		return worldDto;
 	}
@@ -193,10 +196,10 @@ public class GameEngine {
 
 	public void requestRespawn(int pid) {
 		Player player = players.stream()
-				.filter(b -> b.getPid() == pid)
+				.filter(p -> p.getId() == pid)
 				.findFirst()
 				.orElse(null);
-		if ( player != null && player.getBike().isCrashed() ) {
+		if ( player != null && player.isCrashed() ) {
 			player.respawn(findSpawn());
 			eventListener.playerSpawned(pid);
 		}		
@@ -272,37 +275,37 @@ public class GameEngine {
 	    					double spdModifier = ((distance - oldMin) * newRange / oldRange) + newMin; // Trust me
 	    							
 	    					bike.setSpd(BASE_BIKE_SPEED + spdModifier);*/
-	    					Bike bike = player.getBike();
-				    		bike.updatePosition();
+			    			
+				    		player.update();
+				    		
+				    		Bike playerBike = player.getBike();
 							boolean collided = false;
+							ICollidable collidedWith = null;
 			
 							for ( Player p : activePlayers ) {
-								boolean isSelf = p.getPid() == player.getPid();
-								collided = collided || bike.collides( p.getBike().getTrail(!isSelf), 1 );
+								boolean isSelf = p.getId() == player.getId();
+								collided = collided || playerBike.collides( p.getBike().getTrail(!isSelf), 1 );
 								if ( collided ) {
-									bike.setCrashedInto(p.getBike());
+									collidedWith = p;
 									break;
 								}
 							}
 							
-							if ( arena.checkCollision(bike, 1) ) {
+							if ( arena.checkCollision(playerBike, 1) ) {
 								collided = true;
-								bike.setCrashedInto(new Wall());						
+								collidedWith = new Wall();				
 							}
 			
 							if ( collided ) {
-								bike.crash();
-								bike.setSpectating(true);
-								eventListener.playerCrashed(bike);
-								if ( bike.getCrashedInto() != null ) {
-									ICollidable crashedInto = bike.getCrashedInto();
-									if ( !(crashedInto instanceof Wall) && crashedInto.getId() != bike.getPid() ) {
-										score.grantScore(crashedInto.getId(), crashedInto.getName(), 1);
-										eventListener.scoreUpdated(score.getScores());
-									}
+								player.crashed(collidedWith);
+								eventListener.playerCrashed(player);
+								if ( !(collidedWith instanceof Wall) && collidedWith.getId() != player.getId() ) {
+									score.grantScore(collidedWith.getId(), collidedWith.getName(), 1);
+									eventListener.scoreUpdated(score.getScores());
 								}
 							}	
-							player.updateBike(bike);
+							
+							//player.updateBike(bike); -- dont think this does anything?
 			    		});
 			    		
 			    		threads.add(t);
@@ -330,7 +333,7 @@ public class GameEngine {
 	}
 
 	public Player getPlayer(int pid) {
-		return players.stream().filter(p -> p.getPid() == pid).findFirst().orElse(null);
+		return players.stream().filter(p -> p.getId() == pid).findFirst().orElse(null);
 	}
 
 	public int getRoundTimeLeft() {

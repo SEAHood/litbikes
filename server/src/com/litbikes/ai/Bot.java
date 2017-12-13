@@ -3,6 +3,7 @@ package com.litbikes.ai;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -21,31 +22,26 @@ public class Bot extends Player {
 	private static int AI_TICK_MS = 50;
 	private static int AI_RESPAWN_MS = 3000;
 	private final BotIOClient ioClient;
-	private List<Player> players;
+	private CopyOnWriteArrayList<Player> players;
 	private Arena arena;
 	long lastPredictionTime;
 	long predictionCooldown = 100;
 	BotController controller;
 	
 	public Bot( int pid, List<Player> _players, Arena _arena ) {
-		super(pid);
+		super(pid, false);
 		arena = _arena;
-		players = _players;
+		players = new CopyOnWriteArrayList<>(_players);
 		ioClient = new BotIOClient(this);
-	}
-	
-	@Override
-	public boolean isHuman() {
-		return false;
 	}
 	
 	public void attachController( BotController _controller ) {
 		controller = _controller;
 	}
 	
-	public void updateWorld( List<Player> _players, Arena _arena ) {
+	public void updateWorld(List<Player> _players, Arena _arena) {
 		arena = _arena;
-		players = _players;
+		players = new CopyOnWriteArrayList<>(_players);
 	}
 	
 	public void start() {
@@ -63,7 +59,7 @@ public class Bot extends Player {
     	  		
 			List<TrailSegment> allTrails = new ArrayList<>();
 			for ( Player p : activePlayers ) {
-				boolean isSelf = p.getPid() == pid;
+				boolean isSelf = p.getId() == pid;
 				allTrails.addAll( p.getBike().getTrail(!isSelf) );
 			}
 			
@@ -97,8 +93,13 @@ public class Bot extends Player {
 	class AILoop implements Runnable {
 	    public void run() {
 	    	try {
-		    	if ( !bike.isCrashed() ) {
-			    	predictCollision();
+	    		
+		    	if ( !isCrashed() ) {
+		    		try {
+				    	predictCollision();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 		    	} else {
 		    		try {
 						Thread.sleep(AI_RESPAWN_MS);

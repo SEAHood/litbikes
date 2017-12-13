@@ -7,26 +7,30 @@ module Dto {
         pos: Vector;
         dir: Vector;
         spd: number;
+        trail: TrailSegmentDto[];
+        colour: string; // includes %A% alpha
+    }
+
+    export interface PlayerDto {
+        pid: number;
+        name: string;
+        bike: BikeDto;
         crashed: boolean;
         crashing: boolean;
         crashedInto: number;
         crashedIntoName: string;
-        spectating: boolean;
         deathTimestamp?: number
-        trail: TrailSegmentDto[];
-        colour: string; // includes %A% alpha
+        spectating: boolean;
         score: number;
     }
 
     export interface HelloDto {
         gameSettings : GameSettingsDto;
-        bike : BikeDto;
-        arena : ArenaDto;
         world : WorldUpdateDto;
     }
 
     export interface GameJoinDto {
-        bike : BikeDto;
+        player : PlayerDto;
         scores : ScoreDto[];
     }
 
@@ -46,7 +50,7 @@ module Dto {
         roundTimeLeft: number;
         timeUntilNextRound: number;
         currentWinner: number;
-        bikes: BikeDto[];
+        players: PlayerDto[];
         arena: ArenaDto;
     }
 

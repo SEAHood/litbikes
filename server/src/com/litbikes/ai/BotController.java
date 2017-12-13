@@ -66,9 +66,12 @@ public class BotController {
 		}		
 	}
 
-	public void doUpdate( List<Player> bikes, Arena arena ) {
+	public void doUpdate( List<Player> players, Arena arena ) {
 		for ( Bot bot : bots ) {
-			bot.updateWorld(bikes, arena);
+			Player botPlayer = players.stream().filter(p -> p.getId() == bot.getId()).findFirst().orElse(null);
+			if (botPlayer != null)
+				bot.setCrashed(botPlayer.isCrashed());
+			bot.updateWorld(players, arena);
 		}
 	}
 
@@ -87,6 +90,7 @@ public class BotController {
 
 	public void sentRequestRespawn( BotIOClient client ) {
 		try {
+			LOG.info("BOT REQUESTING RESPAWN FROM GC");
 			gameController.clientRequestRespawnEvent(client);
 		} catch (Exception e) {
 			LOG.warn("Client couldn't update - what happened?");
