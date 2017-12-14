@@ -44,6 +44,12 @@ module Util {
             return ( xDiff >= error && xDiff <= error ) &&
                    ( yDiff >= error && yDiff <= error );
         }
+
+        public static pad(n: number, width: number, z?: string) {
+            z = z || '0';
+            let ns = n + '';
+            return ns.length >= width ? ns : new Array(width - ns.length + 1).join(z) + ns;
+        }
     }
 
     export class ColourUtil {

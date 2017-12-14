@@ -302,9 +302,17 @@ module Game {
         
         private processWorldUpdate( data : WorldUpdateDto ) {
             this.roundInProgress = data.roundInProgress;
-            this.roundTimeLeft = data.roundTimeLeft;
             this.timeUntilNextRound = data.timeUntilNextRound;
             this.currentWinner = data.currentWinner;
+            
+            if (this.roundTimeLeft != data.roundTimeLeft) {
+                var t = new Date(data.roundTimeLeft * 1000);
+                var minutes = NumberUtil.pad(t.getMinutes(), 2);
+                var seconds = NumberUtil.pad(t.getSeconds(), 2);
+                $('#round-timer').text(minutes + ":" + seconds);
+            }
+            this.roundTimeLeft = data.roundTimeLeft;
+
             let updatedPlayers = _.pluck(data.players, 'pid');
             let existingPlayers = _.pluck(this.players, 'pid');
             _.each( existingPlayers, ( pid : number ) => {

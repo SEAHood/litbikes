@@ -115,6 +115,18 @@ input:focus, textarea:focus {
     color: #e0874c;
 }
 
+#round-container {
+    width: 100%;
+}
+
+#round-timer {
+    margin-left: 45%;
+    color: white;
+    font-family: 'Visitor', Times, serif;
+    font-size: 1.3em;
+    letter-spacing: 0.1em;
+}
+
 #info-container {
     display: flex;
     flex-direction: row;
@@ -202,6 +214,15 @@ input:focus, textarea:focus {
 
 #chat-log li {
     word-wrap: break-word;
+}
+
+#beta-icon {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding: 5px;
+    color: #999;
+    font-style: italic;
 }
 
 ::-webkit-scrollbar {
