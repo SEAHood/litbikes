@@ -441,8 +441,7 @@ module Game {
                 });
 
                 _.each( this.players, ( player: Player ) => {
-                    
-                    player.draw(p, this.tabPressed, null);
+                    player.draw(p, this.tabPressed);
                 });
             }
 
@@ -474,8 +473,17 @@ module Game {
 
             if (this.gameJoined) {
                 if (this.roundInProgress) {
-                    let powerUpIcon = this.getPowerUpIcon(this.player.getCurrentPowerUp());
-                    this.player.draw(p, this.tabPressed, powerUpIcon);
+                    this.player.draw(p, this.tabPressed);
+                    let powerUpIcon = this.getPowerUpIcon(this.player.getCurrentPowerUp()); 
+                    if (powerUpIcon) {
+                        let pos = this.player.getBike().getPos();
+                        if (pos.x < 75 && pos.y < 75) {
+                            p.tint(255, 100);
+                        } else {
+                            p.tint(255, 200);
+                        }
+                        p.image(powerUpIcon, 5, 5, 30, 30);
+                    }
                 }
 
                 if ( this.player.isCrashed() && this.player.isSpectating() && this.showRespawn && this.roundInProgress ) {

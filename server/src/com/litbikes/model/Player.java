@@ -136,6 +136,7 @@ public class Player implements ICollidable {
 		setCrashed(false);
 		setCrashedInto(null);
 		setSpectating(false);
+		currentPowerUpType = null;
 		effect = PlayerEffect.NONE;
 	}
 }

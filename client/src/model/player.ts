@@ -77,7 +77,7 @@ module Model {
             this.bike.update(this.isAlive());
         }
 
-        public draw(p: p5, showName: boolean, powerUpIcon: p5.Image) {
+        public draw(p: p5, showName: boolean) {
             if (this.isVisible()) {
                 let showRespawnRing = this.isAlive() && this.isControlledPlayer;
                 this.bike.draw(p, showRespawnRing, this.isControlledPlayer);
@@ -90,11 +90,6 @@ module Model {
                 
                 //p.text(this.effect ? this.effect : "none", this.bike.getPos().x, Math.max(0, this.bike.getPos().y - 15));
 
-                if (powerUpIcon) {
-                    let width = 20;
-                    let height = 20;
-                    p.image(powerUpIcon, this.bike.getPos().x, Math.max(0, this.bike.getPos().y - 15), width, height)
-                }
             }
         }
 
@@ -119,13 +114,7 @@ module Model {
             this.currentPowerUp = dto.currentPowerUp ? dto.currentPowerUp.toLowerCase() : null;
             this.effect = dto.effect;
             this.bike.updateFromDto(dto.bike);
-
-            if (oldPowerUp != this.currentPowerUp) {
-                // powerup has changed, refresh ui
-                $('#powerup').empty();
-                $('#powerup').append("<img src='img/game/powerups/slow.png");
-            }
-            
+          
         }
     }
 }
