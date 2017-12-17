@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
@@ -17,12 +18,15 @@ import org.eclipse.jetty.util.log.Logger;
 
 import com.litbikes.dto.ClientUpdateDto;
 import com.litbikes.dto.PlayerDto;
+import com.litbikes.dto.PowerUpDto;
 import com.litbikes.dto.ScoreDto;
 import com.litbikes.dto.ServerWorldDto;
 import com.litbikes.model.Arena;
 import com.litbikes.model.Bike;
 import com.litbikes.model.ICollidable;
 import com.litbikes.model.Player;
+import com.litbikes.model.PowerUp;
+import com.litbikes.model.PowerUp.PowerUpType;
 import com.litbikes.model.Spawn;
 import com.litbikes.model.TrailSegment;
 import com.litbikes.model.Wall;
@@ -33,11 +37,16 @@ public class GameEngine {
 	
 	private static Logger LOG = Log.getLogger(GameEngine.class);
 	private static final int GAME_TICK_MS = 25;
+	private static final int PU_SPAWN_DELAY_MIN = 1;
+	private static final int PU_SPAWN_DELAY_MAX = 1;
+	private static final int PU_DURATION_MIN = 10;
+	private static final int PU_DURATION_MAX = 20;
 	
 	private GameEventListener eventListener;
 	private long gameTick = 0;
 		
 	private final List<Player> players;
+	private final List<PowerUp> powerUps;
 	private final Arena arena;
 	private final ScoreKeeper score;
 	private final int gameSize;	
@@ -47,9 +56,12 @@ public class GameEngine {
 	private int timeUntilNextRound;
 	private boolean roundInProgress = false;
 	
+	private Timer powerUpSpawnTimer = new Timer();
+	
 	public GameEngine(int gameSize) {
 		arena = new Arena(gameSize);
 		players = new ArrayList<>();
+		powerUps = new ArrayList<>();
 		score = new ScoreKeeper();
 		this.gameSize = gameSize;
 	}
@@ -57,8 +69,12 @@ public class GameEngine {
 	public void start() {
 		Runnable gameLoop = new GameTick();
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-		LOG.info("Starting game at " + GAME_TICK_MS + "ms per game tick");
 		executor.scheduleAtFixedRate(gameLoop, 0, GAME_TICK_MS, TimeUnit.MILLISECONDS);
+		
+		PowerUpSpawner powerUpSpawner = new PowerUpSpawner();
+		powerUpSpawner.run();
+		
+		LOG.info("Starting game at " + GAME_TICK_MS + "ms per game tick");
 		eventListener.gameStarted();
 	}
 	
@@ -170,11 +186,16 @@ public class GameEngine {
 	public ServerWorldDto getWorldDto() {
 		ServerWorldDto worldDto = new ServerWorldDto();
 		List<PlayerDto> playersDto = new ArrayList<>();
-		
 		for ( Player player : players ) {
 			PlayerDto playerDto = player.getDto();
 			playerDto.score = score.getScore(playerDto.pid);
 			playersDto.add( playerDto );
+		}
+
+		List<PowerUpDto> powerUpsDto = new ArrayList<>();
+		for ( PowerUp p : powerUps ) {
+			PowerUpDto powerUpDto = p.getDto();
+			powerUpsDto.add(powerUpDto);
 		}
 
 		Instant now = Instant.now();
@@ -186,6 +207,7 @@ public class GameEngine {
 		worldDto.gameTick = gameTick;
 		worldDto.arena = arena.getDto();
 		worldDto.players = playersDto;
+		worldDto.powerUps = powerUpsDto;
 		
 		return worldDto;
 	}
@@ -239,8 +261,56 @@ public class GameEngine {
 		return score.getScores();
 	}
 
-	int getGameTickMs() {
+	public int getGameTickMs() {
 		return GAME_TICK_MS;
+	}
+	
+	public Arena getArena() {
+		return arena;
+	}
+
+	public List<Player> getPlayers() {
+		return players;
+	}
+
+	public Player getPlayer(int pid) {
+		return players.stream().filter(p -> p.getId() == pid).findFirst().orElse(null);
+	}
+
+	public int getRoundTimeLeft() {
+		return roundTimeLeft;
+	}
+	
+	class PowerUpSpawner extends TimerTask {
+		@Override
+		public void run() {
+			try {
+				PowerUpType type = PowerUpType.NOTHING;
+				int rand = new Random().nextInt(2);
+				if (rand == 1)
+					type = PowerUpType.ROCKET;
+				else
+					type = PowerUpType.SLOW;
+				
+				PowerUp powerUp = new PowerUp(Vector.random(gameSize, gameSize), type);
+				powerUps.add(powerUp);				
+	            int delay = (PU_SPAWN_DELAY_MIN + new Random().nextInt(PU_SPAWN_DELAY_MAX)) * 1000;
+	            powerUpSpawnTimer.schedule(new PowerUpSpawner(), delay);
+	            
+	            // Schedule despawn of powerup
+	            int duration = (PU_DURATION_MIN + new Random().nextInt(PU_DURATION_MAX)) * 1000;
+	            powerUpSpawnTimer.schedule(new TimerTask() {
+	            	@Override
+	            	public void run() {
+	            		if (!powerUp.isCollected()) {
+    	            		powerUps.remove(powerUp);
+	            		}
+	            	}
+	            }, duration);
+			} catch (Exception ex) {
+				LOG.warn("Exception thrown in power up manager", ex);
+			}
+		}
 	}
 	
 	class GameTick implements Runnable {
@@ -281,6 +351,8 @@ public class GameEngine {
 				    		Bike playerBike = player.getBike();
 							boolean collided = false;
 							ICollidable collidedWith = null;
+							PowerUp powerUpCollected = null;
+							
 			
 							for ( Player p : activePlayers ) {
 								boolean isSelf = p.getId() == player.getId();
@@ -289,9 +361,20 @@ public class GameEngine {
 									collidedWith = p;
 									break;
 								}
+								
+								for (PowerUp powerUp : powerUps) {
+									Vector pos = p.getBike().getPos();
+									double aheadX = pos.x + (2 * p.getBike().getDir().x);
+									double aheadY = pos.y + (2 * p.getBike().getDir().y);
+									Line2D line = new Line2D.Double(pos.x, pos.y, aheadX, aheadY);
+									if (powerUp.collides(line))  {
+										powerUpCollected = powerUp;
+										break;
+									}
+								}
 							}
 							
-							if ( arena.checkCollision(playerBike, 1) ) {
+							if ( !collided && arena.checkCollision(playerBike, 1) ) {
 								collided = true;
 								collidedWith = new Wall();				
 							}
@@ -304,8 +387,22 @@ public class GameEngine {
 									eventListener.scoreUpdated(score.getScores());
 								}
 							}	
-							
-							//player.updateBike(bike); -- dont think this does anything?
+													
+							if (powerUpCollected != null) {
+								powerUpCollected.setCollected(true);
+								final PowerUp powerUp = powerUpCollected;	
+								Timer timer = new Timer();
+								timer.schedule(new TimerTask() {
+			    	            	@Override
+			    	            	public void run() {
+			    	            		try {
+				    	            		powerUps.remove(powerUp);			    	            			
+			    	            		} catch (Exception e) {
+			    	            			e.printStackTrace();
+			    	            		}
+			    	            	}
+			    	            }, 5000);
+							}
 			    		});
 			    		
 			    		threads.add(t);
@@ -322,22 +419,6 @@ public class GameEngine {
 				LOG.info(e.getMessage());
 			}
 	    }
-	}
-	
-	public Arena getArena() {
-		return arena;
-	}
-
-	public List<Player> getPlayers() {
-		return players;
-	}
-
-	public Player getPlayer(int pid) {
-		return players.stream().filter(p -> p.getId() == pid).findFirst().orElse(null);
-	}
-
-	public int getRoundTimeLeft() {
-		return roundTimeLeft;
 	}
 	
 }

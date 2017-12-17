@@ -6,8 +6,8 @@ import java.util.List;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
+import com.litbikes.controller.GameController;
 import com.litbikes.dto.ClientUpdateDto;
-import com.litbikes.engine.GameController;
 import com.litbikes.model.Arena;
 import com.litbikes.model.Player;
 

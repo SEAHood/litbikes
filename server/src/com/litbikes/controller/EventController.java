@@ -1,4 +1,4 @@
-package com.litbikes.engine;
+package com.litbikes.controller;
 
 public class EventController {
 

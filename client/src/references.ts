@@ -8,4 +8,5 @@
 /// <reference path="model/trailSegment.ts" />
 /// <reference path="model/bike.ts" />
 /// <reference path="model/player.ts" />
+/// <reference path="model/powerUp.ts" />
 /// <reference path="game/game.ts" />

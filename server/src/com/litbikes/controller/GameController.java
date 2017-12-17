@@ -1,4 +1,4 @@
-package com.litbikes.engine;
+package com.litbikes.controller;
 
 import java.awt.Color;
 import java.util.HashMap;
@@ -25,16 +25,9 @@ import com.litbikes.dto.GameJoinDto;
 import com.litbikes.dto.GameSettingsDto;
 import com.litbikes.dto.HelloDto;
 import com.litbikes.dto.ScoreDto;
+import com.litbikes.engine.GameEngine;
+import com.litbikes.engine.GameEventListener;
 import com.litbikes.model.Player;
-
-interface GameEventListener {
-	void playerCrashed(Player player);
-	void playerSpawned(int pid);
-	void scoreUpdated(List<ScoreDto> scores);
-	void gameStarted();
-	void roundStarted();
-	void roundEnded();
-}
 
 // Manages connections between high level game components
 public class GameController implements GameEventListener {

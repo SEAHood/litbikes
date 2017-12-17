@@ -2,10 +2,12 @@ module Game {
 
     import Bike = Model.Bike;
     import Player = Model.Player;
+    import PowerUp = Model.PowerUp;
     import Arena = Model.Arena;
     import WorldUpdateDto = Dto.WorldUpdateDto;
     import BikeDto = Dto.BikeDto;
     import PlayerDto = Dto.PlayerDto;
+    import PowerUpDto = Dto.PowerUpDto;
     import Vector = Util.Vector;
     import ClientUpdateDto = Dto.ClientUpdateDto;
     import GameJoinDto = Dto.GameJoinDto;
@@ -20,6 +22,7 @@ module Game {
         private socket = io.connect(this.host);
         private arena : Arena;
         private players : Player[] = [];
+        private powerUps : PowerUp[] = [];
         private registered = false;
         private version ="0.1b";
         private gameStarted = false;
@@ -344,6 +347,21 @@ module Game {
                     }
                 }
             });
+
+            let powerUps = [];
+            _.each(data.powerUps, (p: PowerUpDto) => {
+                let powerUpDto = new PowerUp(p.id, p.pos, p.type);
+                let existingPowerUp = _.find(this.powerUps, (ep: PowerUp) => ep.getId() === p.id);
+                if ( existingPowerUp ) {
+                    existingPowerUp.updateFromDto(p);
+                } else {
+                    let powerUp = new PowerUp(p.id, p.pos, p.type);
+                    this.powerUps.push(powerUp);
+                    existingPowerUp = powerUp;
+                }
+                powerUps.push(existingPowerUp);
+            });
+            this.powerUps = powerUps;
         }
 
         private updateScores(scores: ScoreDto[]) {            
@@ -390,6 +408,10 @@ module Game {
             this.arena.draw(p);
         
             if (this.roundInProgress) {
+                _.each( this.powerUps, (powerUp: PowerUp) => {
+                    powerUp.draw(p);
+                });
+
                 _.each( this.players, ( player: Player ) => {
                     player.draw(p, this.tabPressed);
                 });

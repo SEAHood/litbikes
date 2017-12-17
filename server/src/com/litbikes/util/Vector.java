@@ -1,5 +1,7 @@
 package com.litbikes.util;
 
+import java.util.Random;
+
 public class Vector {
 
 	public double x;
@@ -22,6 +24,10 @@ public class Vector {
 	
 	public static Vector zero() {
 		return new Vector(0, 0);
+	}
+	
+	public static Vector random(int maxX, int maxY) {
+		return new Vector(new Random().nextInt(maxX), new Random().nextInt(maxX));
 	}
 	
 	@Override

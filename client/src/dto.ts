@@ -24,6 +24,13 @@ module Dto {
         score: number;
     }
 
+    export interface PowerUpDto {
+        id: string;
+        pos: Vector;
+        type: string;
+        collected: boolean;
+    }
+
     export interface HelloDto {
         gameSettings : GameSettingsDto;
         world : WorldUpdateDto;
@@ -51,6 +58,7 @@ module Dto {
         timeUntilNextRound: number;
         currentWinner: number;
         players: PlayerDto[];
+        powerUps: PowerUpDto[];
         arena: ArenaDto;
     }
 

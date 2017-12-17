@@ -9,9 +9,9 @@ import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
+import com.litbikes.controller.GameController;
 import com.litbikes.dto.ClientGameJoinDto;
 import com.litbikes.dto.ClientUpdateDto;
-import com.litbikes.engine.GameController;
 
 public class GameServer {
 	
