@@ -968,8 +968,8 @@ declare class p5 {
     //
     //   param "successCallback" has invalid type: Function(p5.Image)
     //   param "failureCallback" has invalid type: Function(Event)
-    //
-    // loadImage(path: string, successCallback?: Function(p5.Image), failureCallback?: Function(Event)): p5.Image
+    // any ftw
+    loadImage(path: string, successCallback?: any, failureCallback?: any): p5.Image
 
     /**
      * Draw an image to the main canvas of the p5js sketch

@@ -113,6 +113,10 @@ public class Bike {
 		return dir;
 	}
 
+	public double getSpd() {
+		return spd;
+	}
+
 	public void setSpd(double spd) {
 		this.spd = spd;
 	}

@@ -2,8 +2,6 @@ package com.litbikes.dto;
 
 import java.util.List;
 
-import com.litbikes.model.PowerUp;
-
 public class ServerWorldDto {
 	
 	public long timestamp;

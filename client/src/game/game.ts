@@ -49,6 +49,8 @@ module Game {
         private mainFont;
         private secondaryFont;
         private debugFont;
+        private powerUpIconRocket: p5.Image;
+        private powerUpIconSlow: p5.Image;
 
         constructor() {
             this.socket.on('hello', ( data : HelloDto ) => {
@@ -115,6 +117,7 @@ module Game {
                 S = 83,
                 D = 68,
                 R = 82,
+                SPACE = 32,
                 F3 = 114,
                 H = 72,
                 TAB = 9
@@ -171,6 +174,8 @@ module Game {
                         this.showRespawn = !this.showRespawn;
                     } else if (keyCode === Keys.TAB) {
                         this.tabPressed = true;
+                    } else if (keyCode === Keys.SPACE) {
+                        this.socket.emit('use-powerup');
                     } else {
                         eventMatched = false;
                     }
@@ -213,6 +218,17 @@ module Game {
             });
 
             this.socket.emit('hello');
+        }
+        
+        private setup( p : p5 ) {
+            this.mainFont = p.loadFont('fonts/3Dventure.ttf');
+            this.secondaryFont = p.loadFont('fonts/visitor.ttf');
+            this.debugFont = p.loadFont('fonts/larabie.ttf');
+            
+            this.powerUpIconRocket = p.loadImage('img/game/powerups/rocket.png');
+            this.powerUpIconSlow = p.loadImage('img/game/powerups/slow.png');
+
+            p.createCanvas(this.arena.size, this.arena.size);
         }
 
         private nameIsValid(name: string): boolean {
@@ -394,6 +410,18 @@ module Game {
             }
         }
 
+        private getPowerUpIcon(powerUp: string) {            
+            let powerUpIcon = null;
+            switch (powerUp) {
+                case "rocket":
+                    return this.powerUpIconRocket;
+                case "slow":
+                    return this.powerUpIconSlow;
+                default:
+                    return null;
+            }
+        }
+
         private sketch() {
             return ( p : p5 ) => {
                 p.setup = () => this.setup(p);
@@ -413,7 +441,8 @@ module Game {
                 });
 
                 _.each( this.players, ( player: Player ) => {
-                    player.draw(p, this.tabPressed);
+                    
+                    player.draw(p, this.tabPressed, null);
                 });
             }
 
@@ -445,7 +474,8 @@ module Game {
 
             if (this.gameJoined) {
                 if (this.roundInProgress) {
-                    this.player.draw(p, this.tabPressed);
+                    let powerUpIcon = this.getPowerUpIcon(this.player.getCurrentPowerUp());
+                    this.player.draw(p, this.tabPressed, powerUpIcon);
                 }
 
                 if ( this.player.isCrashed() && this.player.isSpectating() && this.showRespawn && this.roundInProgress ) {
@@ -523,6 +553,10 @@ module Game {
                 p.text("Next round starting in " + this.timeUntilNextRound + " second" + (this.timeUntilNextRound === 1 ? "" : "s"), halfWidth, halfHeight);
             }
             
+            if (this.player && this.player.isAlive() && this.player.getEffect().toLowerCase() == "slowed") {
+                p.filter("INVERT", 0);
+            }
+            
             // Debug text
             if ( this.showDebug ) {
                 p.textFont(this.debugFont);
@@ -540,7 +574,7 @@ module Game {
                         "dir: "+ playerBike.getDir().x + ", " + playerBike.getDir().y + "\n" +
                         "spd: "+ playerBike.getSpd() + "\n" +
                         "crashed: " + (this.player.isCrashed() ? "yes" : "no") + "\n" +
-                        "crashing: " + (playerBike.isCrashing() ? "yes" : "no") + "\n" +
+                        "crashing: " + (playerBike.isCrashing() ? "yes" : "no") + "\n" + +
                         "colour: " + playerBike.getColour() + "\n" +
                         "spectating: " + (this.player.isSpectating() ? "yes" : "no") + "\n" +
                         "round in progress: " + (this.roundInProgress ? "yes" : "no") + "\n" + 
@@ -554,14 +588,6 @@ module Game {
                 }
             }
         }
-
-        private setup( p : p5 ) {
-            this.mainFont = p.loadFont('fonts/3Dventure.ttf');
-            this.secondaryFont = p.loadFont('fonts/visitor.ttf');
-            this.debugFont = p.loadFont('fonts/larabie.ttf');
-            p.createCanvas(this.arena.size, this.arena.size);
-        }
-
     }
     new Game();
 

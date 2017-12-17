@@ -29,6 +29,7 @@ public class GameServer {
 	private final static String C_REQUEST_RESPAWN = "request-respawn";
 	private final static String C_KEEP_ALIVE = "keep-alive";
 	private final static String C_CHAT_MESSAGE = "chat-message";
+	private final static String C_USE_POWERUP = "use-powerup";
 	
 	public GameServer(int port, int maxBots, int gameSize) {
 		config = new Configuration();
@@ -111,6 +112,19 @@ public class GameServer {
             	super.onData(client, message, ackRequest);
             	try {
 					gameController.clientChatMessageEvent(client, message);
+				} catch (Exception e) {
+					LOG.warn("Client was null, this wasn't meant to happen");
+					e.printStackTrace();
+				}
+            }
+        });
+
+        ioServer.addEventListener(C_USE_POWERUP, String.class, new ClientEventListener<String>() {
+            @Override
+            public void onData(final SocketIOClient client, String message, final AckRequest ackRequest) {
+            	super.onData(client, message, ackRequest);
+            	try {
+					gameController.clientRequestUsePowerUpEvent(client);
 				} catch (Exception e) {
 					LOG.warn("Client was null, this wasn't meant to happen");
 					e.printStackTrace();

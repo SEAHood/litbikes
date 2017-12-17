@@ -22,6 +22,8 @@ module Dto {
         deathTimestamp?: number
         spectating: boolean;
         score: number;
+        currentPowerUp: string;
+        effect: string;
     }
 
     export interface PowerUpDto {

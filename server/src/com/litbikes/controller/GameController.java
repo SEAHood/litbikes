@@ -80,21 +80,6 @@ public class GameController implements GameEventListener {
 				}
 			}
 		}, 0, 250, TimeUnit.MILLISECONDS);
-				
-		executor.scheduleAtFixedRate(new Runnable() {
-			public void run() {		
-				try {		
-					int timeLeft = game.getRoundTimeLeft();
-					if (timeLeft > 0 && (timeLeft < 10 || timeLeft % 10 == 0)) {
-				    	String msg = "Round ending in " + timeLeft + " seconds";
-				    	ChatMessageDto dto = new ChatMessageDto(null, null, msg, true);
-				    	broadcastData("chat-message", dto);
-					}			
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}, 0, 1, TimeUnit.SECONDS);
 	}
 
 	public void playerCrashed( Player player ) {
@@ -256,8 +241,21 @@ public class GameController implements GameEventListener {
 
     	Player player = game.getPlayer(pid);
 		LOG.info("Respawn request from " + player.getName());
-		game.requestRespawn(player.getId());
-		
+		game.requestRespawn(player);		
+	}
+
+	public void clientRequestUsePowerUpEvent(SocketIOClient client) throws Exception {
+    	Integer pid = sessionPlayers.get(client.getSessionId());
+    	if ( pid == null ) 
+    		throw new Exception("sessionPlayers value was null.. this really shouldn't have happened");
+
+    	Player player = game.getPlayer(pid);
+    	if (player.getCurrentPowerUpType() == null)
+    		return; // player doesn't have a powerup
+    	
+		LOG.info("PowerUp used by " + player.getName());
+		game.requestUsePowerUp(player);
+		broadcastWorldUpdate();
 	}
 
 	public void clientHelloEvent(SocketIOClient client) {

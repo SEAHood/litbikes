@@ -186,5 +186,4 @@ module Model {
             return this.respawning;
         }
     }
-
 }

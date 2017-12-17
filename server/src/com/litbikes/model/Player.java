@@ -1,8 +1,14 @@
 package com.litbikes.model;
 
 import com.litbikes.dto.PlayerDto;
+import com.litbikes.model.PowerUp.PowerUpType;
 
 public class Player implements ICollidable {
+	public enum PlayerEffect {
+		NONE,
+		SLOWED
+	}
+
 	protected int pid;
 	protected Bike bike;
 	private String name;
@@ -10,6 +16,8 @@ public class Player implements ICollidable {
 	private boolean spectating = false;
 	private ICollidable crashedInto = null;
 	private boolean isHuman;
+	private PowerUpType currentPowerUpType = null;
+	private PlayerEffect effect = PlayerEffect.NONE;
 	
 	public Player(int _pid, boolean _isHuman) {
 		pid = _pid;
@@ -44,6 +52,22 @@ public class Player implements ICollidable {
 		return isHuman;
 	}
 	
+	public PowerUpType getCurrentPowerUpType() {
+		return currentPowerUpType;
+	}
+	
+	public void setCurrentPowerUpType(PowerUpType type) {
+		currentPowerUpType = type;
+	}
+	
+	public PlayerEffect getEffect() {
+		return effect;
+	}
+	
+	public void setEffect(PlayerEffect effect) {
+		this.effect = effect;
+	}
+	
 	public PlayerDto getDto() {
 		PlayerDto dto = new PlayerDto();
 		dto.pid = pid;
@@ -53,6 +77,8 @@ public class Player implements ICollidable {
 		dto.crashedInto = crashedInto != null ? crashedInto.getId() : null;
 		dto.crashedIntoName = crashedInto != null ? crashedInto.getName() : null;
 		dto.spectating = spectating;
+		dto.currentPowerUp = currentPowerUpType;
+		dto.effect = effect;
 		return dto;
 	}
 	
@@ -110,5 +136,6 @@ public class Player implements ICollidable {
 		setCrashed(false);
 		setCrashedInto(null);
 		setSpectating(false);
+		effect = PlayerEffect.NONE;
 	}
 }

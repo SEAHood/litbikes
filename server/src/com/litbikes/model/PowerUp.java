@@ -59,7 +59,6 @@ public class PowerUp {
 		int originX = (int)pos.x - (boxSize / 2);
 		int originY = (int)pos.y - (boxSize / 2);
 		Rectangle hitbox = new Rectangle(originX, originY, boxSize, boxSize);
-		boolean hits = line.intersects(hitbox);
 		return line.intersects(hitbox);
 	}
 	

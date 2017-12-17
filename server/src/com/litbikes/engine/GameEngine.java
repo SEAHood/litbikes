@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +31,7 @@ import com.litbikes.model.PowerUp.PowerUpType;
 import com.litbikes.model.Spawn;
 import com.litbikes.model.TrailSegment;
 import com.litbikes.model.Wall;
+import com.litbikes.model.Player.PlayerEffect;
 import com.litbikes.util.Vector;
 
 public class GameEngine {
@@ -37,8 +39,8 @@ public class GameEngine {
 	
 	private static Logger LOG = Log.getLogger(GameEngine.class);
 	private static final int GAME_TICK_MS = 25;
-	private static final int PU_SPAWN_DELAY_MIN = 1;
-	private static final int PU_SPAWN_DELAY_MAX = 1;
+	private static final int PU_SPAWN_DELAY_MIN = 10;
+	private static final int PU_SPAWN_DELAY_MAX = 20;
 	private static final int PU_DURATION_MIN = 10;
 	private static final int PU_DURATION_MAX = 20;
 	
@@ -46,7 +48,7 @@ public class GameEngine {
 	private long gameTick = 0;
 		
 	private final List<Player> players;
-	private final List<PowerUp> powerUps;
+	private final CopyOnWriteArrayList<PowerUp> powerUps;
 	private final Arena arena;
 	private final ScoreKeeper score;
 	private final int gameSize;	
@@ -61,7 +63,7 @@ public class GameEngine {
 	public GameEngine(int gameSize) {
 		arena = new Arena(gameSize);
 		players = new ArrayList<>();
-		powerUps = new ArrayList<>();
+		powerUps = new CopyOnWriteArrayList<>();
 		score = new ScoreKeeper();
 		this.gameSize = gameSize;
 	}
@@ -216,17 +218,47 @@ public class GameEngine {
 		eventListener = listener;
 	}
 
-	public void requestRespawn(int pid) {
-		Player player = players.stream()
-				.filter(p -> p.getId() == pid)
-				.findFirst()
-				.orElse(null);
+	public void requestRespawn(Player player) {
 		if ( player != null && player.isCrashed() ) {
 			player.respawn(findSpawn());
-			eventListener.playerSpawned(pid);
+			eventListener.playerSpawned(player.getId());
 		}		
 	}
-	
+
+	public void requestUsePowerUp(Player player) {
+		if ( player != null && player.isAlive() && player.getCurrentPowerUpType() != null ) {
+			switch (player.getCurrentPowerUpType()) {
+				case ROCKET:
+					break;
+				case SLOW:
+					players.stream().forEach(p -> {
+						if (p.getId() != player.getId()) {
+							Bike b = p.getBike();
+							double oldSpd = b.getSpd();
+							b.setSpd(0.5);
+							p.updateBike(b);
+							p.setEffect(PlayerEffect.SLOWED);
+
+							Timer timer = new Timer();
+							TimerTask task = new TimerTask() {
+								public void run() {
+									b.setSpd(oldSpd);
+									p.updateBike(b);
+									p.setEffect(PlayerEffect.NONE);
+								}
+							};
+							timer.schedule(task, 3000);
+						}
+					});
+					
+					break;
+				default:
+					return;				
+			}
+			player.setCurrentPowerUpType(null);
+		}		
+	}
+
 	public Spawn findSpawn() {
 		Spawn spawn = new Spawn(gameSize);
 		int i = 0;
@@ -285,12 +317,12 @@ public class GameEngine {
 		@Override
 		public void run() {
 			try {
-				PowerUpType type = PowerUpType.NOTHING;
-				int rand = new Random().nextInt(2);
+				PowerUpType type = PowerUpType.SLOW;
+				/*int rand = new Random().nextInt(2);
 				if (rand == 1)
 					type = PowerUpType.ROCKET;
 				else
-					type = PowerUpType.SLOW;
+					type = PowerUpType.SLOW;*/
 				
 				PowerUp powerUp = new PowerUp(Vector.random(gameSize, gameSize), type);
 				powerUps.add(powerUp);				
@@ -369,6 +401,7 @@ public class GameEngine {
 									Line2D line = new Line2D.Double(pos.x, pos.y, aheadX, aheadY);
 									if (powerUp.collides(line))  {
 										powerUpCollected = powerUp;
+										p.setCurrentPowerUpType(powerUp.getType());
 										break;
 									}
 								}
@@ -401,7 +434,7 @@ public class GameEngine {
 			    	            			e.printStackTrace();
 			    	            		}
 			    	            	}
-			    	            }, 5000);
+			    	            }, 4000);
 							}
 			    		});
 			    		
@@ -420,5 +453,4 @@ public class GameEngine {
 			}
 	    }
 	}
-	
 }

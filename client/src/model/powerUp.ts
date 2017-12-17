@@ -6,7 +6,7 @@ module Model {
         private pos: Vector;
         private type: string;
         private collected: boolean;
-        private animating: boolean;
+        private collecting: boolean;
         private popSize: number;
         
         constructor(_id: string, _pos: Vector, _type: string) {
@@ -14,7 +14,7 @@ module Model {
             this.pos = _pos;
             this.type = _type;
             this.collected = false;
-            this.animating = false;
+            this.collecting = false;
             this.popSize = 0;
         }
     
@@ -44,7 +44,7 @@ module Model {
 
         public collect() {
             this.collected = true;
-            this.animating = true;
+            this.collecting = true;
         }
 
         public updateFromDto(dto: PowerUpDto) {
@@ -72,24 +72,16 @@ module Model {
                 p.noStroke();
                 p.fill(colour);
                 p.ellipse(this.pos.x, this.pos.y, 6, 6);
-                // p.fill(colour.replace('%A%', '1'));
-                // p.ellipse(this.pos.x, this.pos.y, 4, 4);
-            } else if (this.animating) {
+            } else if (this.collecting) {
                 p.fill('rgba(0,0,0,0)');
                 p.stroke(255);
                 p.strokeWeight(2);
                 p.ellipse(this.pos.x, this.pos.y, this.popSize, this.popSize);
                 this.popSize = this.popSize + 1.5;
                 if (this.popSize > 20) {
-                    this.animating = false;
+                    this.collecting = false;
                 }
             }
-            
-            // p.textFont("Courier");
-            // p.textSize(15);
-            // p.textAlign('center', 'middle');
-            //p.text('i: ' + this.id.substr(0, 5) + '\nc: ' + this.collected + '\na: ' + this.animating, this.pos.x, Math.max(0, this.pos.y - 45));
-        }
-        
+        }        
     }
 }

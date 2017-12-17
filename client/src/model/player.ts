@@ -11,6 +11,8 @@ module Model {
         private crashedIntoName: string;
         private score: number;
         private isControlledPlayer: boolean;
+        private currentPowerUp: string;
+        private effect: string;
 
         constructor(pid: number, name: string, bike: Bike, crashed: boolean, 
             spectating: boolean, deathTimestamp: number, crashedInto: number, 
@@ -55,7 +57,7 @@ module Model {
         public getCrashedIntoName() : string {
             return this.crashedIntoName;
         }
-        private isAlive(): boolean {
+        public isAlive(): boolean {
             return !this.spectating && !this.crashed;
         }
         private isVisible() : boolean {
@@ -64,12 +66,18 @@ module Model {
         public isSpectating() : boolean {
             return this.spectating;
         }
-        
+        public getCurrentPowerUp(): string {
+            return this.currentPowerUp;
+        }
+        public getEffect(): string {
+            return this.effect || "none";
+        }
+
         public update() {
             this.bike.update(this.isAlive());
         }
 
-        public draw( p : p5, showName : boolean ) {
+        public draw(p: p5, showName: boolean, powerUpIcon: p5.Image) {
             if (this.isVisible()) {
                 let showRespawnRing = this.isAlive() && this.isControlledPlayer;
                 this.bike.draw(p, showRespawnRing, this.isControlledPlayer);
@@ -78,6 +86,14 @@ module Model {
                     p.textSize(15);
                     p.textAlign('center', 'middle');
                     p.text(this.name, this.bike.getPos().x, Math.max(0, this.bike.getPos().y - 15));
+                }
+                
+                //p.text(this.effect ? this.effect : "none", this.bike.getPos().x, Math.max(0, this.bike.getPos().y - 15));
+
+                if (powerUpIcon) {
+                    let width = 20;
+                    let height = 20;
+                    p.image(powerUpIcon, this.bike.getPos().x, Math.max(0, this.bike.getPos().y - 15), width, height)
                 }
             }
         }
@@ -94,12 +110,22 @@ module Model {
                 this.bike.respawned();
             }
 
+            let oldPowerUp = this.currentPowerUp;            
             this.crashed = dto.crashed;
             this.crashedInto = dto.crashedInto;
             this.crashedIntoName = dto.crashedIntoName;
             this.spectating = dto.spectating;
             this.score = dto.score;
+            this.currentPowerUp = dto.currentPowerUp ? dto.currentPowerUp.toLowerCase() : null;
+            this.effect = dto.effect;
             this.bike.updateFromDto(dto.bike);
+
+            if (oldPowerUp != this.currentPowerUp) {
+                // powerup has changed, refresh ui
+                $('#powerup').empty();
+                $('#powerup').append("<img src='img/game/powerups/slow.png");
+            }
+            
         }
     }
 }

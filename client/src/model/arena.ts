@@ -13,7 +13,6 @@ module Model {
 
         public draw( p : p5 ) {
             p.background(51);            
-            
             // THE OLD BLUEISH GRID
             // p.strokeWeight(1);
             // p.stroke('rgba(125,249,255,0.10)');
@@ -26,6 +25,5 @@ module Model {
             //     p.line(0, i, this.size, i);
             // }            
         }
-
     }
 }

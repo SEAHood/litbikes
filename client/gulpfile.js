@@ -18,11 +18,7 @@ var SRC_ROOT = './src',
 
 	STATIC_ROOT = SRC_ROOT + '/static',
 	STATIC_FILES = [
-		STATIC_ROOT + '/*',
-		STATIC_ROOT + '/fonts/*',
-		STATIC_ROOT + '/img/*',
-		STATIC_ROOT + '/css/*',
-		STATIC_ROOT + '/js/*.min.js'
+		STATIC_ROOT + '/**'
 	],
 
 	COMPILED_DIR = 'compiled',
