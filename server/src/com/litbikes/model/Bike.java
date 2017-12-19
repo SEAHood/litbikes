@@ -2,6 +2,7 @@ package com.litbikes.model;
 
 import java.awt.Color;
 import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -13,6 +14,7 @@ import com.litbikes.util.Vector;
 
 public class Bike {
 	//private static Logger LOG = Log.getLogger(Bike.class);	
+	private final int ownerPid;
 	private Vector pos;
 	private Vector dir;
 	private double spd;
@@ -20,6 +22,10 @@ public class Bike {
 	private Vector startPos;
 	private Color colour;
 	private Random random = new Random();
+	
+	public Bike(int ownerPid) {
+		this.ownerPid = ownerPid;
+	}
 	
 	public void init(Spawn spawn, boolean newPlayer) {
 		pos = spawn.getPos();
@@ -72,7 +78,7 @@ public class Bike {
 		} else {
 			segLine = new Line2D.Double(pos.x, pos.y, pos.x, pos.y);	
 		}
-		trail.add(new TrailSegment(segLine));
+		trail.add(new TrailSegment(ownerPid, segLine));
 	}
 	
 	public boolean collides( List<TrailSegment> trail, int lookAhead ) {
@@ -109,6 +115,10 @@ public class Bike {
 		this.pos = pos;
 	}
 
+	public Point2D getPosAsPoint2D() {
+		return new Point2D.Double(pos.x, pos.y);
+	}
+
 	public Vector getDir() {
 		return dir;
 	}
@@ -138,15 +148,15 @@ public class Bike {
 		if ( trail.size() > 0 ) {
 			Line2D lastSeg = trail.get(trail.size() - 1).getLine();
 			Line2D headLine = new Line2D.Double(lastSeg.getX2(), lastSeg.getY2(), pos.x, pos.y);		
-			trailWithHead.add(new TrailSegment(headLine));
+			trailWithHead.add(new TrailSegment(ownerPid, headLine));
 		} else {
 			Line2D headLine = new Line2D.Double(startPos.x, startPos.y, pos.x, pos.y);
-			trailWithHead.add(new TrailSegment(headLine));
+			trailWithHead.add(new TrailSegment(ownerPid, headLine));
 		}
 				
 		return trailWithHead;
 	}
-
+	
 	public Color getColour() {
 		return colour;
 	}

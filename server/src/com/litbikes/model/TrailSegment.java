@@ -5,10 +5,16 @@ import com.litbikes.util.Vector;
 import java.awt.geom.Line2D;
 
 public class TrailSegment {
-	private Line2D line;
+	private final int ownerPid;
+	private final Line2D line;
 	
-	public TrailSegment( Line2D line ) {
+	public TrailSegment( int ownerPid, Line2D line ) {
+		this.ownerPid = ownerPid;
 		this.line = line;
+	}
+
+	public int getOwnerPid() {
+		return ownerPid;
 	}
 	
 	public Line2D getLine() {

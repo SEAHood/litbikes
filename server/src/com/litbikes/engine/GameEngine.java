@@ -1,6 +1,7 @@
 package com.litbikes.engine;
 
 import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,13 +26,14 @@ import com.litbikes.dto.ServerWorldDto;
 import com.litbikes.model.Arena;
 import com.litbikes.model.Bike;
 import com.litbikes.model.ICollidable;
+import com.litbikes.model.ImpactPoint;
 import com.litbikes.model.Player;
+import com.litbikes.model.Player.PlayerEffect;
 import com.litbikes.model.PowerUp;
 import com.litbikes.model.PowerUp.PowerUpType;
 import com.litbikes.model.Spawn;
 import com.litbikes.model.TrailSegment;
 import com.litbikes.model.Wall;
-import com.litbikes.model.Player.PlayerEffect;
 import com.litbikes.util.Vector;
 
 public class GameEngine {
@@ -145,7 +147,7 @@ public class GameEngine {
 		Player player = new Player(pid, isHuman);
 		player.setName(name);
 		
-		Bike bike = new Bike();
+		Bike bike = new Bike(pid);
 		bike.init(findSpawn(), true);
 		player.setBike(bike);
 		
@@ -229,6 +231,38 @@ public class GameEngine {
 		if ( player != null && player.isAlive() && player.getCurrentPowerUpType() != null ) {
 			switch (player.getCurrentPowerUpType()) {
 				case ROCKET:
+					Point2D pos = player.getBike().getPosAsPoint2D();
+					Vector dir = player.getBike().getDir();
+					Point2D wallAhead = null;
+					if (dir.x == 0) {
+						// moving on y axis
+						if (dir.y > 0) {
+							wallAhead = new Point2D.Double(dir.x, gameSize);
+						} else if (dir.y < 0) {
+							wallAhead = new Point2D.Double(dir.x, 0);
+						}
+					} else if (dir.y == 0) {
+						// moving on x axis
+						if (dir.x > 0) {
+							wallAhead = new Point2D.Double(gameSize, dir.y);							
+						} else if (dir.x < 0) {
+							wallAhead = new Point2D.Double(0, dir.y);	
+						}
+					}
+					
+					Line2D ray = new Line2D.Double(pos, wallAhead);					
+					ImpactPoint impactPoint = Physics.findClosestImpactPoint(pos, ray, getTrails());
+					Player trailOwner = players.stream()
+							.filter(p -> p.getId() == impactPoint.getTrailSegment().getOwnerPid())
+							.findFirst()
+							.orElse(null);
+					if (trailOwner == null) {
+						LOG.warn("Trail exists without a player - this is a bug");
+						return;
+					}
+					// todo remove trail segment from player bike trails
+					// todo calculate two separate trail segments with gap in between
+					// todo insert separate trail segments into bike player trails at original index of old segment
 					break;
 				case SLOW:
 					players.stream().forEach(p -> {
@@ -287,6 +321,14 @@ public class GameEngine {
 		}
 		
 		return true;
+	}
+	
+	private List<TrailSegment> getTrails() {
+		List<TrailSegment> trails = new ArrayList<>();
+		for (Player p : players) {
+			trails.addAll(p.getBike().getTrail(false));
+		}
+		return trails;
 	}
 	
 	public List<ScoreDto> getScores() {
