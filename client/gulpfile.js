@@ -38,13 +38,16 @@ var SRC_ROOT = './src',
 ;
 
 gulp.task('build+deploy', function(callback) {
-	runSequence(
+	return runSequence(
 		'clean',
-		'build:ts',
-		'move:static',
-		'deploy'
+		function() {
+			runSequence(
+				'build:ts',
+				'move:static',
+				'deploy'
+			);
+		}
 	);
-	callback();
 });
 
 gulp.task('clean', function() {
