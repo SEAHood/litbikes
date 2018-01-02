@@ -48,7 +48,7 @@ gulp.task('build+deploy', function(callback) {
 });
 
 gulp.task('clean', function() {
-	return gulp.src([WEBSERVER_FILES, COMPILED_FILES], {read: false})
+	return gulp.src([WEBSERVER_FILES, COMPILED_FILES], { read: false, allowEmpty: true })
 		.pipe(clean({force: true}))
 });
 
