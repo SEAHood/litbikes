@@ -294,8 +294,7 @@ public class GameEngine {
 							};
 							timer.schedule(task, 3000);
 						}
-					});
-					
+					});					
 					break;
 				default:
 					return;				

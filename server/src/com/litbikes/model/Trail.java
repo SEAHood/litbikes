@@ -51,34 +51,6 @@ public class Trail {
 		
 	}
 	
-	public void breakSegment(TrailSegment s, TrailSegment newSegment1, TrailSegment newSegment2) {
-		TrailSegment segment = segments.get(s.getId());
-		if (segment == null) {
-			if (s.isHead()) {
-				segment = s; // Segment being broken is (missing) segment between bike and last corner
-			} else {
-				return;	
-			}
-		}
-		Point2D frontOfSegment = new Point2D.Double(segment.getLine().getX2(), segment.getLine().getY2());
-		Point2D newSegment1Point1 = new Point2D.Double(newSegment1.getLine().getX1(), newSegment1.getLine().getY1());
-		Point2D newSegment1Point2 = new Point2D.Double(newSegment1.getLine().getX2(), newSegment1.getLine().getY2());
-		Point2D newSegment2Point1 = new Point2D.Double(newSegment2.getLine().getX1(), newSegment2.getLine().getY1());
-		Point2D newSegment2Point2 = new Point2D.Double(newSegment2.getLine().getX2(), newSegment2.getLine().getY2());
-		
-		if (segment.isHead()) {
-			if (frontOfSegment.equals(newSegment1Point1) || frontOfSegment.equals(newSegment1Point2)) {
-				newSegment1.setHead(true);
-			} else if (frontOfSegment.equals(newSegment2Point1) || frontOfSegment.equals(newSegment2Point2)) {
-				newSegment2.setHead(true);
-			}
-		}
-		
-		segments.remove(s.getId());
-		segments.put(newSegment1.getId(), newSegment1);
-		segments.put(newSegment2.getId(), newSegment2);		
-	}
-
 	public void breakSegment(ImpactPoint impactPoint, double radius) {
 		TrailSegment requestedSegment = impactPoint.getTrailSegment();
 		TrailSegment newSegment1 = null;

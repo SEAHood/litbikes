@@ -181,10 +181,6 @@ public class Bike {
 		return "bike s(" + pos.x + ", " + pos.y + "), s(" + dir.x + ", " + dir.y +")";
 	}
 
-	public void breakTrailSegment(TrailSegment segment, TrailSegment newSegment1, TrailSegment newSegment2) {
-		trail.breakSegment(segment, newSegment1, newSegment2);
-	}
-
 	public void breakTrailSegment(ImpactPoint impactPoint, double radius) {
 		trail.breakSegment(impactPoint, radius);
 	}
