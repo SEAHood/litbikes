@@ -5,8 +5,9 @@ module Model {
     import TrailSegmentDto = Dto.TrailSegmentDto;
     export class TrailSegment {
 
-        public start : Vector;
-        public end : Vector;
+        public isHead: boolean;
+        public start: Vector;
+        public end: Vector;
 
         constructor( start: Vector, end: Vector ) {
             this.start = start;
@@ -14,7 +15,9 @@ module Model {
         }
 
         public static fromDto( dto: TrailSegmentDto ) : TrailSegment {
-            return new TrailSegment( dto.start, dto.end );
+            let segment = new TrailSegment( dto.start, dto.end );
+            segment.isHead = dto.isHead;
+            return segment;
         }
 
         public draw( p : p5 ) {

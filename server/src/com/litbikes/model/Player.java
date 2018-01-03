@@ -139,4 +139,8 @@ public class Player implements ICollidable {
 		currentPowerUpType = null;
 		effect = PlayerEffect.NONE;
 	}
+
+	public void breakTrailSegment(ImpactPoint impactPoint, double radius) {
+		bike.breakTrailSegment(impactPoint, radius);
+	}
 }

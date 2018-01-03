@@ -56,22 +56,39 @@ module Model {
 
         public draw(p: p5) {
             if (!this.collected) {
-                let colour = "rgb(255,255,255)";
+                p.push();
+                p.noStroke();
+                p.translate(this.pos.x, this.pos.y);
+                let size = 3;
                 switch (this.type.toLowerCase()) {
                     case "rocket":
-                        // colour = "rgb(255,153,51)";
-                        colour = "rgb(193,253,51)";
+                        p.rotate(p.frameCount / -10.0);
+                        p.fill('rgb(255,255,105)');
+                        p.triangle(
+                            -size, size * 0.8, 
+                            size, size * 0.8, 
+                            0, -size
+                        );
                         break;
                     case "slow":
-                        //colour = "rgb(243,243,21)";
-                        colour = "rgb(252,90,184)";
+                        p.rotate(p.frameCount / 50.0);
+                        p.fill('rgb(105,255,255)');
+                        p.triangle(
+                            -size, size, 
+                            size, size, 
+                            0, -size
+                        );
+                        p.rotate(p.PI);
+                        p.triangle(
+                            -size, size, 
+                            size, size, 
+                            0, -size
+                        );
                         break;
                     default:
                         break;
                 }
-                p.noStroke();
-                p.fill(colour);
-                p.ellipse(this.pos.x, this.pos.y, 6, 6);
+                p.pop();
             } else if (this.collecting) {
                 p.fill('rgba(0,0,0,0)');
                 p.stroke(255);

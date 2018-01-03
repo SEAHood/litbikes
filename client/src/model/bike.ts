@@ -62,8 +62,8 @@ module Model {
             this.pos = dto.pos;
             this.dir = dto.dir;
             this.spd = dto.spd;
-            this.trail = [];
             this.colour = dto.colour;
+            this.trail = [];
             _.each(dto.trail, (seg : TrailSegmentDto) => {
                 this.trail.push( TrailSegment.fromDto(seg) );
             });
@@ -120,22 +120,26 @@ module Model {
             // Draw trail
             p.strokeWeight(2);
             p.stroke(this.colour.replace('%A%', this.trailOpacity.toString()));
-            let lastSeg : Vector = _.last(this.trail).end;
+
+            // Create trail segment between bike and last trail end
+            let headEnd : Vector = _.find(this.trail, t => t.isHead).end;
             let newSeg = new TrailSegment(
-                new Vector(lastSeg.x, lastSeg.y),
+                new Vector(headEnd.x, headEnd.y),
                 new Vector(this.pos.x, this.pos.y)
             );
-
             let trail = _.clone(this.trail);
             trail.push(newSeg);
 
             p.noFill();
-            p.beginShape();
             _.each( trail, ( tp : TrailSegment ) => {
-                p.vertex( tp.start.x, tp.start.y);
+                // if (tp.isHead) {
+                //     p.stroke('rgb(255,0,0)');
+                // } else {
+                //     p.stroke(this.colour.replace('%A%', this.trailOpacity.toString()));
+                // }
+                //p.ellipse(tp.start.x, tp.start.y, 3, 3);
+                p.line(tp.start.x, tp.start.y, tp.end.x, tp.end.y);
             });
-            p.vertex( this.pos.x, this.pos.y);
-            p.endShape();
 
             // Draw bike
             let bikeColour = isControlledPlayer

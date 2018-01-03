@@ -4,7 +4,6 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.Timer;
@@ -25,6 +24,7 @@ import com.litbikes.dto.ScoreDto;
 import com.litbikes.dto.ServerWorldDto;
 import com.litbikes.model.Arena;
 import com.litbikes.model.Bike;
+import com.litbikes.model.Debug;
 import com.litbikes.model.ICollidable;
 import com.litbikes.model.ImpactPoint;
 import com.litbikes.model.Player;
@@ -41,19 +41,20 @@ public class GameEngine {
 	
 	private static Logger LOG = Log.getLogger(GameEngine.class);
 	private static final int GAME_TICK_MS = 25;
-	private static final int PU_SPAWN_DELAY_MIN = 10;
-	private static final int PU_SPAWN_DELAY_MAX = 20;
+	private static final int PU_SPAWN_DELAY_MIN = 4;
+	private static final int PU_SPAWN_DELAY_MAX = 7;
 	private static final int PU_DURATION_MIN = 10;
 	private static final int PU_DURATION_MAX = 20;
 	
 	private GameEventListener eventListener;
 	private long gameTick = 0;
 		
-	private final List<Player> players;
+	private final CopyOnWriteArrayList<Player> players;
 	private final CopyOnWriteArrayList<PowerUp> powerUps;
 	private final Arena arena;
 	private final ScoreKeeper score;
 	private final int gameSize;	
+	private final Debug debug;
 	
 	private Timer roundTimer;
 	private int roundTimeLeft;
@@ -64,9 +65,10 @@ public class GameEngine {
 	
 	public GameEngine(int gameSize) {
 		arena = new Arena(gameSize);
-		players = new ArrayList<>();
+		players = new CopyOnWriteArrayList<>();
 		powerUps = new CopyOnWriteArrayList<>();
 		score = new ScoreKeeper();
+		debug = new Debug();
 		this.gameSize = gameSize;
 	}
 	
@@ -212,6 +214,7 @@ public class GameEngine {
 		worldDto.arena = arena.getDto();
 		worldDto.players = playersDto;
 		worldDto.powerUps = powerUpsDto;
+		worldDto.debug = debug.getDto();
 		
 		return worldDto;
 	}
@@ -237,21 +240,29 @@ public class GameEngine {
 					if (dir.x == 0) {
 						// moving on y axis
 						if (dir.y > 0) {
-							wallAhead = new Point2D.Double(dir.x, gameSize);
+							wallAhead = new Point2D.Double(pos.getX(), gameSize);
 						} else if (dir.y < 0) {
-							wallAhead = new Point2D.Double(dir.x, 0);
+							wallAhead = new Point2D.Double(pos.getX(), 0);
 						}
 					} else if (dir.y == 0) {
 						// moving on x axis
 						if (dir.x > 0) {
-							wallAhead = new Point2D.Double(gameSize, dir.y);							
+							wallAhead = new Point2D.Double(gameSize, pos.getY());							
 						} else if (dir.x < 0) {
-							wallAhead = new Point2D.Double(0, dir.y);	
+							wallAhead = new Point2D.Double(0, pos.getY());	
 						}
 					}
 					
 					Line2D ray = new Line2D.Double(pos, wallAhead);					
 					ImpactPoint impactPoint = Physics.findClosestImpactPoint(pos, ray, getTrails());
+					if (impactPoint == null) {
+						LOG.warn("Impact point was null");
+						break;
+					}
+					if (impactPoint.getTrailSegment() == null) {
+						LOG.warn("Trail segment point was null");
+						break;
+					}
 					Player trailOwner = players.stream()
 							.filter(p -> p.getId() == impactPoint.getTrailSegment().getOwnerPid())
 							.findFirst()
@@ -260,9 +271,9 @@ public class GameEngine {
 						LOG.warn("Trail exists without a player - this is a bug");
 						return;
 					}
-					// todo remove trail segment from player bike trails
-					// todo calculate two separate trail segments with gap in between
-					// todo insert separate trail segments into bike player trails at original index of old segment
+										
+					trailOwner.breakTrailSegment(impactPoint, 10);
+					debug.addImpact(impactPoint);
 					break;
 				case SLOW:
 					players.stream().forEach(p -> {
@@ -305,10 +316,7 @@ public class GameEngine {
 	public boolean spawnIsAcceptable(Spawn spawn) {
 
 		int limit = 80; // Distance to nearest trail
-		List<TrailSegment> trails = players.stream()
-				.map(m -> m.getBike().getTrail(true))
-				.flatMap(Collection::stream)
-				.collect(Collectors.toList());
+		List<TrailSegment> trails = getTrails();
 		
 		double aheadX = spawn.getPos().x + (limit * spawn.getDir().x);
 		double aheadY = spawn.getPos().y + (limit * spawn.getDir().y);
@@ -326,7 +334,7 @@ public class GameEngine {
 	private List<TrailSegment> getTrails() {
 		List<TrailSegment> trails = new ArrayList<>();
 		for (Player p : players) {
-			trails.addAll(p.getBike().getTrail(false));
+			trails.addAll(p.getBike().getTrailSegmentList(true));			
 		}
 		return trails;
 	}
@@ -360,11 +368,11 @@ public class GameEngine {
 		public void run() {
 			try {
 				PowerUpType type = PowerUpType.SLOW;
-				/*int rand = new Random().nextInt(2);
+				int rand = new Random().nextInt(2);
 				if (rand == 1)
 					type = PowerUpType.ROCKET;
 				else
-					type = PowerUpType.SLOW;*/
+					type = PowerUpType.SLOW;
 				
 				PowerUp powerUp = new PowerUp(Vector.random(gameSize, gameSize), type);
 				powerUps.add(powerUp);				
@@ -430,7 +438,7 @@ public class GameEngine {
 			
 							for ( Player p : activePlayers ) {
 								boolean isSelf = p.getId() == player.getId();
-								collided = collided || playerBike.collides( p.getBike().getTrail(!isSelf), 1 );
+								collided = collided || playerBike.collides( p.getBike().getTrailSegmentList(!isSelf), 1 );
 								if ( collided ) {
 									collidedWith = p;
 									break;

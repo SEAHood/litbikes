@@ -6,7 +6,6 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import com.litbikes.dto.BikeDto;
@@ -18,7 +17,7 @@ public class Bike {
 	private Vector pos;
 	private Vector dir;
 	private double spd;
-	private CopyOnWriteArrayList<TrailSegment> trail;
+	private Trail trail;
 	private Vector startPos;
 	private Color colour;
 	private Random random = new Random();
@@ -31,7 +30,7 @@ public class Bike {
 		pos = spawn.getPos();
 		dir = spawn.getDir();
 		spd = spawn.getSpd();
-		trail = new CopyOnWriteArrayList<>();
+		trail = new Trail();
 		startPos = pos;
 		addTrailPoint();
 		
@@ -73,7 +72,7 @@ public class Bike {
 	private void addTrailPoint() {
 		Line2D segLine;
 		if ( trail.size() > 0 ) {
-			Line2D lastSeg = trail.get(trail.size() - 1).getLine();
+			Line2D lastSeg = trail.getHead().getLine();
 			segLine = new Line2D.Double(lastSeg.getX2(), lastSeg.getY2(), pos.x, pos.y);	
 		} else {
 			segLine = new Line2D.Double(pos.x, pos.y, pos.x, pos.y);	
@@ -82,11 +81,12 @@ public class Bike {
 	}
 	
 	public boolean collides( List<TrailSegment> trail, int lookAhead ) {
+		if (trail == null) return false;
+		
 		double aheadX = pos.x + (lookAhead * dir.x);
 		double aheadY = pos.y + (lookAhead * dir.y);
 		
-		Line2D line = new Line2D.Double(pos.x, pos.y, aheadX, aheadY);
-					
+		Line2D line = new Line2D.Double(pos.x, pos.y, aheadX, aheadY);					
 		for ( TrailSegment segment : trail ) {
 			if ( line.intersectsLine(segment.getLine()) ) 
 				return true;	
@@ -99,8 +99,8 @@ public class Bike {
 		BikeDto dto = new BikeDto();
 		dto.pos = new Vector(pos.x, pos.y);
 		dto.dir = new Vector(dir.x, dir.y);
-		dto.spd = spd;
-		dto.trail = trail.stream()
+		dto.spd = spd;		
+		dto.trail = trail.getList().stream()
                 .map(tp -> tp.getDto())
                 .collect(Collectors.toList());
 		dto.colour = String.format("rgba(%s,%s,%s,%%A%%)", colour.getRed(), colour.getGreen(), colour.getBlue());
@@ -139,21 +139,31 @@ public class Bike {
 		addTrailPoint();
 	}
 
-	public List<TrailSegment> getTrail( boolean withHead ) {
-		if ( !withHead ) 
-			return trail.subList(0, Math.max(trail.size() - 1, 0));
+	public List<TrailSegment> getTrailSegmentList(boolean withHead) {
+		if (!withHead) 
+			return trail.getList();
 		
-		List<TrailSegment> trailWithHead = new ArrayList<>(trail);
-
+		List<TrailSegment> trailWithHead = new ArrayList<>(trail.getList());		
+		double headSegmentStartX = 0;
+		double headSegmentStartY = 0;
 		if ( trail.size() > 0 ) {
-			Line2D lastSeg = trail.get(trail.size() - 1).getLine();
-			Line2D headLine = new Line2D.Double(lastSeg.getX2(), lastSeg.getY2(), pos.x, pos.y);		
-			trailWithHead.add(new TrailSegment(ownerPid, headLine));
+			TrailSegment head = trail.getHead();
+			if (head == null) {
+				return null;
+			}
+			Line2D lastSeg = trail.getHead().getLine();
+			headSegmentStartX = lastSeg.getX2();
+			headSegmentStartY = lastSeg.getY2();
 		} else {
-			Line2D headLine = new Line2D.Double(startPos.x, startPos.y, pos.x, pos.y);
-			trailWithHead.add(new TrailSegment(ownerPid, headLine));
+			headSegmentStartX = startPos.x;
+			headSegmentStartY = startPos.y;
 		}
-				
+		
+		trailWithHead.stream().forEach(x -> x.setHead(false));
+		TrailSegment headSegment = new TrailSegment(ownerPid, new Line2D.Double(headSegmentStartX, headSegmentStartY, pos.x, pos.y));
+		headSegment.setHead(true);
+		trailWithHead.add(headSegment);
+		
 		return trailWithHead;
 	}
 	
@@ -169,6 +179,14 @@ public class Bike {
 	@Override
 	public String toString() {
 		return "bike s(" + pos.x + ", " + pos.y + "), s(" + dir.x + ", " + dir.y +")";
+	}
+
+	public void breakTrailSegment(TrailSegment segment, TrailSegment newSegment1, TrailSegment newSegment2) {
+		trail.breakSegment(segment, newSegment1, newSegment2);
+	}
+
+	public void breakTrailSegment(ImpactPoint impactPoint, double radius) {
+		trail.breakSegment(impactPoint, radius);
 	}
 	
 }

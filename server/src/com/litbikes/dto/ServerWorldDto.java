@@ -13,4 +13,5 @@ public class ServerWorldDto {
 	public List<PlayerDto> players;
 	public List<PowerUpDto> powerUps;
 	public ArenaDto arena;
+	public DebugDto debug;
 }

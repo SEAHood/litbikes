@@ -60,7 +60,7 @@ public class Bot extends Player {
 			List<TrailSegment> allTrails = new ArrayList<>();
 			for ( Player p : activePlayers ) {
 				boolean isSelf = p.getId() == pid;
-				allTrails.addAll( p.getBike().getTrail(!isSelf) );
+				allTrails.addAll(p.getBike().getTrailSegmentList(!isSelf));
 			}
 			
 	 		boolean incCollision = bike.collides( allTrails, dDist ) || arena.checkCollision(bike, dDist);

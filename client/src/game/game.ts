@@ -52,6 +52,8 @@ module Game {
         private powerUpIconRocket: p5.Image;
         private powerUpIconSlow: p5.Image;
 
+        private impacts: Vector[];
+
         constructor() {
             this.socket.on('hello', ( data : HelloDto ) => {
                 this.initGame(data);
@@ -378,6 +380,7 @@ module Game {
                 powerUps.push(existingPowerUp);
             });
             this.powerUps = powerUps;
+            this.impacts = data.debug.impacts.map(x => x.pos);
         }
 
         private updateScores(scores: ScoreDto[]) {            
@@ -564,8 +567,14 @@ module Game {
             if (this.player && this.player.isAlive() && this.player.getEffect().toLowerCase() == "slowed") {
                 p.filter("INVERT", 0);
             }
+
+            _.each(this.impacts, (i: Vector) => {                
+                p.noStroke();
+                p.fill('rgba(255, 165, 0, 0.6)');
+                p.ellipse(i.x, i.y, 20, 20);
+            })
             
-            // Debug text
+            // DEBUG ////////////////////////
             if ( this.showDebug ) {
                 p.textFont(this.debugFont);
                 p.fill(255);
@@ -595,6 +604,7 @@ module Game {
                     p.text("Game not joined", 10, 30, 300, 500);
                 }
             }
+            // DEBUG ////////////////////////
         }
     }
     new Game();

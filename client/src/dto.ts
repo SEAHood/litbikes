@@ -48,6 +48,7 @@ module Dto {
     }
 
     export interface TrailSegmentDto {
+        isHead: boolean;
         start: Vector;
         end: Vector;
     }
@@ -62,6 +63,7 @@ module Dto {
         players: PlayerDto[];
         powerUps: PowerUpDto[];
         arena: ArenaDto;
+        debug: DebugDto;
     }
 
     export interface ChatMessageDto {
@@ -80,6 +82,14 @@ module Dto {
 
     export interface GameSettingsDto {
         gameTickMs : number;
+    }
+
+    export interface DebugDto {
+        impacts: ImpactDto[];
+    }
+
+    export interface ImpactDto {
+        pos: Vector;
     }
     
     export interface ClientUpdateDto {
