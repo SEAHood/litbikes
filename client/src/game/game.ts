@@ -122,7 +122,8 @@ module Game {
                 SPACE = 32,
                 F3 = 114,
                 H = 72,
-                TAB = 9
+                TAB = 9,
+                ENTER = 13
             };
 
             $(document).on('keyup', ev => {
@@ -137,7 +138,7 @@ module Game {
             $(document).on('keydown', ev => {
                 if ( $(ev.target).is('input') ) {
                     // Typing in chat, don't process as game keys
-                    if ( ev.which === 13 ) { // enter
+                    if ( ev.which === Keys.ENTER ) { // enter
                         if ($(ev.target).is('#player-name-input')) { // enter when inside player name box
                             let name = $('#player-name-input').val();
                             if (this.nameIsValid(name)) {
@@ -150,6 +151,7 @@ module Game {
                                 $('#chat-input').val('');
                             }
                         }
+                        $(ev.target).blur();
                     }
                     return;
                 }
@@ -178,6 +180,8 @@ module Game {
                         this.tabPressed = true;
                     } else if (keyCode === Keys.SPACE) {
                         this.socket.emit('use-powerup');
+                    } else if (keyCode === Keys.ENTER) {
+                        $('#chat-input').focus();
                     } else {
                         eventMatched = false;
                     }
