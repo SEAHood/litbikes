@@ -462,12 +462,18 @@ public class GameEngine {
 							}
 			
 							if ( collided ) {
+								// Player crashed
 								player.crashed(collidedWith);
 								eventListener.playerCrashed(player);
-								if ( !(collidedWith instanceof Wall) && collidedWith.getId() != player.getId() ) {
+								
+								// Update scores
+								if (!(collidedWith instanceof Wall) && collidedWith.getId() != player.getId()) {
 									score.grantScore(collidedWith.getId(), collidedWith.getName(), 1);
-									eventListener.scoreUpdated(score.getScores());
+								} else {
+									// Decrement player score if they crashed into themselves or the wall
+									score.grantScore(player.getId(), player.getName(), -1);
 								}
+								eventListener.scoreUpdated(score.getScores());
 							}	
 													
 							if (powerUpCollected != null) {

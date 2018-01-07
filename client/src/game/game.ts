@@ -397,7 +397,7 @@ module Game {
                 let bikeColour = !player || isPlayer 
                     ? "inherit"
                     :  player.getBike().getColour().replace('%A%', '1');
-                let scoreElement = li + position + ": <span style='color:" + bikeColour + "'>" + score.name + "</span> - " + score.score + "</li>";
+                let scoreElement = li + position + " <span style='color:" + bikeColour + "'>" + score.name + "</span>: " + score.score + "</li>";
                 $('#score ul').append(scoreElement);
             });
 
@@ -408,7 +408,7 @@ module Game {
                 }
                 let li = "<li style='color:yellow'>";
                 let position = "#" + (scores.indexOf(playerScore) + 1);
-                let scoreElement = li + position + ": " + playerScore.name + " - " + playerScore.score + "</li>";
+                let scoreElement = li + position + " " + playerScore.name + ": " + playerScore.score + "</li>";
                 $('#score ul').append(scoreElement);
             }
         }
