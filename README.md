@@ -1,10 +1,12 @@
-sorry about the mess
+# Litbikes has moved to [the dotnet version](https://github.com/SEAHood/litbikes-dotnet)
 
-#🔥litbikes🔥
+Just incase you want to run this anyway I'll leave this crap below
+
+# 🔥litbikes🔥
 
 ![Lit Bikes](http://i.imgur.com/iZvD9D5.png "Lit Bikes")
 
-##Deployment
+## Deployment
 1. Download/clone repo
 2. Run build.sh or follow steps 3-5 below - running build.sh results in 'server.jar' inside the server directory
 3. Run ```npm install``` inside client directory
